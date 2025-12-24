@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    /* Dark navy theme - inspired by the dashboard reference */
-    --background: 225 30% 7%;
+    /* Dark navy theme - #0E0F1B */
+    --background: 235 32% 8%;
     --foreground: 210 20% 95%;
 
     --card: 225 28% 10%;
