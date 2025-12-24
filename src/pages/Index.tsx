@@ -248,7 +248,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="pl-64">
+      <div className="pl-20">
         <Header 
           selectedMonth={selectedMonth} 
           onMonthChange={setSelectedMonth}
