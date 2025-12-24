@@ -43,16 +43,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
       ...formData,
       adBudget: parseFloat(String(formData.adBudget)) || 0,
       callsGenerated: parseInt(String(formData.callsGenerated)) || 0,
-      callsClosed: parseInt(String(formData.callsClosed)) || 0,
-      averagePrice: parseFloat(String(formData.averagePrice)) || 0,
-      collectedAmount: parseFloat(String(formData.collectedAmount)) || 0,
+      callsClosed: tunnel?.callsClosed || 0, // Calculated from sales
+      averagePrice: 0, // Calculated from sales
+      collectedAmount: tunnel?.collectedAmount || 0, // Calculated from sales
     });
   };
-
-  const adBudgetNum = parseFloat(String(formData.adBudget)) || 0;
-  const callsClosedNum = parseInt(String(formData.callsClosed)) || 0;
-  const averagePriceNum = parseFloat(String(formData.averagePrice)) || 0;
-  const contractedRevenue = callsClosedNum * averagePriceNum;
 
   const selectedDate = formData.date ? new Date(formData.date) : undefined;
   const selectedEndDate = formData.endDate ? new Date(formData.endDate) : undefined;
@@ -213,10 +208,10 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
             </div>
           )}
 
-          {/* Traffic & Sales */}
+          {/* Traffic */}
           <div className="border-t border-border/50 pt-5">
             <h3 className="mb-4 text-sm font-semibold text-muted-foreground">
-              Données de trafic & ventes
+              Données de trafic
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -230,7 +225,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                   className="input-field w-full"
                   min="0"
                   step="0.01"
-                  placeholder="0"
+                  placeholder="Ex: 5000"
                 />
               </div>
               <div>
@@ -243,60 +238,12 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                   onChange={(e) => setFormData(prev => ({ ...prev, callsGenerated: e.target.value }))}
                   className="input-field w-full"
                   min="0"
-                  placeholder="0"
+                  placeholder="Ex: 50"
                 />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Modifiable après (follow-up, etc.)
+                </p>
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  ✅ Calls closés
-                </label>
-                <input
-                  type="number"
-                  value={formData.callsClosed}
-                  onChange={(e) => setFormData(prev => ({ ...prev, callsClosed: e.target.value }))}
-                  className="input-field w-full"
-                  min="0"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  💵 Prix moyen (€)
-                </label>
-                <input
-                  type="number"
-                  value={formData.averagePrice}
-                  onChange={(e) => setFormData(prev => ({ ...prev, averagePrice: e.target.value }))}
-                  className="input-field w-full"
-                  min="0"
-                  step="0.01"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Collected Amount */}
-          <div className="border-t border-border/50 pt-5">
-            <div className="mb-4 rounded-lg bg-secondary/30 p-4">
-              <p className="text-sm text-muted-foreground">CA Contracté (calculé)</p>
-              <p className="font-display text-2xl font-bold text-foreground">
-                {contractedRevenue.toLocaleString('fr-FR')} €
-              </p>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                💰 Montant réellement collecté (€)
-              </label>
-              <input
-                type="number"
-                value={formData.collectedAmount}
-                onChange={(e) => setFormData(prev => ({ ...prev, collectedAmount: e.target.value }))}
-                className="input-field w-full"
-                min="0"
-                step="0.01"
-                placeholder="Montant encaissé ce mois"
-              />
             </div>
           </div>
 
