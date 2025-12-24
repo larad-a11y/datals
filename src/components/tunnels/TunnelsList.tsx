@@ -4,6 +4,8 @@ import { Tunnel, tunnelTypeLabels } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
 import { Button } from '@/components/ui/button';
 
+type TunnelTypeFilter = 'all' | 'webinar' | 'vsl' | 'challenge';
+
 interface TunnelsListProps {
   tunnels: Tunnel[];
   selectedMonth: string;
@@ -15,6 +17,7 @@ interface TunnelsListProps {
 export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
+  const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
 
   const handleSave = (data: Omit<Tunnel, 'id'>) => {
     if (editingTunnel) {
@@ -26,11 +29,20 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
     setEditingTunnel(null);
   };
 
-  const filteredTunnels = tunnels.filter(t => t.month === selectedMonth);
+  const filteredTunnels = tunnels
+    .filter(t => t.month === selectedMonth)
+    .filter(t => typeFilter === 'all' || t.type === typeFilter);
+
+  const filterOptions: { value: TunnelTypeFilter; label: string }[] = [
+    { value: 'all', label: 'Tous' },
+    { value: 'webinar', label: 'Webinar' },
+    { value: 'vsl', label: 'VSL' },
+    { value: 'challenge', label: 'Challenge' },
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-xl font-semibold text-foreground">
             Tunnels de vente
@@ -39,10 +51,27 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
             Gérez vos différents tunnels de conversion
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouveau tunnel
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-lg border border-border/50 bg-secondary/30 p-1">
+            {filterOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setTypeFilter(option.value)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  typeFilter === option.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau
+          </Button>
+        </div>
       </div>
 
       {filteredTunnels.length === 0 ? (

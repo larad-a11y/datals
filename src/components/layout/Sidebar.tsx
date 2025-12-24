@@ -1,4 +1,4 @@
-import { LayoutDashboard, Target, Calendar, Wallet, Users, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Target, Wallet, Users, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarProps {
@@ -9,7 +9,6 @@ interface SidebarProps {
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'tunnels', label: 'Tunnels de vente', icon: Target },
-  { id: 'events', label: 'Webinars / Challenges', icon: Calendar },
   { id: 'charges', label: 'Charges & Déductions', icon: Wallet },
   { id: 'salaries', label: 'Salaires', icon: Users },
   { id: 'kpi', label: 'KPI & Rentabilité', icon: BarChart3 },
