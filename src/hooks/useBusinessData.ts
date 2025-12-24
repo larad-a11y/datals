@@ -7,6 +7,13 @@ import {
   PaymentRecord, InstallmentPlan, Offer, Closer, ChallengeDay 
 } from '@/types/business';
 import type { Json } from '@/integrations/supabase/types';
+import { toast } from 'sonner';
+
+// Helper to convert empty strings to null for database
+const toNullIfEmpty = (value: string | null | undefined): string | null => {
+  if (value === undefined || value === null || value === '') return null;
+  return value;
+};
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -219,15 +226,15 @@ export function useBusinessData() {
   // Add tunnel
   const addTunnelMutation = useMutation({
     mutationFn: async (tunnel: Omit<Tunnel, 'id'>) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
       const { data, error } = await supabase
         .from('tunnels')
         .insert({
           user_id: user.id,
           name: tunnel.name,
           type: tunnel.type,
-          date: tunnel.date,
-          end_date: tunnel.endDate,
+          date: toNullIfEmpty(tunnel.date),
+          end_date: toNullIfEmpty(tunnel.endDate),
           month: tunnel.month,
           is_active: tunnel.isActive,
           ad_budget: tunnel.adBudget,
@@ -247,6 +254,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tunnels'] });
+      toast.success('Tunnel créé avec succès');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur lors de la création: ${error.message}`);
     },
   });
 
@@ -317,8 +328,8 @@ export function useBusinessData() {
         .update({
           name: updates.name,
           type: updates.type,
-          date: updates.date,
-          end_date: updates.endDate,
+          date: toNullIfEmpty(updates.date),
+          end_date: toNullIfEmpty(updates.endDate),
           month: updates.month,
           is_active: updates.isActive,
           ad_budget: updates.adBudget,
@@ -337,6 +348,10 @@ export function useBusinessData() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tunnels'] });
       queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Tunnel mis à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur lors de la mise à jour: ${error.message}`);
     },
   });
 
@@ -352,13 +367,17 @@ export function useBusinessData() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tunnels'] });
       queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Tunnel supprimé');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur lors de la suppression: ${error.message}`);
     },
   });
 
   // Update charges
   const updateChargesMutation = useMutation({
     mutationFn: async (newCharges: Charges) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
       const { error } = await supabase
         .from('user_charges')
         .upsert({
@@ -381,13 +400,17 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['charges'] });
+      toast.success('Charges mises à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
   // Add salary
   const addSalaryMutation = useMutation({
     mutationFn: async (salary: Omit<Salary, 'id'>) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
       const { error } = await supabase
         .from('salaries')
         .insert({
@@ -400,6 +423,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      toast.success('Salaire ajouté');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
@@ -418,6 +445,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      toast.success('Salaire mis à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
@@ -432,13 +463,17 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      toast.success('Salaire supprimé');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
   // Add coaching expense
   const addCoachingMutation = useMutation({
     mutationFn: async (expense: Omit<CoachingExpense, 'id'>) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
       const { error } = await supabase
         .from('coaching_expenses')
         .insert({
@@ -451,6 +486,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      toast.success('Dépense ajoutée');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
@@ -469,6 +508,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      toast.success('Dépense mise à jour');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
@@ -483,6 +526,10 @@ export function useBusinessData() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      toast.success('Dépense supprimée');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erreur: ${error.message}`);
     },
   });
 
