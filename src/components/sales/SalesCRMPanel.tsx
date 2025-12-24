@@ -21,6 +21,7 @@ interface SalesCRMPanelProps {
   initialTunnelFilter?: string;
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid: (saleId: string, tunnelId: string) => void;
+  installmentMarkupPercent?: number;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -34,6 +35,7 @@ export function SalesCRMPanel({
   initialTunnelFilter = '',
   onRecordPayment,
   onFullyPaid,
+  installmentMarkupPercent = 5,
 }: SalesCRMPanelProps) {
   const [selectedTunnelId, setSelectedTunnelId] = useState(initialTunnelFilter);
   const [selectedStatus, setSelectedStatus] = useState<PaymentStatus>('all');
@@ -294,6 +296,7 @@ export function SalesCRMPanel({
           tunnelId={editingSale.tunnelId}
           onSave={handleSaveEdit}
           onCancel={() => setEditingSale(null)}
+          installmentMarkupPercent={installmentMarkupPercent}
         />
       )}
     </div>

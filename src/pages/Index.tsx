@@ -166,6 +166,7 @@ const Index = () => {
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
             onNavigateToSales={handleNavigateToSales}
+            installmentMarkupPercent={charges.installmentMarkupPercent}
           />
         );
       case 'sales':
@@ -181,6 +182,7 @@ const Index = () => {
             initialTunnelFilter={salesTunnelFilter}
             onRecordPayment={handleRecordPayment}
             onFullyPaid={handleFullyPaid}
+            installmentMarkupPercent={charges.installmentMarkupPercent}
           />
         );
       case 'charges':

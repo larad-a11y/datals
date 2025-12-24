@@ -57,6 +57,7 @@ export interface Charges {
   agencyPercent: number; // Default 20%, only above 130k€ HT
   agencyThreshold: number; // 130000€
   paymentProcessorPercent: number; // Default 4%
+  installmentMarkupPercent: number; // Default 5%, markup for installment payments
   
   // Fixed charges
   advertising: number;
@@ -99,6 +100,7 @@ export const defaultCharges: Charges = {
   agencyPercent: 20,
   agencyThreshold: 130000,
   paymentProcessorPercent: 4,
+  installmentMarkupPercent: 5,
   advertising: 0,
   marketing: 0,
   software: 0,
