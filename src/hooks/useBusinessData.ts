@@ -92,23 +92,28 @@ export function useBusinessData() {
     // 6. Coaching / Mentorat (filtré par mois)
     const totalCoachingExpenses = filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
     
-    // 7. Salaires
-    const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
-    
-    // Calcul du bénéfice net
-    // CA HT - Processeur - Closers - Agence - Budget Pub - Charges fixes - Coaching - Salaires
-    const netProfit = totalCollectedHT 
+    // Calcul du bénéfice net AVANT associé et salaires
+    // CA HT - Processeur - Closers - Agence - Budget Pub - Charges fixes - Coaching
+    const profitBeforeAssociate = totalCollectedHT 
       - paymentProcessorCost 
       - closersCost 
       - agencyCost 
       - totalAdBudget
       - fixedCharges 
-      - totalCoachingExpenses 
-      - totalSalaries;
+      - totalCoachingExpenses;
 
-    // 8. Part associé (sur le bénéfice net uniquement)
-    const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
-    const netNetProfit = netProfit - associateCost;
+    // 7. Part associé (sur le bénéfice avant salaires)
+    const associateCost = profitBeforeAssociate > 0 ? profitBeforeAssociate * (charges.associatePercent / 100) : 0;
+    const profitAfterAssociate = profitBeforeAssociate - associateCost;
+
+    // 8. Salaires (déduits APRÈS la part associé)
+    const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
+    
+    // Bénéfice Net = après associé - salaires
+    const netProfit = profitAfterAssociate - totalSalaries;
+    
+    // Bénéfice Net Net = Bénéfice Net (plus rien à déduire après)
+    const netNetProfit = netProfit;
 
     // ROI: (Collecté HT - Budget Pub) / Budget Pub
     const adROI = totalAdBudget > 0 
