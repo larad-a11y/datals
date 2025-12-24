@@ -3,15 +3,17 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { TunnelsList } from '@/components/tunnels/TunnelsList';
+import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
 import { ChargesPanel } from '@/components/charges/ChargesPanel';
 import { SalariesPanel } from '@/components/salaries/SalariesPanel';
 import { KPIPanel } from '@/components/kpi/KPIPanel';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { useBusinessData } from '@/hooks/useBusinessData';
-import { defaultCharges } from '@/types/business';
+import { defaultCharges, Sale } from '@/types/business';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [salesTunnelFilter, setSalesTunnelFilter] = useState('');
   
   const {
     selectedMonth,
@@ -28,7 +30,43 @@ const Index = () => {
     addSalary,
     updateSalary,
     deleteSalary,
+    getAllSales,
   } = useBusinessData();
+
+  // Sale operations from CRM
+  const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    updateTunnel(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+    });
+  };
+
+  const handleDeleteSale = (tunnelId: string, saleId: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    updateTunnel(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+      callsClosed: updatedSales.length,
+    });
+  };
+
+  const handleNavigateToSales = (tunnelId?: string) => {
+    if (tunnelId) {
+      setSalesTunnelFilter(tunnelId);
+    }
+    setActiveTab('sales');
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,6 +81,20 @@ const Index = () => {
             onAdd={addTunnel}
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
+            onNavigateToSales={handleNavigateToSales}
+          />
+        );
+      case 'sales':
+        return (
+          <SalesCRMPanel
+            tunnels={tunnels}
+            getAllSales={getAllSales}
+            onUpdateSale={handleUpdateSale}
+            onDeleteSale={handleDeleteSale}
+            onNavigateToTunnel={(tunnelId) => {
+              setActiveTab('tunnels');
+            }}
+            initialTunnelFilter={salesTunnelFilter}
           />
         );
       case 'charges':
