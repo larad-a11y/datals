@@ -118,11 +118,24 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
                 ? ((tunnel.collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
                 : 0;
               const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
-              const formattedDate = new Date(tunnel.date).toLocaleDateString('fr-FR', {
+              const formattedDate = tunnel.date ? new Date(tunnel.date).toLocaleDateString('fr-FR', {
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric'
-              });
+              }) : '';
+
+              // Calculate type-specific metrics
+              const showUpRate = tunnel.type === 'webinar' && tunnel.registrations && tunnel.attendees
+                ? ((tunnel.attendees / tunnel.registrations) * 100).toFixed(1)
+                : null;
+              
+              const bookingRate = tunnel.type === 'vsl' && tunnel.registrations && tunnel.callsBooked
+                ? ((tunnel.callsBooked / tunnel.registrations) * 100).toFixed(1)
+                : null;
+              
+              const avgChallengeShowUp = tunnel.type === 'challenge' && tunnel.registrations && tunnel.challengeDays && tunnel.challengeDays.length > 0
+                ? (tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length / tunnel.registrations * 100).toFixed(1)
+                : null;
               
               return (
                 <div 
@@ -146,7 +159,7 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-border/30">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-3 border-t border-border/30">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Pub dépensée</p>
                       <p className="font-display text-base font-semibold text-foreground">
@@ -171,6 +184,49 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
                         {contractedRevenue.toLocaleString('fr-FR')} €
                       </p>
                     </div>
+                    
+                    {/* Type-specific metrics */}
+                    {tunnel.type === 'webinar' && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Show-up rate</p>
+                        <p className="font-display text-base font-semibold text-primary">
+                          {showUpRate ? `${showUpRate}%` : '-'}
+                        </p>
+                        {tunnel.registrations && tunnel.attendees && (
+                          <p className="text-xs text-muted-foreground">
+                            {tunnel.attendees}/{tunnel.registrations}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {tunnel.type === 'vsl' && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Taux booking</p>
+                        <p className="font-display text-base font-semibold text-primary">
+                          {bookingRate ? `${bookingRate}%` : '-'}
+                        </p>
+                        {tunnel.registrations && tunnel.callsBooked && (
+                          <p className="text-xs text-muted-foreground">
+                            {tunnel.callsBooked}/{tunnel.registrations}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {tunnel.type === 'challenge' && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Show-up moyen</p>
+                        <p className="font-display text-base font-semibold text-primary">
+                          {avgChallengeShowUp ? `${avgChallengeShowUp}%` : '-'}
+                        </p>
+                        {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            {tunnel.challengeDays.length} jours
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

@@ -56,6 +56,11 @@ export interface PaymentNotification {
   dismissed: boolean;
 }
 
+export interface ChallengeDay {
+  day: number;
+  attendees: number;
+}
+
 export interface Tunnel {
   id: string;
   name: string;
@@ -71,6 +76,11 @@ export interface Tunnel {
   averagePrice: number;
   collectedAmount: number; // Kept for backward compatibility, will be calculated from sales
   sales: Sale[];
+  // Traffic metrics by type
+  registrations?: number; // Nombre d'inscrits (all types)
+  attendees?: number; // Nombre de présents (webinar only)
+  challengeDays?: ChallengeDay[]; // Présents par jour (challenge only)
+  callsBooked?: number; // Calls réservés (VSL only)
 }
 
 export interface Charges {
