@@ -208,7 +208,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   <div className="flex items-center justify-end gap-1.5">
-                    <span>{sale.totalPrice.toLocaleString('fr-FR')} €</span>
+                    <span className="whitespace-nowrap">{sale.totalPrice.toLocaleString('fr-FR')} €</span>
                     {sale.basePrice && sale.basePrice < sale.totalPrice && (
                       <span className="text-xs text-profitable">
                         +{(((sale.totalPrice - sale.basePrice) / sale.basePrice) * 100).toFixed(0)}%
@@ -222,12 +222,23 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 <TableCell>
                   <div className="flex flex-col gap-0.5">
                     {sale.paymentHistory && sale.paymentHistory.length > 0 ? (
-                      sale.paymentHistory.slice(0, 3).map((payment, index) => (
-                        <span key={payment.id} className="text-xs text-muted-foreground">
-                          {index + 1}. {new Date(payment.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                          {payment.verified && <span className="ml-1 text-profitable">✓</span>}
-                        </span>
-                      ))
+                      sale.paymentHistory.slice(0, 3).map((payment, index) => {
+                        // Handle both date formats: YYYY-MM-DD and ISO string
+                        const dateStr = payment.date.includes('T') 
+                          ? payment.date.split('T')[0] 
+                          : payment.date;
+                        const dateObj = new Date(dateStr + 'T12:00:00');
+                        const isValidDate = !isNaN(dateObj.getTime());
+                        
+                        return (
+                          <span key={payment.id} className="text-xs text-muted-foreground">
+                            {index + 1}. {isValidDate 
+                              ? dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                              : 'Date invalide'}
+                            {payment.verified && <span className="ml-1 text-profitable">✓</span>}
+                          </span>
+                        );
+                      })
                     ) : (
                       <span className="text-xs text-muted-foreground italic">Aucun</span>
                     )}
