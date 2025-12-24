@@ -1,5 +1,13 @@
 export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
+export interface PaymentRecord {
+  id: string;
+  amount: number;
+  date: string;
+  verified: boolean;
+  verifiedAt?: string;
+}
+
 export interface Sale {
   id: string;
   tunnelId: string;
@@ -9,6 +17,19 @@ export interface Sale {
   numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.
   amountCollected: number;
   createdAt: string;
+  paymentHistory: PaymentRecord[];
+  nextPaymentDate?: string; // Date of next expected payment
+}
+
+export interface PaymentNotification {
+  id: string;
+  saleId: string;
+  tunnelId: string;
+  clientName: string;
+  amount: number;
+  dueDate: string;
+  type: 'upcoming' | 'due' | 'overdue';
+  dismissed: boolean;
 }
 
 export interface Tunnel {
@@ -89,3 +110,52 @@ export const tunnelTypeLabels: Record<TunnelType, string> = {
   vsl: 'VSL',
   challenge: 'Challenge',
 };
+
+// Helper to generate notifications from sales
+export function generatePaymentNotifications(sales: (Sale & { tunnelName?: string })[]): PaymentNotification[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const notifications: PaymentNotification[] = [];
+  
+  sales.forEach(sale => {
+    if (!sale.nextPaymentDate) return;
+    
+    const remaining = sale.totalPrice - sale.amountCollected;
+    if (remaining <= 0) return; // Fully paid
+    
+    const dueDate = new Date(sale.nextPaymentDate);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let type: PaymentNotification['type'] = 'upcoming';
+    if (diffDays < 0) type = 'overdue';
+    else if (diffDays <= 3) type = 'due';
+    
+    // Only show notifications for due or overdue, or upcoming within 7 days
+    if (diffDays <= 7) {
+      const paymentAmount = sale.totalPrice / sale.numberOfPayments;
+      
+      notifications.push({
+        id: `notif-${sale.id}-${sale.nextPaymentDate}`,
+        saleId: sale.id,
+        tunnelId: sale.tunnelId,
+        clientName: sale.clientName || 'Client sans nom',
+        amount: paymentAmount,
+        dueDate: sale.nextPaymentDate,
+        type,
+        dismissed: false,
+      });
+    }
+  });
+  
+  // Sort by date (overdue first, then due, then upcoming)
+  return notifications.sort((a, b) => {
+    const typeOrder = { overdue: 0, due: 1, upcoming: 2 };
+    if (typeOrder[a.type] !== typeOrder[b.type]) {
+      return typeOrder[a.type] - typeOrder[b.type];
+    }
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
+}

@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { PaymentActions, PaymentHistoryDialog } from './PaymentActions';
 
 interface EnrichedSale extends Sale {
   tunnelName?: string;
@@ -23,14 +24,17 @@ interface SalesTableProps {
   onEdit: (sale: EnrichedSale) => void;
   onDelete: (saleId: string, tunnelId: string) => void;
   onViewTunnel?: (tunnelId: string) => void;
+  onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
+  onFullyPaid?: (saleId: string, tunnelId: string) => void;
 }
 
 type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -73,6 +77,43 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTable
     </button>
   );
 
+  // Get row status class
+  const getRowStatusClass = (sale: EnrichedSale) => {
+    const remaining = sale.totalPrice - sale.amountCollected;
+    const isPaid = remaining <= 0;
+    
+    if (isPaid) return 'bg-profitable/5 border-l-2 border-l-profitable';
+    
+    // Check if has pending payment (based on nextPaymentDate)
+    if (sale.nextPaymentDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(sale.nextPaymentDate);
+      dueDate.setHours(0, 0, 0, 0);
+      
+      const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) return 'bg-danger/5 border-l-2 border-l-danger'; // Overdue
+      if (diffDays <= 3) return 'bg-warning/5 border-l-2 border-l-warning'; // Due soon
+    }
+    
+    return ''; // Default - no special styling
+  };
+
+  // Handle payment recording
+  const handleRecordPayment = (saleId: string, tunnelId: string, amount: number) => {
+    if (onRecordPayment) {
+      onRecordPayment(saleId, tunnelId, amount);
+    }
+    setHistoryDialogSale(null);
+  };
+
+  const handleFullyPaid = (saleId: string, tunnelId: string) => {
+    if (onFullyPaid) {
+      onFullyPaid(saleId, tunnelId);
+    }
+  };
+
   if (sales.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -105,6 +146,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTable
             </TableHead>
             <TableHead className="text-right">Reste</TableHead>
             <TableHead className="w-[120px]">Progression</TableHead>
+            <TableHead className="w-[120px]">Paiement</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -113,10 +155,10 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTable
             const remaining = sale.totalPrice - sale.amountCollected;
             const progress = sale.totalPrice > 0 ? (sale.amountCollected / sale.totalPrice) * 100 : 0;
             const isPaid = remaining <= 0;
-            const isPartial = sale.amountCollected > 0 && remaining > 0;
+            const rowClass = getRowStatusClass(sale);
 
             return (
-              <TableRow key={sale.id} className="hover:bg-secondary/20">
+              <TableRow key={sale.id} className={`hover:bg-secondary/20 ${rowClass}`}>
                 <TableCell className="text-sm text-muted-foreground">
                   {new Date(sale.createdAt).toLocaleDateString('fr-FR')}
                 </TableCell>
@@ -154,6 +196,20 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTable
                   </div>
                 </TableCell>
                 <TableCell>
+                  {onRecordPayment && onFullyPaid ? (
+                    <PaymentActions
+                      sale={sale}
+                      onRecordPayment={handleRecordPayment}
+                      onFullyPaid={handleFullyPaid}
+                      onViewHistory={setHistoryDialogSale}
+                    />
+                  ) : (
+                    <span className={`text-xs ${isPaid ? 'text-profitable' : 'text-muted-foreground'}`}>
+                      {isPaid ? 'Soldé' : `${sale.numberOfPayments}x`}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => onEdit(sale)}
@@ -185,6 +241,15 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel }: SalesTable
           })}
         </TableBody>
       </Table>
+      
+      {/* Payment History Dialog */}
+      {onRecordPayment && (
+        <PaymentHistoryDialog
+          sale={historyDialogSale}
+          onClose={() => setHistoryDialogSale(null)}
+          onRecordPayment={handleRecordPayment}
+        />
+      )}
     </div>
   );
 }
