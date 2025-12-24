@@ -1,6 +1,16 @@
-import { Search, X } from 'lucide-react';
-import { Tunnel, TunnelType, tunnelTypeLabels } from '@/types/business';
+import { useState } from 'react';
+import { Search, X, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Tunnel, Closer } from '@/types/business';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 export type PaymentStatus = 'all' | 'paid' | 'pending' | 'partial';
 
@@ -14,6 +24,11 @@ interface SalesFiltersProps {
   onSearchChange: (query: string) => void;
   selectedMonth: string;
   onMonthChange: (month: string) => void;
+  closers: Closer[];
+  selectedCloserId: string;
+  onCloserChange: (closerId: string) => void;
+  selectedDate: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
 }
 
 export function SalesFilters({
@@ -26,7 +41,13 @@ export function SalesFilters({
   onSearchChange,
   selectedMonth,
   onMonthChange,
+  closers,
+  selectedCloserId,
+  onCloserChange,
+  selectedDate,
+  onDateChange,
 }: SalesFiltersProps) {
+  const [dateOpen, setDateOpen] = useState(false);
   const statusOptions: { value: PaymentStatus; label: string }[] = [
     { value: 'all', label: 'Tous' },
     { value: 'paid', label: 'Payé' },
@@ -34,13 +55,15 @@ export function SalesFilters({
     { value: 'pending', label: 'Impayé' },
   ];
 
-  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '';
+  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedDate !== undefined;
 
   const resetFilters = () => {
     onTunnelChange('');
     onStatusChange('all');
     onSearchChange('');
     onMonthChange('');
+    onCloserChange('');
+    onDateChange(undefined);
   };
 
   // Generate month options (last 12 months)
@@ -93,6 +116,49 @@ export function SalesFilters({
           </option>
         ))}
       </select>
+
+      {/* Closer filter */}
+      <select
+        value={selectedCloserId}
+        onChange={(e) => onCloserChange(e.target.value)}
+        className="input-field min-w-[150px]"
+      >
+        <option value="">Tous les closers</option>
+        {closers.map((closer) => (
+          <option key={closer.id} value={closer.id}>
+            {closer.firstName} {closer.lastName}
+          </option>
+        ))}
+      </select>
+
+      {/* Date picker */}
+      <Popover open={dateOpen} onOpenChange={setDateOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "min-w-[150px] justify-start text-left font-normal",
+              !selectedDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: fr }) : "Date précise"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              onDateChange(date);
+              setDateOpen(false);
+            }}
+            locale={fr}
+            initialFocus
+            className="pointer-events-auto"
+          />
+        </PopoverContent>
+      </Popover>
 
       {/* Status filter */}
       <div className="flex rounded-lg border border-border/50 bg-secondary/30 p-1">

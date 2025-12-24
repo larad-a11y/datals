@@ -45,6 +45,8 @@ export function SalesCRMPanel({
   const [selectedStatus, setSelectedStatus] = useState<PaymentStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
+  const [selectedCloserId, setSelectedCloserId] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [editingSale, setEditingSale] = useState<EnrichedSale | null>(null);
 
@@ -58,6 +60,21 @@ export function SalesCRMPanel({
 
       // Month filter
       if (selectedMonth && sale.tunnelMonth !== selectedMonth) return false;
+
+      // Closer filter
+      if (selectedCloserId && sale.closerId !== selectedCloserId) return false;
+
+      // Exact date filter
+      if (selectedDate) {
+        const saleDate = new Date(sale.saleDate);
+        if (
+          saleDate.getDate() !== selectedDate.getDate() ||
+          saleDate.getMonth() !== selectedDate.getMonth() ||
+          saleDate.getFullYear() !== selectedDate.getFullYear()
+        ) {
+          return false;
+        }
+      }
 
       // Search filter
       if (searchQuery) {
@@ -81,7 +98,7 @@ export function SalesCRMPanel({
 
       return true;
     });
-  }, [allSales, selectedTunnelId, selectedMonth, searchQuery, selectedStatus]);
+  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedDate, searchQuery, selectedStatus]);
 
   // Pagination
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -220,6 +237,17 @@ export function SalesCRMPanel({
         selectedMonth={selectedMonth}
         onMonthChange={(month) => {
           setSelectedMonth(month);
+          handleFilterChange();
+        }}
+        closers={closers}
+        selectedCloserId={selectedCloserId}
+        onCloserChange={(id) => {
+          setSelectedCloserId(id);
+          handleFilterChange();
+        }}
+        selectedDate={selectedDate}
+        onDateChange={(date) => {
+          setSelectedDate(date);
           handleFilterChange();
         }}
       />
