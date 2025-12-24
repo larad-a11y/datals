@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
+import { CloserStatsSection } from './CloserStatsSection';
 
 interface KPIPanelProps {
   kpis: KPIData;
@@ -162,6 +163,9 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
           </p>
         </div>
       </div>
+
+      {/* Closer Stats Section */}
+      <CloserStatsSection tunnels={tunnels} charges={charges} />
 
       {/* KPI Trend Chart */}
       <KPITrendChart
