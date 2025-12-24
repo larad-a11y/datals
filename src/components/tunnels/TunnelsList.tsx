@@ -256,7 +256,7 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                       <Button
                         variant="profitable"
                         size="sm"
-                        onClick={() => setShowQuickSale(showQuickSale === tunnel.id ? null : tunnel.id)}
+                        onClick={() => setShowQuickSale(prev => prev === tunnel.id ? null : tunnel.id)}
                         className="flex-1"
                       >
                         <Plus className="mr-1 h-4 w-4" />

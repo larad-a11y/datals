@@ -226,7 +226,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Progress value={progress} className="h-2 flex-1" />
+                    <Progress value={progress} variant={isPaid ? "profitable" : "warning"} className="h-2 flex-1" />
                     <span className="text-xs text-muted-foreground w-10 text-right">
                       {Math.round(progress)}%
                     </span>
