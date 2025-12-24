@@ -64,10 +64,11 @@ export function SalesCRMPanel({
       // Closer filter
       if (selectedCloserId && sale.closerId !== selectedCloserId) return false;
 
-      // Date range filter
+      // Date range filter - parse dates as local dates to avoid timezone issues
       if (dateRange.from || dateRange.to) {
-        const saleDate = new Date(sale.saleDate);
-        saleDate.setHours(0, 0, 0, 0);
+        // Parse sale date as local date (YYYY-MM-DD string)
+        const saleDateParts = sale.saleDate.split('-').map(Number);
+        const saleDate = new Date(saleDateParts[0], saleDateParts[1] - 1, saleDateParts[2]);
         
         if (dateRange.from) {
           const fromDate = new Date(dateRange.from);
