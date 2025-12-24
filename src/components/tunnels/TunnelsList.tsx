@@ -141,23 +141,25 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div>
-                    <div className={`badge-${trend} mb-2`}>
-                      {tunnelTypeLabels[tunnel.type]}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`badge-${trend}`}>
+                        {tunnelTypeLabels[tunnel.type]}
+                      </span>
+                      {tunnel.date && (
+                        <span className="text-sm font-medium text-foreground bg-secondary/50 px-2 py-0.5 rounded">
+                          {tunnel.type === 'challenge' && tunnel.endDate ? (
+                            <>
+                              {new Date(tunnel.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} → {new Date(tunnel.endDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                            </>
+                          ) : (
+                            new Date(tunnel.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                          )}
+                        </span>
+                      )}
                     </div>
                     <h3 className="font-display text-lg font-semibold text-foreground">
                       {tunnel.name}
                     </h3>
-                    {tunnel.date && (
-                      <p className="text-xs text-muted-foreground">
-                        {tunnel.type === 'challenge' && tunnel.endDate ? (
-                          <>
-                            {new Date(tunnel.date).toLocaleDateString('fr-FR')} → {new Date(tunnel.endDate).toLocaleDateString('fr-FR')}
-                          </>
-                        ) : (
-                          new Date(tunnel.date).toLocaleDateString('fr-FR')
-                        )}
-                      </p>
-                    )}
                   </div>
                   <div className="flex gap-1">
                     <button
@@ -178,13 +180,17 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Budget pub</span>
-                    <span className="font-medium text-foreground">
+                {/* Budget pub prominent */}
+                <div className="mb-4 rounded-lg bg-secondary/50 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-muted-foreground">💰 Budget pub</span>
+                    <span className="text-xl font-bold text-foreground">
                       {tunnel.adBudget.toLocaleString('fr-FR')} €
                     </span>
                   </div>
+                </div>
+
+                <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Calls</span>
                     <span className="font-medium text-foreground">
@@ -197,20 +203,32 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                       {closingRate.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="border-t border-border/50 pt-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contracté</span>
-                      <span className="font-medium text-foreground">
+
+                  {/* Revenus en grand */}
+                  <div className="border-t border-border/50 pt-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-muted-foreground">📋 CA Contracté</span>
+                      <span className="text-lg font-bold text-foreground">
                         {contractedRevenue.toLocaleString('fr-FR')} €
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Collecté</span>
-                      <span className="font-semibold text-profitable">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-muted-foreground">✅ CA Collecté</span>
+                      <span className="text-lg font-bold text-profitable">
                         {collectedAmount.toLocaleString('fr-FR')} €
                       </span>
                     </div>
+                    {remainingAmount > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Reste à encaisser</span>
+                        <span className="text-sm font-medium text-warning">
+                          {remainingAmount.toLocaleString('fr-FR')} €
+                        </span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* ROI */}
                   <div className="rounded-lg bg-secondary/50 p-3 text-center">
                     <p className="text-xs text-muted-foreground">ROI</p>
                     <p className={`font-display text-2xl font-bold text-${trend}`}>
