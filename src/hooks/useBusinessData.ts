@@ -81,11 +81,12 @@ export function useBusinessData() {
     const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
     
     // Calcul du bénéfice net
-    // CA HT - Processeur - Closers - Agence - Charges fixes - Coaching - Salaires
+    // CA HT - Processeur - Closers - Agence - Budget Pub - Charges fixes - Coaching - Salaires
     const netProfit = totalCollectedHT 
       - paymentProcessorCost 
       - closersCost 
       - agencyCost 
+      - totalAdBudget
       - fixedCharges 
       - totalCoachingExpenses 
       - totalSalaries;
