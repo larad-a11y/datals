@@ -121,6 +121,9 @@ export function useBusinessData() {
       ? ((totalContracted - totalAdBudget) / totalAdBudget) * 100 
       : 0;
 
+    // Paiements à venir = Contracté - Collecté (reste à encaisser)
+    const upcomingPayments = totalContracted - totalCollectedTTC;
+
     // Cost per call
     const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
 
@@ -158,6 +161,7 @@ export function useBusinessData() {
       paymentProcessorCost,
       closersCost,
       agencyCost,
+      upcomingPayments,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 

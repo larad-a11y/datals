@@ -10,6 +10,7 @@ import {
   ArrowDown,
   Sparkles,
   UserCheck,
+  Clock,
 } from 'lucide-react';
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
@@ -91,6 +92,16 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
           </div>
           <p className="stat-value mt-2 text-foreground">
             {kpis.contractedRevenue.toLocaleString('fr-FR')} €
+          </p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            Paiements à venir
+          </div>
+          <p className="stat-value mt-2 text-foreground">
+            {kpis.upcomingPayments.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
       </div>
