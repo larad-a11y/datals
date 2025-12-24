@@ -276,6 +276,23 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             </div>
           )}
 
+          {/* Part associé - AVANT salaires maintenant */}
+          <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+            <span className="text-foreground">
+              - Part associé ({charges.associatePercent}% du bénéfice)
+            </span>
+            <span className="font-medium text-danger">
+              -{((kpis.collectedRevenueHT - kpis.paymentProcessorCost - kpis.closersCost - kpis.agencyCost - kpis.totalAdBudget - fixedCharges - totalCoachingExpenses) > 0 
+                ? (kpis.collectedRevenueHT - kpis.paymentProcessorCost - kpis.closersCost - kpis.agencyCost - kpis.totalAdBudget - fixedCharges - totalCoachingExpenses) * (charges.associatePercent / 100) 
+                : 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center">
+            <ArrowDown className="h-5 w-5 text-muted-foreground" />
+          </div>
+
+          {/* Salaires - APRÈS part associé */}
           {totalSalaries > 0 && (
             <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
               <span className="text-foreground">- Salaires</span>
@@ -289,34 +306,10 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             <ArrowDown className="h-5 w-5 text-muted-foreground" />
           </div>
 
-          <div className={`flex items-center justify-between rounded-lg p-4 ${kpis.netProfit > 0 ? 'bg-profitable/10' : 'bg-danger/10'}`}>
-            <span className="font-medium text-foreground">= Bénéfice Net</span>
-            <span className={`font-display text-xl font-bold ${kpis.netProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
+          <div className={`flex items-center justify-between rounded-lg border-2 p-4 ${kpis.netProfit > 0 ? 'border-profitable bg-profitable/10' : 'border-danger bg-danger/10'}`}>
+            <span className="font-semibold text-foreground">= Bénéfice Net</span>
+            <span className={`font-display text-2xl font-bold ${kpis.netProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
               {kpis.netProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
-            </span>
-          </div>
-
-          <div className="flex items-center justify-center">
-            <ArrowDown className="h-5 w-5 text-muted-foreground" />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
-            <span className="text-foreground">
-              - Part associé ({charges.associatePercent}% du net)
-            </span>
-            <span className="font-medium text-danger">
-              -{(kpis.netProfit > 0 ? kpis.netProfit * (charges.associatePercent / 100) : 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
-            </span>
-          </div>
-
-          <div className="flex items-center justify-center">
-            <ArrowDown className="h-5 w-5 text-muted-foreground" />
-          </div>
-
-          <div className={`flex items-center justify-between rounded-lg border-2 p-4 ${kpis.netNetProfit > 0 ? 'border-profitable bg-profitable/10' : 'border-danger bg-danger/10'}`}>
-            <span className="font-semibold text-foreground">= Bénéfice Net Net</span>
-            <span className={`font-display text-2xl font-bold ${kpis.netNetProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
-              {kpis.netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
             </span>
           </div>
         </div>

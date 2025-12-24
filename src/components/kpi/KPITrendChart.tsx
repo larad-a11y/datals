@@ -73,19 +73,20 @@ function calculateMonthKPIs(
   // Salaires
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
 
-  // Bénéfice net
-  const netProfit = totalCollectedHT 
+  // Bénéfice avant associé et salaires
+  const profitBeforeAssociate = totalCollectedHT 
     - paymentProcessorCost 
     - closersCost 
     - agencyCost 
     - totalAdBudget
     - fixedCharges 
-    - totalCoachingExpenses 
-    - totalSalaries;
+    - totalCoachingExpenses;
 
-  // Part associé
-  const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
-  const netNetProfit = netProfit - associateCost;
+  // Part associé (AVANT salaires)
+  const associateCost = profitBeforeAssociate > 0 ? profitBeforeAssociate * (charges.associatePercent / 100) : 0;
+  
+  // Bénéfice net = après associé - salaires
+  const netProfit = profitBeforeAssociate - associateCost - totalSalaries;
 
   // Parse month to get label
   const date = parse(month, 'yyyy-MM', new Date());
@@ -95,7 +96,7 @@ function calculateMonthKPIs(
     month,
     label,
     caCollecte: totalCollectedTTC,
-    beneficeNet: netNetProfit,
+    beneficeNet: netProfit,
     budgetPub: totalAdBudget,
   };
 }
