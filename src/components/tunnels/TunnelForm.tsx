@@ -360,27 +360,6 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
               </div>
             )}
 
-            {/* VSL specific: calls booked */}
-            {formData.type === 'vsl' && (
-              <div className="mt-4">
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  📅 Calls réservés
-                </label>
-                <input
-                  type="number"
-                  value={formData.callsBooked}
-                  onChange={(e) => setFormData(prev => ({ ...prev, callsBooked: e.target.value }))}
-                  className="input-field w-full"
-                  min="0"
-                  placeholder="Ex: 30"
-                />
-                {formData.registrations && formData.callsBooked && (
-                  <p className="mt-1 text-xs text-primary">
-                    Taux de booking: {((parseInt(String(formData.callsBooked)) / parseInt(String(formData.registrations))) * 100).toFixed(1)}%
-                  </p>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Actions */}
