@@ -232,12 +232,15 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                     </div>
                     
                     <div className="flex gap-2">
-                      <button
+                      <Button
+                        variant="profitable"
+                        size="sm"
                         onClick={() => setShowQuickSale(showQuickSale === tunnel.id ? null : tunnel.id)}
-                        className="flex-1 rounded-lg border border-border/50 bg-background/50 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                        className="flex-1"
                       >
-                        + Ajouter une vente
-                      </button>
+                        <Plus className="mr-1 h-4 w-4" />
+                        Ajouter une vente
+                      </Button>
                       {onNavigateToSales && tunnel.sales.length > 0 && (
                         <button
                           onClick={() => onNavigateToSales(tunnel.id)}
