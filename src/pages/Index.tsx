@@ -5,7 +5,6 @@ import { Dashboard } from '@/components/dashboard/Dashboard';
 import { TunnelsList } from '@/components/tunnels/TunnelsList';
 import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
 import { ChargesPanel } from '@/components/charges/ChargesPanel';
-import { SalariesPanel } from '@/components/salaries/SalariesPanel';
 import { KPIPanel } from '@/components/kpi/KPIPanel';
 import { useBusinessData } from '@/hooks/useBusinessData';
 import { defaultCharges, Sale, PaymentNotification, generatePaymentNotifications, PaymentRecord } from '@/types/business';
@@ -193,15 +192,10 @@ const Index = () => {
             onUpdate={setCharges}
             onResetCharges={() => setCharges(defaultCharges)}
             collectedRevenue={kpis.collectedRevenue}
-          />
-        );
-      case 'salaries':
-        return (
-          <SalariesPanel
             salaries={salaries}
-            onAdd={addSalary}
-            onUpdate={updateSalary}
-            onDelete={deleteSalary}
+            onAddSalary={addSalary}
+            onUpdateSalary={updateSalary}
+            onDeleteSalary={deleteSalary}
           />
         );
       case 'kpi':
