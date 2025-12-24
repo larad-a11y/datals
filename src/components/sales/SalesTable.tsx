@@ -156,6 +156,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
             <TableHead className="text-center">Paiements</TableHead>
+            <TableHead>Échéances</TableHead>
             <TableHead className="text-right">
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
@@ -218,6 +219,32 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {sale.numberOfPayments}x
                 </TableCell>
+                <TableCell>
+                  {sale.paymentHistory && sale.paymentHistory.length > 0 ? (
+                    <div className="flex flex-col gap-0.5">
+                      {sale.paymentHistory.map((payment, idx) => (
+                        <span 
+                          key={payment.id} 
+                          className={`text-xs ${payment.verified ? 'text-profitable' : 'text-muted-foreground'}`}
+                        >
+                          {idx + 1}. {new Date(payment.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          {payment.verified && ' ✓'}
+                        </span>
+                      ))}
+                      {sale.nextPaymentDate && !isPaid && (
+                        <span className="text-xs text-warning">
+                          {sale.paymentHistory.length + 1}. {new Date(sale.nextPaymentDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
+                  ) : sale.nextPaymentDate ? (
+                    <span className="text-xs text-warning">
+                      1. {new Date(sale.nextPaymentDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">-</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-right font-medium text-profitable">
                   {sale.amountCollected.toLocaleString('fr-FR')} €
                 </TableCell>
@@ -226,7 +253,10 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Progress value={progress} className="h-2 flex-1" />
+                    <Progress 
+                      value={progress} 
+                      className={`h-2 flex-1 ${isPaid ? '[&>div]:bg-profitable' : '[&>div]:bg-warning'}`} 
+                    />
                     <span className="text-xs text-muted-foreground w-10 text-right">
                       {Math.round(progress)}%
                     </span>
