@@ -1,5 +1,6 @@
 import { LayoutDashboard, Target, Receipt, Wallet, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UserProfile } from './UserProfile';
 
 interface SidebarProps {
   activeTab: string;
@@ -16,8 +17,8 @@ const navItems = [
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-20 border-r border-border/30 bg-sidebar">
-      <div className="flex h-full flex-col items-center py-4">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-20 border-r border-border/30 bg-sidebar flex flex-col">
+      <div className="flex flex-1 flex-col items-center py-4">
         {/* Navigation */}
         <nav className="flex flex-col items-center gap-2 w-full px-2">
           {navItems.map((item) => {
@@ -48,6 +49,11 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             );
           })}
         </nav>
+      </div>
+      
+      {/* User Profile at bottom */}
+      <div className="px-2 pb-4">
+        <UserProfile />
       </div>
     </aside>
   );
