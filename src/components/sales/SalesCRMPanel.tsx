@@ -46,7 +46,7 @@ export function SalesCRMPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedCloserId, setSelectedCloserId] = useState('');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [currentPage, setCurrentPage] = useState(1);
   const [editingSale, setEditingSale] = useState<EnrichedSale | null>(null);
 
@@ -64,15 +64,21 @@ export function SalesCRMPanel({
       // Closer filter
       if (selectedCloserId && sale.closerId !== selectedCloserId) return false;
 
-      // Exact date filter
-      if (selectedDate) {
+      // Date range filter
+      if (dateRange.from || dateRange.to) {
         const saleDate = new Date(sale.saleDate);
-        if (
-          saleDate.getDate() !== selectedDate.getDate() ||
-          saleDate.getMonth() !== selectedDate.getMonth() ||
-          saleDate.getFullYear() !== selectedDate.getFullYear()
-        ) {
-          return false;
+        saleDate.setHours(0, 0, 0, 0);
+        
+        if (dateRange.from) {
+          const fromDate = new Date(dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          if (saleDate < fromDate) return false;
+        }
+        
+        if (dateRange.to) {
+          const toDate = new Date(dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          if (saleDate > toDate) return false;
         }
       }
 
@@ -98,7 +104,7 @@ export function SalesCRMPanel({
 
       return true;
     });
-  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedDate, searchQuery, selectedStatus]);
+  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, dateRange, searchQuery, selectedStatus]);
 
   // Pagination
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -245,9 +251,9 @@ export function SalesCRMPanel({
           setSelectedCloserId(id);
           handleFilterChange();
         }}
-        selectedDate={selectedDate}
-        onDateChange={(date) => {
-          setSelectedDate(date);
+        dateRange={dateRange}
+        onDateRangeChange={(range) => {
+          setDateRange(range);
           handleFilterChange();
         }}
       />
