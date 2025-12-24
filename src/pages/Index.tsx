@@ -170,6 +170,7 @@ const Index = () => {
             onNavigateToSales={handleNavigateToSales}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
+            closers={charges.closers}
           />
         );
       case 'sales':
@@ -187,6 +188,7 @@ const Index = () => {
             onFullyPaid={handleFullyPaid}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
+            closers={charges.closers}
           />
         );
       case 'charges':
