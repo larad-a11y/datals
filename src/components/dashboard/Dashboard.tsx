@@ -159,7 +159,7 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 pt-3 border-t border-border/30">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 pt-3 border-t border-border/30">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Pub dépensée</p>
                       <p className="font-display text-base font-semibold text-foreground">
@@ -185,47 +185,66 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
                       </p>
                     </div>
                     
-                    {/* Type-specific metrics */}
+                    {/* Type-specific metrics - Always show based on tunnel type */}
                     {tunnel.type === 'webinar' && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Show-up rate</p>
-                        <p className="font-display text-base font-semibold text-primary">
-                          {showUpRate ? `${showUpRate}%` : '-'}
-                        </p>
-                        {tunnel.registrations && tunnel.attendees && (
-                          <p className="text-xs text-muted-foreground">
-                            {tunnel.attendees}/{tunnel.registrations}
+                      <>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Inscrits / Présents</p>
+                          <p className="font-display text-base font-semibold text-foreground">
+                            {tunnel.registrations || 0} / {tunnel.attendees || 0}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Show-up rate</p>
+                          <p className="font-display text-base font-semibold text-primary">
+                            {showUpRate ? `${showUpRate}%` : '0%'}
+                          </p>
+                        </div>
+                      </>
                     )}
                     
                     {tunnel.type === 'vsl' && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Taux booking</p>
-                        <p className="font-display text-base font-semibold text-primary">
-                          {bookingRate ? `${bookingRate}%` : '-'}
-                        </p>
-                        {tunnel.registrations && tunnel.callsBooked && (
-                          <p className="text-xs text-muted-foreground">
-                            {tunnel.callsBooked}/{tunnel.registrations}
+                      <>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Inscrits / Calls</p>
+                          <p className="font-display text-base font-semibold text-foreground">
+                            {tunnel.registrations || 0} / {tunnel.callsBooked || 0}
                           </p>
-                        )}
-                      </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Taux booking</p>
+                          <p className="font-display text-base font-semibold text-primary">
+                            {bookingRate ? `${bookingRate}%` : '0%'}
+                          </p>
+                        </div>
+                      </>
                     )}
                     
                     {tunnel.type === 'challenge' && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Show-up moyen</p>
-                        <p className="font-display text-base font-semibold text-primary">
-                          {avgChallengeShowUp ? `${avgChallengeShowUp}%` : '-'}
-                        </p>
-                        {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            {tunnel.challengeDays.length} jours
+                      <>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Inscrits</p>
+                          <p className="font-display text-base font-semibold text-foreground">
+                            {tunnel.registrations || 0}
                           </p>
-                        )}
-                      </div>
+                          {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              {tunnel.challengeDays.length} jours
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Show-up moyen</p>
+                          <p className="font-display text-base font-semibold text-primary">
+                            {avgChallengeShowUp ? `${avgChallengeShowUp}%` : '0%'}
+                          </p>
+                          {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
+                            <p className="text-xs text-muted-foreground">
+                              Moy: {Math.round(tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length)} présents
+                            </p>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
