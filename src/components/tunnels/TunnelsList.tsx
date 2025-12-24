@@ -115,7 +115,13 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
                     </h3>
                     {tunnel.date && (
                       <p className="text-xs text-muted-foreground">
-                        {new Date(tunnel.date).toLocaleDateString('fr-FR')}
+                        {tunnel.type === 'challenge' && tunnel.endDate ? (
+                          <>
+                            {new Date(tunnel.date).toLocaleDateString('fr-FR')} → {new Date(tunnel.endDate).toLocaleDateString('fr-FR')}
+                          </>
+                        ) : (
+                          new Date(tunnel.date).toLocaleDateString('fr-FR')
+                        )}
                       </p>
                     )}
                   </div>

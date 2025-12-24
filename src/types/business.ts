@@ -5,6 +5,7 @@ export interface Tunnel {
   name: string;
   type: TunnelType;
   date?: string;
+  endDate?: string; // For challenges that span multiple days
   month: string;
   isActive: boolean;
   // Traffic & Sales data
