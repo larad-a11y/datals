@@ -244,6 +244,7 @@ export function SalesCRMPanel({
         onViewTunnel={onNavigateToTunnel}
         onRecordPayment={onRecordPayment}
         onFullyPaid={onFullyPaid}
+        closers={closers}
       />
 
       {/* Pagination */}
