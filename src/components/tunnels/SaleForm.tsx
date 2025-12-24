@@ -121,6 +121,18 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     e.preventDefault();
     if (basePriceNum <= 0) return;
     
+    // For new sales, create initial payment record if there's an amount collected
+    let paymentHistory = sale?.paymentHistory || [];
+    if (!sale && amountCollectedNum > 0) {
+      paymentHistory = [{
+        id: `payment-${Date.now()}`,
+        amount: amountCollectedNum,
+        date: formData.saleDate,
+        verified: true,
+        verifiedAt: new Date().toISOString(),
+      }];
+    }
+    
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
@@ -132,7 +144,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
       totalPrice: totalPriceNum || basePriceNum,
       numberOfPayments: formData.numberOfPayments,
       amountCollected: amountCollectedNum,
-      paymentHistory: sale?.paymentHistory || [],
+      paymentHistory,
       nextPaymentDate: formData.numberOfPayments > 1 && amountCollectedNum < totalPriceNum
         ? calculateNextPaymentDate()
         : undefined,
