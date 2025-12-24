@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { Dashboard } from '@/components/dashboard/Dashboard';
@@ -7,12 +8,22 @@ import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
 import { ChargesPanel } from '@/components/charges/ChargesPanel';
 import { KPIPanel } from '@/components/kpi/KPIPanel';
 import { useBusinessData } from '@/hooks/useBusinessData';
+import { useAuth } from '@/hooks/useAuth';
 import { defaultCharges, Sale, PaymentNotification, generatePaymentNotifications, PaymentRecord } from '@/types/business';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [salesTunnelFilter, setSalesTunnelFilter] = useState('');
   const [dismissedNotifications, setDismissedNotifications] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [authLoading, user, navigate]);
   
   const {
     selectedMonth,
@@ -245,6 +256,18 @@ const Index = () => {
         );
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
