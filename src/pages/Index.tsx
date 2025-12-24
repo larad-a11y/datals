@@ -227,6 +227,8 @@ const Index = () => {
             charges={charges}
             salaries={salaries}
             coachingExpenses={filteredCoachingExpenses}
+            tunnels={tunnels}
+            selectedMonth={selectedMonth}
           />
         );
       default:
