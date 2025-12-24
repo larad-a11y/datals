@@ -207,7 +207,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  <div className="flex flex-col items-end">
+                  <div className="flex items-center justify-end gap-1.5">
                     <span>{sale.totalPrice.toLocaleString('fr-FR')} €</span>
                     {sale.basePrice && sale.basePrice < sale.totalPrice && (
                       <span className="text-xs text-profitable">
