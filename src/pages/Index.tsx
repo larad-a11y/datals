@@ -26,6 +26,9 @@ const Index = () => {
     addTunnel,
     updateTunnel,
     deleteTunnel,
+    addSale,
+    updateSale,
+    deleteSale,
     addSalary,
     updateSalary,
     deleteSalary,
@@ -37,33 +40,14 @@ const Index = () => {
     deleteCoachingExpense,
   } = useBusinessData();
 
-  // Sale operations from CRM
-  const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    updateTunnel(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-    });
-  };
+  // Sale operations from CRM - use dedicated mutations
+  const handleUpdateSale = useCallback((tunnelId: string, saleId: string, updates: Partial<Sale>) => {
+    updateSale(saleId, updates);
+  }, [updateSale]);
 
-  const handleDeleteSale = (tunnelId: string, saleId: string) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    updateTunnel(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-      callsClosed: updatedSales.length,
-    });
-  };
+  const handleDeleteSale = useCallback((tunnelId: string, saleId: string) => {
+    deleteSale(saleId);
+  }, [deleteSale]);
 
   const handleNavigateToSales = (tunnelId?: string) => {
     if (tunnelId) {
@@ -73,7 +57,7 @@ const Index = () => {
   };
 
   // Record a payment for a sale
-  const handleRecordPayment = (saleId: string, tunnelId: string, amount: number) => {
+  const handleRecordPayment = useCallback((saleId: string, tunnelId: string, amount: number) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
     if (!tunnel) return;
     
@@ -102,15 +86,15 @@ const Index = () => {
       nextPaymentDate = nextDate.toISOString().split('T')[0];
     }
     
-    handleUpdateSale(tunnelId, saleId, {
+    updateSale(saleId, {
       amountCollected: newAmountCollected,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate,
     });
-  };
+  }, [tunnels, updateSale]);
 
   // Mark a sale as fully paid
-  const handleFullyPaid = (saleId: string, tunnelId: string) => {
+  const handleFullyPaid = useCallback((saleId: string, tunnelId: string) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
     if (!tunnel) return;
     
@@ -131,12 +115,12 @@ const Index = () => {
       verifiedAt: new Date().toISOString(),
     };
     
-    handleUpdateSale(tunnelId, saleId, {
+    updateSale(saleId, {
       amountCollected: sale.totalPrice,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate: undefined,
     });
-  };
+  }, [tunnels, updateSale]);
 
   // Generate notifications from all sales
   const notifications = useMemo(() => {
@@ -184,6 +168,7 @@ const Index = () => {
             onAdd={addTunnel}
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
+            onAddSale={addSale}
             onNavigateToSales={handleNavigateToSales}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}

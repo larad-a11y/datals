@@ -15,8 +15,6 @@ const toNullIfEmpty = (value: string | null | undefined): string | null => {
   return value;
 };
 
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
 // Helper to convert DB tunnel to app tunnel
 function dbTunnelToApp(dbTunnel: any, dbSales: any[]): Tunnel {
   const tunnelSales = dbSales
@@ -112,6 +110,12 @@ export function useBusinessData() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
+  // Query options for performance optimization
+  const queryOptions = {
+    staleTime: 30000, // 30 seconds
+    gcTime: 300000, // 5 minutes (formerly cacheTime)
+  };
+
   // Fetch tunnels
   const { data: dbTunnels = [] } = useQuery({
     queryKey: ['tunnels', user?.id],
@@ -125,6 +129,7 @@ export function useBusinessData() {
       return data || [];
     },
     enabled: !!user,
+    ...queryOptions,
   });
 
   // Fetch sales
@@ -140,6 +145,7 @@ export function useBusinessData() {
       return data || [];
     },
     enabled: !!user,
+    ...queryOptions,
   });
 
   // Fetch charges
@@ -151,11 +157,12 @@ export function useBusinessData() {
         .from('user_charges')
         .select('*')
         .eq('user_id', user.id)
-        .single();
-      if (error && error.code !== 'PGRST116') throw error;
+        .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!user,
+    ...queryOptions,
   });
 
   // Fetch salaries
@@ -171,6 +178,7 @@ export function useBusinessData() {
       return data || [];
     },
     enabled: !!user,
+    ...queryOptions,
   });
 
   // Fetch coaching expenses
@@ -186,6 +194,7 @@ export function useBusinessData() {
       return data || [];
     },
     enabled: !!user,
+    ...queryOptions,
   });
 
   // Convert DB data to app format
@@ -253,76 +262,21 @@ export function useBusinessData() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tunnels'] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
       toast.success('Tunnel créé avec succès');
     },
     onError: (error: Error) => {
+      console.error('Tunnel creation error:', error);
       toast.error(`Erreur lors de la création: ${error.message}`);
     },
   });
 
-  // Update tunnel
+  // Update tunnel (only tunnel fields, not sales)
   const updateTunnelMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Tunnel> }) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
       
-      // Handle sales separately
-      if (updates.sales) {
-        for (const sale of updates.sales) {
-          const existingSale = dbSales.find(s => s.id === sale.id);
-          if (existingSale) {
-            await supabase
-              .from('sales')
-              .update({
-                client_name: sale.clientName,
-                closer_id: sale.closerId,
-                sale_date: sale.saleDate,
-                offer_id: sale.offerId,
-                payment_method: sale.paymentMethod,
-                base_price: sale.basePrice,
-                total_price: sale.totalPrice,
-                number_of_payments: sale.numberOfPayments,
-                amount_collected: sale.amountCollected,
-                payment_history: sale.paymentHistory as unknown as Json,
-                next_payment_date: sale.nextPaymentDate,
-              })
-              .eq('id', sale.id);
-          } else {
-            await supabase
-              .from('sales')
-              .insert({
-                id: sale.id || generateId(),
-                user_id: user.id,
-                tunnel_id: id,
-                client_name: sale.clientName,
-                closer_id: sale.closerId,
-                sale_date: sale.saleDate,
-                offer_id: sale.offerId,
-                payment_method: sale.paymentMethod,
-                base_price: sale.basePrice,
-                total_price: sale.totalPrice,
-                number_of_payments: sale.numberOfPayments,
-                amount_collected: sale.amountCollected,
-                payment_history: sale.paymentHistory as unknown as Json,
-                next_payment_date: sale.nextPaymentDate,
-              });
-          }
-        }
-        
-        // Delete removed sales
-        const currentSaleIds = updates.sales.map(s => s.id);
-        const salesToDelete = dbSales
-          .filter(s => s.tunnel_id === id && !currentSaleIds.includes(s.id))
-          .map(s => s.id);
-        
-        if (salesToDelete.length > 0) {
-          await supabase
-            .from('sales')
-            .delete()
-            .in('id', salesToDelete);
-        }
-      }
-
+      // Only update tunnel fields, ignore sales (handled separately)
       const { error } = await supabase
         .from('tunnels')
         .update({
@@ -346,11 +300,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tunnels'] });
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
       toast.success('Tunnel mis à jour');
     },
     onError: (error: Error) => {
+      console.error('Tunnel update error:', error);
       toast.error(`Erreur lors de la mise à jour: ${error.message}`);
     },
   });
@@ -358,6 +312,9 @@ export function useBusinessData() {
   // Delete tunnel
   const deleteTunnelMutation = useMutation({
     mutationFn: async (id: string) => {
+      // First delete all sales associated with this tunnel
+      await supabase.from('sales').delete().eq('tunnel_id', id);
+      
       const { error } = await supabase
         .from('tunnels')
         .delete()
@@ -365,11 +322,108 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tunnels'] });
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
       toast.success('Tunnel supprimé');
     },
     onError: (error: Error) => {
+      console.error('Tunnel deletion error:', error);
+      toast.error(`Erreur lors de la suppression: ${error.message}`);
+    },
+  });
+
+  // ========== SALE MUTATIONS ==========
+  
+  // Add sale - Let Supabase generate UUID automatically
+  const addSaleMutation = useMutation({
+    mutationFn: async (sale: Omit<Sale, 'id' | 'createdAt'> & { tunnelId: string }) => {
+      if (!user) throw new Error('Non authentifié');
+      
+      const { data, error } = await supabase
+        .from('sales')
+        .insert({
+          user_id: user.id,
+          tunnel_id: sale.tunnelId,
+          client_name: sale.clientName,
+          closer_id: toNullIfEmpty(sale.closerId),
+          sale_date: sale.saleDate,
+          offer_id: toNullIfEmpty(sale.offerId),
+          payment_method: sale.paymentMethod,
+          base_price: sale.basePrice,
+          total_price: sale.totalPrice,
+          number_of_payments: sale.numberOfPayments,
+          amount_collected: sale.amountCollected || 0,
+          payment_history: (sale.paymentHistory || []) as unknown as Json,
+          next_payment_date: toNullIfEmpty(sale.nextPaymentDate),
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
+      toast.success('Vente créée avec succès');
+    },
+    onError: (error: Error) => {
+      console.error('Sale creation error:', error);
+      toast.error(`Erreur lors de la création de la vente: ${error.message}`);
+    },
+  });
+
+  // Update sale
+  const updateSaleMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Sale> }) => {
+      if (!user) throw new Error('Non authentifié');
+      
+      const { error } = await supabase
+        .from('sales')
+        .update({
+          client_name: updates.clientName,
+          closer_id: updates.closerId !== undefined ? toNullIfEmpty(updates.closerId) : undefined,
+          sale_date: updates.saleDate,
+          offer_id: updates.offerId !== undefined ? toNullIfEmpty(updates.offerId) : undefined,
+          payment_method: updates.paymentMethod,
+          base_price: updates.basePrice,
+          total_price: updates.totalPrice,
+          number_of_payments: updates.numberOfPayments,
+          amount_collected: updates.amountCollected,
+          payment_history: updates.paymentHistory as unknown as Json,
+          next_payment_date: updates.nextPaymentDate !== undefined ? toNullIfEmpty(updates.nextPaymentDate) : undefined,
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
+      toast.success('Vente mise à jour');
+    },
+    onError: (error: Error) => {
+      console.error('Sale update error:', error);
+      toast.error(`Erreur lors de la mise à jour: ${error.message}`);
+    },
+  });
+
+  // Delete sale
+  const deleteSaleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['tunnels', user?.id] });
+      toast.success('Vente supprimée');
+    },
+    onError: (error: Error) => {
+      console.error('Sale deletion error:', error);
       toast.error(`Erreur lors de la suppression: ${error.message}`);
     },
   });
@@ -399,10 +453,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['charges'] });
+      queryClient.invalidateQueries({ queryKey: ['charges', user?.id] });
       toast.success('Charges mises à jour');
     },
     onError: (error: Error) => {
+      console.error('Charges update error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -422,10 +477,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries', user?.id] });
       toast.success('Salaire ajouté');
     },
     onError: (error: Error) => {
+      console.error('Salary add error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -444,10 +500,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries', user?.id] });
       toast.success('Salaire mis à jour');
     },
     onError: (error: Error) => {
+      console.error('Salary update error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -462,10 +519,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['salaries'] });
+      queryClient.invalidateQueries({ queryKey: ['salaries', user?.id] });
       toast.success('Salaire supprimé');
     },
     onError: (error: Error) => {
+      console.error('Salary deletion error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -485,10 +543,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['coaching_expenses', user?.id] });
       toast.success('Dépense ajoutée');
     },
     onError: (error: Error) => {
+      console.error('Coaching expense add error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -507,10 +566,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['coaching_expenses', user?.id] });
       toast.success('Dépense mise à jour');
     },
     onError: (error: Error) => {
+      console.error('Coaching expense update error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -525,10 +585,11 @@ export function useBusinessData() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['coaching_expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['coaching_expenses', user?.id] });
       toast.success('Dépense supprimée');
     },
     onError: (error: Error) => {
+      console.error('Coaching expense deletion error:', error);
       toast.error(`Erreur: ${error.message}`);
     },
   });
@@ -638,6 +699,19 @@ export function useBusinessData() {
     deleteTunnelMutation.mutate(id);
   }, [deleteTunnelMutation]);
 
+  // Sale callbacks
+  const addSale = useCallback((sale: Omit<Sale, 'id' | 'createdAt'> & { tunnelId: string }) => {
+    addSaleMutation.mutate(sale);
+  }, [addSaleMutation]);
+
+  const updateSale = useCallback((id: string, updates: Partial<Sale>) => {
+    updateSaleMutation.mutate({ id, updates });
+  }, [updateSaleMutation]);
+
+  const deleteSale = useCallback((id: string) => {
+    deleteSaleMutation.mutate(id);
+  }, [deleteSaleMutation]);
+
   const setCharges = useCallback((newCharges: Charges) => {
     updateChargesMutation.mutate(newCharges);
   }, [updateChargesMutation]);
@@ -691,6 +765,10 @@ export function useBusinessData() {
     addTunnel,
     updateTunnel,
     deleteTunnel,
+    // New sale operations
+    addSale,
+    updateSale,
+    deleteSale,
     addSalary,
     updateSalary,
     deleteSalary,
