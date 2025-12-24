@@ -8,6 +8,8 @@ import {
   Receipt,
   FileText,
   ArrowDown,
+  Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { KPIData, Charges, Salary, CoachingExpense } from '@/types/business';
 
@@ -90,7 +92,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
       </div>
 
       {/* Performance metrics */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
@@ -128,6 +130,32 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
           </div>
           <p className="stat-value mt-2 text-foreground">
             {kpis.cac.toFixed(2)} €
+          </p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Sparkles className="h-4 w-4" />
+            CPL
+          </div>
+          <p className="stat-value mt-2 text-foreground">
+            {kpis.cpl.toFixed(2)} €
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {kpis.totalRegistrations} inscrits total
+          </p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <UserCheck className="h-4 w-4" />
+            Coût/Présent Webinaire
+          </div>
+          <p className="stat-value mt-2 text-foreground">
+            {kpis.costPerWebinarAttendee.toFixed(2)} €
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {kpis.totalWebinarAttendees} présents total
           </p>
         </div>
       </div>
