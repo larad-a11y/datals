@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { Sale } from '@/types/business';
 import { SaleForm } from './SaleForm';
-import { Button } from '@/components/ui/button';
 
 interface SalesSectionProps {
   sales: Sale[];
@@ -12,17 +11,17 @@ interface SalesSectionProps {
 }
 
 export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: SalesSectionProps) {
-  const [showForm, setShowForm] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const handleSave = (data: Omit<Sale, 'id' | 'createdAt'>) => {
+    onAddSale(data);
+  };
+
+  const handleEditSave = (data: Omit<Sale, 'id' | 'createdAt'>) => {
     if (editingSale) {
       onUpdateSale(editingSale.id, data);
-    } else {
-      onAddSale(data);
+      setEditingSale(null);
     }
-    setShowForm(false);
-    setEditingSale(null);
   };
 
   // Calculate totals
@@ -33,29 +32,31 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: S
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-2 rounded-lg bg-secondary/30 p-3">
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">Contracté</p>
-          <p className="font-display text-sm font-bold text-foreground">
-            {totalContracted.toLocaleString('fr-FR')} €
-          </p>
+      {sales.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 rounded-lg bg-secondary/30 p-3">
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">Contracté</p>
+            <p className="font-display text-sm font-bold text-foreground">
+              {totalContracted.toLocaleString('fr-FR')} €
+            </p>
+          </div>
+          <div className="text-center border-x border-border/50">
+            <p className="text-xs text-muted-foreground">Encaissé</p>
+            <p className="font-display text-sm font-bold text-profitable">
+              {totalCollected.toLocaleString('fr-FR')} €
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground">Reste</p>
+            <p className={`font-display text-sm font-bold ${totalRemaining > 0 ? 'text-warning' : 'text-profitable'}`}>
+              {totalRemaining.toLocaleString('fr-FR')} €
+            </p>
+          </div>
         </div>
-        <div className="text-center border-x border-border/50">
-          <p className="text-xs text-muted-foreground">Encaissé</p>
-          <p className="font-display text-sm font-bold text-profitable">
-            {totalCollected.toLocaleString('fr-FR')} €
-          </p>
-        </div>
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">Reste</p>
-          <p className={`font-display text-sm font-bold ${totalRemaining > 0 ? 'text-warning' : 'text-profitable'}`}>
-            {totalRemaining.toLocaleString('fr-FR')} €
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Sales list */}
-      {sales.length > 0 ? (
+      {sales.length > 0 && (
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {sales.map((sale) => {
             const remaining = sale.totalPrice - sale.amountCollected;
@@ -77,10 +78,7 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: S
                   </div>
                   <div className="flex gap-1">
                     <button
-                      onClick={() => {
-                        setEditingSale(sale);
-                        setShowForm(true);
-                      }}
+                      onClick={() => setEditingSale(sale)}
                       className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                     >
                       <Edit2 className="h-3 w-3" />
@@ -111,33 +109,21 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: S
             );
           })}
         </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <Users className="mb-2 h-8 w-8 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">Aucune vente enregistrée</p>
-        </div>
       )}
 
-      {/* Add button */}
-      <Button 
-        onClick={() => setShowForm(true)} 
-        variant="outline" 
-        size="sm" 
-        className="w-full"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Ajouter une vente
-      </Button>
+      {/* Always visible inline form */}
+      <SaleForm
+        onSave={handleSave}
+        onCancel={() => {}}
+        inline
+      />
 
-      {/* Form modal */}
-      {showForm && (
+      {/* Edit modal */}
+      {editingSale && (
         <SaleForm
-          sale={editingSale || undefined}
-          onSave={handleSave}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingSale(null);
-          }}
+          sale={editingSale}
+          onSave={handleEditSave}
+          onCancel={() => setEditingSale(null)}
         />
       )}
     </div>
