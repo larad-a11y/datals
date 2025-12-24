@@ -147,11 +147,15 @@ export interface KPIData {
   costPerCall: number;
   closingRate: number;
   cac: number;
+  cpl: number; // Coût par lead (inscrit)
+  costPerWebinarAttendee: number; // Coût par présent webinaire
   netProfit: number;
   netNetProfit: number;
   totalCalls: number;
   totalClosedCalls: number;
   totalAdBudget: number;
+  totalRegistrations: number;
+  totalWebinarAttendees: number;
   paymentProcessorCost: number;
   closersCost: number;
   agencyCost: number;

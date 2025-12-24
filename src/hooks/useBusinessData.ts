@@ -48,6 +48,12 @@ export function useBusinessData() {
     const totalClosedCalls = filteredTunnels.reduce(
       (sum, t) => sum + t.callsClosed, 0
     );
+    const totalRegistrations = filteredTunnels.reduce(
+      (sum, t) => sum + (t.registrations || 0), 0
+    );
+    const totalWebinarAttendees = filteredTunnels
+      .filter(t => t.type === 'webinar')
+      .reduce((sum, t) => sum + (t.attendees || 0), 0);
 
     // === NOUVEL ORDRE DE CALCUL ===
     
@@ -118,6 +124,12 @@ export function useBusinessData() {
     // CAC (Customer Acquisition Cost)
     const cac = totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0;
 
+    // CPL (Cost Per Lead) - Coût par inscrit
+    const cpl = totalRegistrations > 0 ? totalAdBudget / totalRegistrations : 0;
+
+    // Coût par présent webinaire
+    const costPerWebinarAttendee = totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0;
+
     return {
       contractedRevenue: totalContracted,
       collectedRevenue: totalCollectedTTC,
@@ -127,11 +139,15 @@ export function useBusinessData() {
       costPerCall,
       closingRate,
       cac,
+      cpl,
+      costPerWebinarAttendee,
       netProfit,
       netNetProfit,
       totalCalls,
       totalClosedCalls,
       totalAdBudget,
+      totalRegistrations,
+      totalWebinarAttendees,
       paymentProcessorCost,
       closersCost,
       agencyCost,
