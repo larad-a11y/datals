@@ -143,7 +143,7 @@ export function ChargesPanel({
           </h3>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
           <div>
             <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
               💳 Processeur de paiement
@@ -161,6 +161,25 @@ export function ChargesPanel({
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Par défaut: 4%</p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
+              🧾 TVA sur les ventes
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={charges.taxPercent}
+                onChange={(e) => handleChange('taxPercent', parseFloat(e.target.value) || 0)}
+                className="input-field w-full pr-8"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Ventes TTC, par défaut: 20%</p>
           </div>
 
           <div>

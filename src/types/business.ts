@@ -100,6 +100,7 @@ export interface Charges {
   agencyPercent: number; // Default 20%, only above 130k€ HT
   agencyThreshold: number; // 130000€
   paymentProcessorPercent: number; // Default 4%
+  taxPercent: number; // Default 20% (TVA)
   
   // Installment plans with individual markups
   installmentPlans: InstallmentPlan[];
@@ -154,6 +155,7 @@ export const defaultCharges: Charges = {
   agencyPercent: 20,
   agencyThreshold: 130000,
   paymentProcessorPercent: 4,
+  taxPercent: 20,
   installmentPlans: defaultInstallmentPlans,
   offers: [],
   advertising: 0,
