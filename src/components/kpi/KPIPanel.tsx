@@ -205,6 +205,15 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
             </div>
           )}
 
+          {kpis.totalAdBudget > 0 && (
+            <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+              <span className="text-foreground">- Budget Pub</span>
+              <span className="font-medium text-danger">
+                -{kpis.totalAdBudget.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+              </span>
+            </div>
+          )}
+
           {fixedCharges > 0 && (
             <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
               <span className="text-foreground">- Charges fixes</span>
