@@ -6,70 +6,80 @@
 
 @layer base {
   :root {
-    /* Dark professional theme */
-    --background: 220 20% 8%;
+    /* Dark navy theme - inspired by the dashboard reference */
+    --background: 225 30% 7%;
     --foreground: 210 20% 95%;
 
-    --card: 220 18% 11%;
+    --card: 225 28% 10%;
     --card-foreground: 210 20% 95%;
 
-    --popover: 220 18% 11%;
+    --popover: 225 28% 10%;
     --popover-foreground: 210 20% 95%;
 
-    --primary: 160 60% 45%;
-    --primary-foreground: 220 20% 8%;
+    /* Orange/coral accent - main action color */
+    --primary: 24 95% 55%;
+    --primary-foreground: 225 30% 7%;
 
-    --secondary: 220 15% 18%;
+    --secondary: 225 25% 14%;
     --secondary-foreground: 210 20% 85%;
 
-    --muted: 220 15% 15%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 225 22% 12%;
+    --muted-foreground: 220 15% 50%;
 
-    --accent: 220 15% 20%;
+    --accent: 225 25% 16%;
     --accent-foreground: 210 20% 95%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 160 60% 45%;
+    --border: 225 20% 15%;
+    --input: 225 20% 15%;
+    --ring: 24 95% 55%;
 
     --radius: 0.75rem;
 
     /* Custom colors for business KPIs */
-    --profitable: 160 60% 45%;
-    --profitable-foreground: 160 60% 90%;
+    --profitable: 145 70% 45%;
+    --profitable-foreground: 145 70% 85%;
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 90%;
     --danger: 0 72% 55%;
     --danger-foreground: 0 72% 90%;
+    
+    /* Chart colors */
+    --chart-orange: 24 95% 55%;
+    --chart-yellow: 45 95% 55%;
+    --chart-teal: 175 70% 45%;
+    --chart-blue: 210 80% 55%;
+    --chart-red: 0 75% 55%;
+    --chart-green: 145 70% 45%;
 
     /* Gradients */
-    --gradient-profitable: linear-gradient(135deg, hsl(160 60% 45%), hsl(160 60% 35%));
+    --gradient-profitable: linear-gradient(135deg, hsl(145 70% 45%), hsl(145 70% 35%));
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 40%));
     --gradient-danger: linear-gradient(135deg, hsl(0 72% 55%), hsl(0 72% 45%));
-    --gradient-card: linear-gradient(135deg, hsl(220 18% 13%), hsl(220 18% 9%));
-    --gradient-hero: linear-gradient(180deg, hsl(220 20% 10%), hsl(220 20% 6%));
+    --gradient-card: linear-gradient(135deg, hsl(225 28% 12%), hsl(225 28% 8%));
+    --gradient-hero: linear-gradient(180deg, hsl(225 30% 9%), hsl(225 30% 5%));
+    --gradient-primary: linear-gradient(135deg, hsl(24 95% 55%), hsl(24 95% 45%));
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 20% 4% / 0.3);
-    --shadow-md: 0 4px 6px -1px hsl(220 20% 4% / 0.4), 0 2px 4px -2px hsl(220 20% 4% / 0.3);
-    --shadow-lg: 0 10px 15px -3px hsl(220 20% 4% / 0.5), 0 4px 6px -4px hsl(220 20% 4% / 0.4);
-    --shadow-glow: 0 0 30px hsl(160 60% 45% / 0.15);
+    --shadow-sm: 0 1px 2px 0 hsl(225 30% 4% / 0.4);
+    --shadow-md: 0 4px 6px -1px hsl(225 30% 4% / 0.5), 0 2px 4px -2px hsl(225 30% 4% / 0.4);
+    --shadow-lg: 0 10px 15px -3px hsl(225 30% 4% / 0.6), 0 4px 6px -4px hsl(225 30% 4% / 0.5);
+    --shadow-glow: 0 0 30px hsl(24 95% 55% / 0.15);
 
-    --sidebar-background: 220 18% 9%;
+    --sidebar-background: 225 28% 8%;
     --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 160 60% 45%;
-    --sidebar-primary-foreground: 220 20% 8%;
-    --sidebar-accent: 220 15% 15%;
+    --sidebar-primary: 24 95% 55%;
+    --sidebar-primary-foreground: 225 30% 7%;
+    --sidebar-accent: 225 25% 14%;
     --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 160 60% 45%;
+    --sidebar-border: 225 20% 13%;
+    --sidebar-ring: 24 95% 55%;
   }
 
   .dark {
-    --background: 220 20% 8%;
+    --background: 225 30% 7%;
     --foreground: 210 20% 95%;
   }
 }
@@ -160,6 +170,10 @@
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
     background: hsl(var(--danger) / 0.15);
     color: hsl(var(--danger-foreground));
+  }
+  
+  .badge-stable {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/15 text-primary;
   }
 }
 
