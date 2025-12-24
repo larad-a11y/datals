@@ -1,0 +1,64 @@
+import { LayoutDashboard, Target, Calendar, Wallet, Users, BarChart3, Settings } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface SidebarProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+const navItems = [
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'tunnels', label: 'Tunnels de vente', icon: Target },
+  { id: 'events', label: 'Webinars / Challenges', icon: Calendar },
+  { id: 'charges', label: 'Charges & Déductions', icon: Wallet },
+  { id: 'salaries', label: 'Salaires', icon: Users },
+  { id: 'kpi', label: 'KPI & Rentabilité', icon: BarChart3 },
+  { id: 'settings', label: 'Paramètres', icon: Settings },
+];
+
+export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  return (
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border/50 bg-sidebar">
+      <div className="flex h-full flex-col">
+        {/* Logo */}
+        <div className="flex h-16 items-center gap-3 border-b border-border/50 px-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+            <BarChart3 className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <span className="font-display text-lg font-semibold text-foreground">
+            ProfitPilot
+          </span>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 space-y-1 p-4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onTabChange(item.id)}
+                className={cn(
+                  'nav-item w-full',
+                  activeTab === item.id && 'active'
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="border-t border-border/50 p-4">
+          <div className="rounded-lg bg-accent/50 p-4">
+            <p className="text-xs text-muted-foreground">
+              Pilotez votre business par les chiffres, pas à l'instinct.
+            </p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
