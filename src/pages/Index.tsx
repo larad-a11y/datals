@@ -26,9 +26,6 @@ const Index = () => {
     addTunnel,
     updateTunnel,
     deleteTunnel,
-    addSale,
-    updateSale,
-    deleteSale,
     addSalary,
     updateSalary,
     deleteSalary,
@@ -40,14 +37,33 @@ const Index = () => {
     deleteCoachingExpense,
   } = useBusinessData();
 
-  // Sale operations from CRM - use dedicated mutations
-  const handleUpdateSale = useCallback((tunnelId: string, saleId: string, updates: Partial<Sale>) => {
-    updateSale(saleId, updates);
-  }, [updateSale]);
+  // Sale operations from CRM
+  const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    updateTunnel(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+    });
+  };
 
-  const handleDeleteSale = useCallback((tunnelId: string, saleId: string) => {
-    deleteSale(saleId);
-  }, [deleteSale]);
+  const handleDeleteSale = (tunnelId: string, saleId: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    updateTunnel(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+      callsClosed: updatedSales.length,
+    });
+  };
 
   const handleNavigateToSales = (tunnelId?: string) => {
     if (tunnelId) {
@@ -57,20 +73,17 @@ const Index = () => {
   };
 
   // Record a payment for a sale
-  const handleRecordPayment = useCallback((saleId: string, tunnelId: string, amount: number) => {
+  const handleRecordPayment = (saleId: string, tunnelId: string, amount: number) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
     if (!tunnel) return;
     
     const sale = tunnel.sales.find(s => s.id === saleId);
     if (!sale) return;
     
-    // Use YYYY-MM-DD format consistently
-    const today = new Date().toISOString().split('T')[0];
-    
     const newPayment: PaymentRecord = {
       id: `payment-${Date.now()}`,
       amount,
-      date: today,
+      date: new Date().toISOString(),
       verified: true,
       verifiedAt: new Date().toISOString(),
     };
@@ -86,15 +99,15 @@ const Index = () => {
       nextPaymentDate = nextDate.toISOString().split('T')[0];
     }
     
-    updateSale(saleId, {
+    handleUpdateSale(tunnelId, saleId, {
       amountCollected: newAmountCollected,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate,
     });
-  }, [tunnels, updateSale]);
+  };
 
   // Mark a sale as fully paid
-  const handleFullyPaid = useCallback((saleId: string, tunnelId: string) => {
+  const handleFullyPaid = (saleId: string, tunnelId: string) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
     if (!tunnel) return;
     
@@ -104,23 +117,20 @@ const Index = () => {
     const remaining = sale.totalPrice - sale.amountCollected;
     if (remaining <= 0) return;
     
-    // Use YYYY-MM-DD format consistently
-    const today = new Date().toISOString().split('T')[0];
-    
     const newPayment: PaymentRecord = {
       id: `payment-${Date.now()}`,
       amount: remaining,
-      date: today,
+      date: new Date().toISOString(),
       verified: true,
       verifiedAt: new Date().toISOString(),
     };
     
-    updateSale(saleId, {
+    handleUpdateSale(tunnelId, saleId, {
       amountCollected: sale.totalPrice,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate: undefined,
     });
-  }, [tunnels, updateSale]);
+  };
 
   // Generate notifications from all sales
   const notifications = useMemo(() => {
@@ -168,7 +178,6 @@ const Index = () => {
             onAdd={addTunnel}
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
-            onAddSale={addSale}
             onNavigateToSales={handleNavigateToSales}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}

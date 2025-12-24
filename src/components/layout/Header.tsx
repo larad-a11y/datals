@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addMonths, subMonths } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -8,7 +10,6 @@ import {
 } from '@/components/ui/popover';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { PaymentNotification } from '@/types/business';
-import { UserMenu } from './UserMenu';
 
 interface HeaderProps {
   selectedMonth: string;
@@ -62,7 +63,7 @@ export function Header({
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Notification Bell */}
         {onNavigateToSale && onDismissNotification && onDismissAllNotifications && (
           <NotificationBell
@@ -124,9 +125,6 @@ export function Header({
             </div>
           </PopoverContent>
         </Popover>
-
-        {/* User Menu */}
-        <UserMenu />
       </div>
     </header>
   );
