@@ -155,7 +155,7 @@ export function SalesCRMPanel({
       {/* Header */}
       <div>
         <h2 className="font-display text-xl font-semibold text-foreground">
-          Ventes / CRM
+          Ventes
         </h2>
         <p className="text-sm text-muted-foreground">
           Vue centralisée de toutes vos ventes
