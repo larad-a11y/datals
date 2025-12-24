@@ -1,22 +1,148 @@
 import { 
   TrendingUp, 
+  TrendingDown,
   PhoneCall, 
   Target, 
   Users, 
   Wallet, 
   Diamond,
   Receipt,
-  FileText
+  FileText,
+  MousePointerClick,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
 import { KPICard } from './KPICard';
-import { KPIData, Tunnel } from '@/types/business';
+import { TunnelCard } from './TunnelCard';
+import { KPIData, Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
+import { useMemo, useState } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface DashboardProps {
   kpis: KPIData;
   tunnels: Tunnel[];
+  charges: Charges;
+  salaries: Salary[];
+  coachingExpenses: CoachingExpense[];
+  allTunnels?: Tunnel[]; // All tunnels for comparison
+  selectedMonth: string;
 }
 
-export function Dashboard({ kpis, tunnels }: DashboardProps) {
+export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, allTunnels = [], selectedMonth }: DashboardProps) {
+  const [showComparison, setShowComparison] = useState(false);
+  
+  // Calculate previous month KPIs
+  const previousMonthKpis = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const prevDate = new Date(year, month - 2, 1);
+    const prevMonth = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    const prevTunnels = allTunnels.filter(t => t.month === prevMonth && t.isActive);
+    
+    if (prevTunnels.length === 0) {
+      return null;
+    }
+    
+    // Calculate previous month metrics
+    const totalContracted = prevTunnels.reduce((sum, t) => {
+      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
+      return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
+    }, 0);
+    
+    const totalCollectedTTC = prevTunnels.reduce((sum, t) => {
+      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+      return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
+    }, 0);
+    
+    const taxRate = charges.taxPercent / 100;
+    const tvaAmount = totalCollectedTTC * taxRate / (1 + taxRate);
+    const totalCollectedHT = totalCollectedTTC - tvaAmount;
+    
+    const totalAdBudget = prevTunnels.reduce((sum, t) => sum + t.adBudget, 0);
+    const totalCalls = prevTunnels.reduce((sum, t) => sum + t.callsGenerated, 0);
+    const totalClosedCalls = prevTunnels.reduce((sum, t) => sum + t.callsClosed, 0);
+    
+    const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
+    
+    // Closers
+    const salesWithCloserTTC = prevTunnels.reduce((sum, t) => {
+      const tunnelSalesWithCloser = t.sales
+        .filter(sale => sale.closerId)
+        .reduce((s, sale) => s + sale.amountCollected, 0);
+      return sum + tunnelSalesWithCloser;
+    }, 0);
+    const salesWithCloserHT = salesWithCloserTTC * (1 / (1 + taxRate));
+    const closersCost = salesWithCloserHT * (charges.closersPercent / 100);
+    
+    let agencyCost = 0;
+    if (totalCollectedHT > charges.agencyThreshold) {
+      const excessHT = totalCollectedHT - charges.agencyThreshold;
+      agencyCost = excessHT * (charges.agencyPercent / 100);
+    }
+    
+    const fixedCharges = charges.advertising + charges.marketing + charges.software + charges.otherCosts;
+    const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
+    
+    // Filter coaching for previous month
+    const prevCoaching = coachingExpenses.filter(e => e.month === prevMonth);
+    const totalCoachingExpenses = prevCoaching.reduce((sum, e) => sum + e.amount, 0);
+    
+    const netProfit = totalCollectedHT 
+      - paymentProcessorCost 
+      - closersCost 
+      - agencyCost 
+      - totalAdBudget
+      - fixedCharges 
+      - totalCoachingExpenses 
+      - totalSalaries;
+    
+    const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
+    const netNetProfit = netProfit - associateCost;
+    
+    const adROI = totalAdBudget > 0 
+      ? ((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100 
+      : 0;
+    const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
+    const closingRate = totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0;
+    const cac = totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0;
+    
+    return {
+      contractedRevenue: totalContracted,
+      collectedRevenue: totalCollectedTTC,
+      collectedRevenueHT: totalCollectedHT,
+      netProfit,
+      netNetProfit,
+      adROI,
+      costPerCall,
+      closingRate,
+      cac,
+      totalAdBudget,
+      totalCalls,
+      totalClosedCalls,
+    };
+  }, [allTunnels, selectedMonth, charges, salaries, coachingExpenses]);
+  
+  // Calculate percentage changes
+  const getPercentChange = (current: number, previous: number | undefined) => {
+    if (!previous || previous === 0) return null;
+    return ((current - previous) / Math.abs(previous)) * 100;
+  };
+  
+  const collectedChange = showComparison && previousMonthKpis 
+    ? getPercentChange(kpis.collectedRevenue, previousMonthKpis.collectedRevenue) 
+    : null;
+  const netProfitChange = showComparison && previousMonthKpis 
+    ? getPercentChange(kpis.netProfit, previousMonthKpis.netProfit) 
+    : null;
+  const netNetProfitChange = showComparison && previousMonthKpis 
+    ? getPercentChange(kpis.netNetProfit, previousMonthKpis.netNetProfit) 
+    : null;
+  const contractedChange = showComparison && previousMonthKpis 
+    ? getPercentChange(kpis.contractedRevenue, previousMonthKpis.contractedRevenue) 
+    : null;
+  
   const getTrend = (value: number, thresholds: { good: number; warning: number }) => {
     if (value >= thresholds.good) return 'profitable' as const;
     if (value >= thresholds.warning) return 'warning' as const;
@@ -26,47 +152,116 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
   const profitTrend = kpis.netNetProfit > 0 ? 'profitable' : kpis.netNetProfit === 0 ? 'warning' : 'danger';
   const roiTrend = getTrend(kpis.adROI, { good: 100, warning: 50 });
   const closingTrend = getTrend(kpis.closingRate, { good: 30, warning: 15 });
+  
+  // Calculate global CPL
+  const totalRegistrations = tunnels.reduce((sum, t) => sum + (t.registrations || 0), 0);
+  const globalCPL = totalRegistrations > 0 ? kpis.totalAdBudget / totalRegistrations : 0;
+  
+  // Calculate global cost per attendee (webinars only)
+  const totalAttendees = tunnels
+    .filter(t => t.type === 'webinar')
+    .reduce((sum, t) => sum + (t.attendees || 0), 0);
+  const webinarBudget = tunnels
+    .filter(t => t.type === 'webinar')
+    .reduce((sum, t) => sum + t.adBudget, 0);
+  const globalCostPerAttendee = totalAttendees > 0 ? webinarBudget / totalAttendees : 0;
+
+  const ChangeIndicator = ({ value }: { value: number | null }) => {
+    if (value === null) return null;
+    const isPositive = value >= 0;
+    const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
+    return (
+      <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isPositive ? 'text-profitable' : 'text-danger'}`}>
+        <Icon className="h-3 w-3" />
+        {Math.abs(value).toFixed(1)}%
+      </span>
+    );
+  };
 
   return (
     <div className="space-y-6">
+      {/* Comparison Toggle */}
+      <div className="flex items-center justify-end gap-3">
+        <Label htmlFor="comparison" className="text-sm text-muted-foreground">
+          Comparer au mois précédent
+        </Label>
+        <Switch 
+          id="comparison" 
+          checked={showComparison} 
+          onCheckedChange={setShowComparison}
+          disabled={!previousMonthKpis}
+        />
+        {!previousMonthKpis && showComparison === false && (
+          <span className="text-xs text-muted-foreground italic">Aucune donnée mois précédent</span>
+        )}
+      </div>
+      
       {/* Main KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <KPICard
-          title="Bénéfice Net Net"
-          value={kpis.netNetProfit}
-          icon={Diamond}
-          trend={profitTrend}
-          suffix=" €"
-          subtitle="Après toutes les charges"
-        />
-        <KPICard
-          title="Bénéfice Net"
-          value={kpis.netProfit}
-          icon={Wallet}
-          trend={kpis.netProfit > 0 ? 'profitable' : 'danger'}
-          suffix=" €"
-          subtitle="Avant part associé"
-        />
-        <KPICard
-          title="CA Collecté"
-          value={kpis.collectedRevenue}
-          icon={Receipt}
-          trend="neutral"
-          suffix=" €"
-          subtitle="Encaissé ce mois"
-        />
-        <KPICard
-          title="CA Contracté"
-          value={kpis.contractedRevenue}
-          icon={FileText}
-          trend="neutral"
-          suffix=" €"
-          subtitle="Signé ce mois"
-        />
+        <div className="relative">
+          <KPICard
+            title="Bénéfice Net Net"
+            value={kpis.netNetProfit}
+            icon={Diamond}
+            trend={profitTrend}
+            suffix=" €"
+            subtitle="Après toutes les charges"
+          />
+          {netNetProfitChange !== null && (
+            <div className="absolute top-3 right-3">
+              <ChangeIndicator value={netNetProfitChange} />
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <KPICard
+            title="Bénéfice Net"
+            value={kpis.netProfit}
+            icon={Wallet}
+            trend={kpis.netProfit > 0 ? 'profitable' : 'danger'}
+            suffix=" €"
+            subtitle="Avant part associé"
+          />
+          {netProfitChange !== null && (
+            <div className="absolute top-3 right-3">
+              <ChangeIndicator value={netProfitChange} />
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <KPICard
+            title="CA Collecté"
+            value={kpis.collectedRevenue}
+            icon={Receipt}
+            trend="neutral"
+            suffix=" €"
+            subtitle="Encaissé ce mois"
+          />
+          {collectedChange !== null && (
+            <div className="absolute top-3 right-3">
+              <ChangeIndicator value={collectedChange} />
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <KPICard
+            title="CA Contracté"
+            value={kpis.contractedRevenue}
+            icon={FileText}
+            trend="neutral"
+            suffix=" €"
+            subtitle="Signé ce mois"
+          />
+          {contractedChange !== null && (
+            <div className="absolute top-3 right-3">
+              <ChangeIndicator value={contractedChange} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Performance KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <KPICard
           title="ROI Publicitaire"
           value={kpis.adROI}
@@ -99,6 +294,24 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
           suffix=" €"
           subtitle="Coût d'acquisition client"
         />
+        <KPICard
+          title="CPL"
+          value={globalCPL}
+          icon={MousePointerClick}
+          trend="neutral"
+          suffix=" €"
+          subtitle={`${totalRegistrations} inscrits total`}
+        />
+        {totalAttendees > 0 && (
+          <KPICard
+            title="Coût/Présent"
+            value={globalCostPerAttendee}
+            icon={Users}
+            trend="neutral"
+            suffix=" €"
+            subtitle={`${totalAttendees} présents webinars`}
+          />
+        )}
       </div>
 
       {/* Tunnels Overview */}
@@ -111,145 +324,16 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
             Aucun tunnel actif. Ajoutez un tunnel pour commencer.
           </p>
         ) : (
-          <div className="space-y-3">
-            {tunnels.map((tunnel) => {
-              const contractedRevenue = tunnel.sales.reduce((sum, s) => sum + s.totalPrice, 0);
-              const roi = tunnel.adBudget > 0 
-                ? ((tunnel.collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
-                : 0;
-              const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
-              const formattedDate = tunnel.date ? new Date(tunnel.date).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-              }) : '';
-
-              // Calculate type-specific metrics
-              const showUpRate = tunnel.type === 'webinar' && tunnel.registrations && tunnel.attendees
-                ? ((tunnel.attendees / tunnel.registrations) * 100).toFixed(1)
-                : null;
-              
-              const bookingRate = tunnel.type === 'vsl' && tunnel.registrations && tunnel.callsBooked
-                ? ((tunnel.callsBooked / tunnel.registrations) * 100).toFixed(1)
-                : null;
-              
-              const avgChallengeShowUp = tunnel.type === 'challenge' && tunnel.registrations && tunnel.challengeDays && tunnel.challengeDays.length > 0
-                ? (tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length / tunnel.registrations * 100).toFixed(1)
-                : null;
-              
-              return (
-                <div 
-                  key={tunnel.id}
-                  className="rounded-lg bg-secondary/30 p-4"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`badge-${trend}`}>
-                        {tunnel.type.toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-medium text-foreground">{tunnel.name}</p>
-                        <p className="text-sm text-muted-foreground">{formattedDate}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-display text-lg font-semibold text-${trend}`}>
-                        {roi.toFixed(1)}% ROI
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4 pt-3 border-t border-border/30">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Pub dépensée</p>
-                      <p className="font-display text-base font-semibold text-foreground">
-                        {tunnel.adBudget.toLocaleString('fr-FR')} €
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Ventes</p>
-                      <p className="font-display text-base font-semibold text-foreground">
-                        {tunnel.callsClosed}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">CA Collecté</p>
-                      <p className="font-display text-base font-semibold text-foreground">
-                        {tunnel.collectedAmount.toLocaleString('fr-FR')} €
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">CA Contracté</p>
-                      <p className="font-display text-base font-semibold text-foreground">
-                        {contractedRevenue.toLocaleString('fr-FR')} €
-                      </p>
-                    </div>
-                    
-                    {/* Type-specific metrics - Always show based on tunnel type */}
-                    {tunnel.type === 'webinar' && (
-                      <>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Inscrits / Présents</p>
-                          <p className="font-display text-base font-semibold text-foreground">
-                            {tunnel.registrations || 0} / {tunnel.attendees || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Show-up rate</p>
-                          <p className="font-display text-base font-semibold text-primary">
-                            {showUpRate ? `${showUpRate}%` : '0%'}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    
-                    {tunnel.type === 'vsl' && (
-                      <>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Inscrits / Calls</p>
-                          <p className="font-display text-base font-semibold text-foreground">
-                            {tunnel.registrations || 0} / {tunnel.callsBooked || 0}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Taux booking</p>
-                          <p className="font-display text-base font-semibold text-primary">
-                            {bookingRate ? `${bookingRate}%` : '0%'}
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    
-                    {tunnel.type === 'challenge' && (
-                      <>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Inscrits</p>
-                          <p className="font-display text-base font-semibold text-foreground">
-                            {tunnel.registrations || 0}
-                          </p>
-                          {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {tunnel.challengeDays.length} jours
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">Show-up moyen</p>
-                          <p className="font-display text-base font-semibold text-primary">
-                            {avgChallengeShowUp ? `${avgChallengeShowUp}%` : '0%'}
-                          </p>
-                          {tunnel.challengeDays && tunnel.challengeDays.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              Moy: {Math.round(tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length)} présents
-                            </p>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="space-y-4">
+            {tunnels.map((tunnel) => (
+              <TunnelCard 
+                key={tunnel.id}
+                tunnel={tunnel}
+                charges={charges}
+                salaries={salaries}
+                coachingExpenses={coachingExpenses.filter(e => e.month === selectedMonth)}
+              />
+            ))}
           </div>
         )}
       </div>
