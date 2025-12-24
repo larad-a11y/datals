@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Target, ExternalLink } from 'lucide-react';
-import { Tunnel, Sale, tunnelTypeLabels } from '@/types/business';
+import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallmentPlans } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
 import { SaleForm } from './SaleForm';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,11 @@ interface TunnelsListProps {
   onUpdate: (id: string, updates: Partial<Tunnel>) => void;
   onDelete: (id: string) => void;
   onNavigateToSales?: (tunnelId?: string) => void;
-  installmentMarkupPercent?: number;
+  installmentPlans?: InstallmentPlan[];
+  offers?: Offer[];
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentMarkupPercent = 5 }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [] }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
@@ -280,7 +281,8 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                         onSave={(data) => handleQuickAddSale(tunnel.id, data)}
                         onCancel={() => setShowQuickSale(null)}
                         inline
-                        installmentMarkupPercent={installmentMarkupPercent}
+                        installmentPlans={installmentPlans}
+                        offers={offers}
                       />
                     </div>
                   )}

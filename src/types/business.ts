@@ -1,5 +1,7 @@
 export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
+export type PaymentMethod = 'cb' | 'virement';
+
 export interface PaymentRecord {
   id: string;
   amount: number;
@@ -8,11 +10,27 @@ export interface PaymentRecord {
   verifiedAt?: string;
 }
 
+export interface InstallmentPlan {
+  id: string;
+  numberOfPayments: number;
+  markupPercent: number;
+}
+
+export interface Offer {
+  id: string;
+  name: string;
+  basePrice: number;
+  availableInstallments: number[]; // Array of numberOfPayments allowed
+}
+
 export interface Sale {
   id: string;
   tunnelId: string;
   tunnelName?: string;
   clientName?: string;
+  saleDate: string; // Date de la vente
+  offerId?: string; // Reference to an offer
+  paymentMethod: PaymentMethod;
   basePrice: number; // Prix de base (prix cash)
   totalPrice: number; // Prix final contracté (peut inclure majoration pour paiement échelonné)
   numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.
@@ -57,7 +75,12 @@ export interface Charges {
   agencyPercent: number; // Default 20%, only above 130k€ HT
   agencyThreshold: number; // 130000€
   paymentProcessorPercent: number; // Default 4%
-  installmentMarkupPercent: number; // Default 5%, markup for installment payments
+  
+  // Installment plans with individual markups
+  installmentPlans: InstallmentPlan[];
+  
+  // Offers catalog
+  offers: Offer[];
   
   // Fixed charges
   advertising: number;
@@ -94,13 +117,21 @@ export interface KPIData {
   totalAdBudget: number;
 }
 
+export const defaultInstallmentPlans: InstallmentPlan[] = [
+  { id: 'plan-1', numberOfPayments: 1, markupPercent: 0 },
+  { id: 'plan-2', numberOfPayments: 2, markupPercent: 5 },
+  { id: 'plan-3', numberOfPayments: 3, markupPercent: 10 },
+  { id: 'plan-4', numberOfPayments: 4, markupPercent: 15 },
+];
+
 export const defaultCharges: Charges = {
   associatePercent: 15,
   closersPercent: 17.5,
   agencyPercent: 20,
   agencyThreshold: 130000,
   paymentProcessorPercent: 4,
-  installmentMarkupPercent: 5,
+  installmentPlans: defaultInstallmentPlans,
+  offers: [],
   advertising: 0,
   marketing: 0,
   software: 0,
@@ -112,6 +143,11 @@ export const tunnelTypeLabels: Record<TunnelType, string> = {
   webinar: 'Webinar',
   vsl: 'VSL',
   challenge: 'Challenge',
+};
+
+export const paymentMethodLabels: Record<PaymentMethod, string> = {
+  cb: 'CB',
+  virement: 'Virement',
 };
 
 // Helper to generate notifications from sales
