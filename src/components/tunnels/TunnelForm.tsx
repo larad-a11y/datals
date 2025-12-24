@@ -31,6 +31,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     callsClosed: tunnel?.callsClosed || 0,
     averagePrice: tunnel?.averagePrice || 0,
     collectedAmount: tunnel?.collectedAmount || 0,
+    sales: tunnel?.sales || [],
   });
 
   const [dateOpen, setDateOpen] = useState(false);

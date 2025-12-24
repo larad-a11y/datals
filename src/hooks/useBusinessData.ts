@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Tunnel, Charges, Salary, KPIData, defaultCharges } from '@/types/business';
+import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale } from '@/types/business';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -21,12 +21,16 @@ export function useBusinessData() {
 
   // Calculate KPIs
   const kpis = useMemo((): KPIData => {
-    const totalContracted = filteredTunnels.reduce(
-      (sum, t) => sum + (t.callsClosed * t.averagePrice), 0
-    );
-    const totalCollected = filteredTunnels.reduce(
-      (sum, t) => sum + t.collectedAmount, 0
-    );
+    const totalContracted = filteredTunnels.reduce((sum, t) => {
+      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
+      return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
+    }, 0);
+    
+    const totalCollected = filteredTunnels.reduce((sum, t) => {
+      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+      return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
+    }, 0);
+    
     const totalAdBudget = filteredTunnels.reduce(
       (sum, t) => sum + t.adBudget, 0
     );
@@ -102,7 +106,12 @@ export function useBusinessData() {
 
   // Tunnel operations
   const addTunnel = useCallback((tunnel: Omit<Tunnel, 'id'>) => {
-    setTunnels(prev => [...prev, { ...tunnel, id: generateId() }]);
+    const newTunnel = { 
+      ...tunnel, 
+      id: generateId(),
+      sales: tunnel.sales || [],
+    };
+    setTunnels(prev => [...prev, newTunnel]);
   }, []);
 
   const updateTunnel = useCallback((id: string, updates: Partial<Tunnel>) => {

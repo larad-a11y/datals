@@ -1,5 +1,14 @@
 export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
+export interface Sale {
+  id: string;
+  clientName?: string;
+  totalPrice: number;
+  numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.
+  amountCollected: number;
+  createdAt: string;
+}
+
 export interface Tunnel {
   id: string;
   name: string;
@@ -13,7 +22,8 @@ export interface Tunnel {
   callsGenerated: number;
   callsClosed: number;
   averagePrice: number;
-  collectedAmount: number;
+  collectedAmount: number; // Kept for backward compatibility, will be calculated from sales
+  sales: Sale[];
 }
 
 export interface Charges {
