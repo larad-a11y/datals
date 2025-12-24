@@ -142,8 +142,9 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
+            <TableHead>Date</TableHead>
             <TableHead className="text-right">
-              <SortHeader label="Prix total" sortKeyName="totalPrice" />
+              <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
             <TableHead className="text-center">Paiements</TableHead>
             <TableHead className="text-right">
@@ -180,8 +181,18 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-sm">{sale.tunnelName}</span>
                   </div>
                 </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {sale.tunnelDate ? new Date(sale.tunnelDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '-'}
+                </TableCell>
                 <TableCell className="text-right font-medium">
-                  {sale.totalPrice.toLocaleString('fr-FR')} €
+                  <div className="flex flex-col items-end">
+                    <span>{sale.totalPrice.toLocaleString('fr-FR')} €</span>
+                    {sale.basePrice && sale.basePrice < sale.totalPrice && (
+                      <span className="text-xs text-profitable">
+                        +{(((sale.totalPrice - sale.basePrice) / sale.basePrice) * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {sale.numberOfPayments}x

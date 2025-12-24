@@ -13,7 +13,8 @@ export interface Sale {
   tunnelId: string;
   tunnelName?: string;
   clientName?: string;
-  totalPrice: number;
+  basePrice: number; // Prix de base (prix cash)
+  totalPrice: number; // Prix final contracté (peut inclure majoration pour paiement échelonné)
   numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.
   amountCollected: number;
   createdAt: string;

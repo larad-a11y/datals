@@ -10,13 +10,30 @@ interface SaleFormProps {
   inline?: boolean;
 }
 
+// Majorations par défaut pour les paiements échelonnés
+const DEFAULT_MARKUPS: Record<number, number> = {
+  1: 0,
+  2: 5,
+  3: 10,
+  4: 15,
+  6: 20,
+  10: 25,
+  12: 30,
+};
+
 export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
-    totalPrice: sale?.totalPrice || '',
+    basePrice: sale?.basePrice || sale?.totalPrice || '',
     numberOfPayments: sale?.numberOfPayments || 1,
+    totalPrice: sale?.totalPrice || '',
     amountCollected: sale?.amountCollected || '',
+    useMarkup: !sale, // Par défaut on utilise la majoration pour les nouvelles ventes
   });
+
+  const basePriceNum = typeof formData.basePrice === 'string' 
+    ? parseFloat(formData.basePrice) || 0 
+    : formData.basePrice;
 
   const totalPriceNum = typeof formData.totalPrice === 'string' 
     ? parseFloat(formData.totalPrice) || 0 
@@ -25,6 +42,15 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   const amountCollectedNum = typeof formData.amountCollected === 'string'
     ? parseFloat(formData.amountCollected) || 0
     : formData.amountCollected;
+
+  // Calcul automatique du prix total avec majoration
+  useEffect(() => {
+    if (basePriceNum > 0 && formData.useMarkup) {
+      const markup = DEFAULT_MARKUPS[formData.numberOfPayments] || 0;
+      const calculatedTotal = basePriceNum * (1 + markup / 100);
+      setFormData(prev => ({ ...prev, totalPrice: calculatedTotal }));
+    }
+  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup]);
 
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
   useEffect(() => {
@@ -43,12 +69,13 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (totalPriceNum <= 0) return;
+    if (basePriceNum <= 0) return;
     
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
-      totalPrice: totalPriceNum,
+      basePrice: basePriceNum,
+      totalPrice: totalPriceNum || basePriceNum,
       numberOfPayments: formData.numberOfPayments,
       amountCollected: amountCollectedNum,
       paymentHistory: sale?.paymentHistory || [],
@@ -61,15 +88,20 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     if (inline) {
       setFormData({
         clientName: '',
-        totalPrice: '',
+        basePrice: '',
         numberOfPayments: 1,
+        totalPrice: '',
         amountCollected: '',
+        useMarkup: true,
       });
     }
   };
 
+  const markupPercent = DEFAULT_MARKUPS[formData.numberOfPayments] || 0;
+  const hasMarkup = totalPriceNum > basePriceNum && basePriceNum > 0;
+  const markupAmount = totalPriceNum - basePriceNum;
   const remainingAmount = totalPriceNum - amountCollectedNum;
-  const paymentPerInstallment = formData.numberOfPayments > 0 
+  const paymentPerInstallment = formData.numberOfPayments > 0 && totalPriceNum > 0
     ? totalPriceNum / formData.numberOfPayments 
     : 0;
 
@@ -90,12 +122,12 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
-          💵 Prix total de la vente (€)
+          💵 Prix de base / Prix cash (€)
         </label>
         <input
           type="number"
-          value={formData.totalPrice}
-          onChange={(e) => setFormData(prev => ({ ...prev, totalPrice: e.target.value }))}
+          value={formData.basePrice}
+          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value }))}
           className="input-field w-full"
           min="0"
           step="0.01"
@@ -113,7 +145,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
             <button
               key={n}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: n }))}
+              onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: n, useMarkup: true }))}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 formData.numberOfPayments === n
                   ? 'bg-primary text-primary-foreground'
@@ -121,15 +153,55 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
               }`}
             >
               {n}x
+              {n > 1 && DEFAULT_MARKUPS[n] > 0 && (
+                <span className="ml-1 text-xs opacity-70">+{DEFAULT_MARKUPS[n]}%</span>
+              )}
             </button>
           ))}
         </div>
-        {formData.numberOfPayments > 1 && totalPriceNum > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">
+      </div>
+
+      {formData.numberOfPayments > 1 && basePriceNum > 0 && (
+        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-foreground">Prix final avec majoration</span>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={formData.useMarkup}
+                onChange={(e) => {
+                  if (!e.target.checked) {
+                    setFormData(prev => ({ ...prev, useMarkup: false, totalPrice: prev.basePrice }));
+                  } else {
+                    setFormData(prev => ({ ...prev, useMarkup: true }));
+                  }
+                }}
+                className="rounded"
+              />
+              Appliquer majoration
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={formData.totalPrice}
+              onChange={(e) => setFormData(prev => ({ ...prev, totalPrice: e.target.value, useMarkup: false }))}
+              className="input-field flex-1"
+              min={basePriceNum}
+              step="0.01"
+            />
+            <span className="text-sm text-muted-foreground">€</span>
+          </div>
+          {hasMarkup && (
+            <p className="mt-2 text-xs text-profitable">
+              +{markupAmount.toLocaleString('fr-FR')} € de majoration ({((markupAmount / basePriceNum) * 100).toFixed(0)}%)
+            </p>
+          )}
+          <p className="mt-1 text-xs text-muted-foreground">
             {formData.numberOfPayments} paiements de {paymentPerInstallment.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
           </p>
-        )}
-      </div>
+        </div>
+      )}
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
@@ -141,18 +213,29 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           onChange={(e) => setFormData(prev => ({ ...prev, amountCollected: e.target.value }))}
           className="input-field w-full"
           min="0"
-          max={totalPriceNum}
+          max={totalPriceNum || basePriceNum}
           step="0.01"
           placeholder="Premier paiement"
         />
       </div>
 
-      {totalPriceNum > 0 && (
+      {(totalPriceNum > 0 || basePriceNum > 0) && (
         <div className="rounded-lg bg-secondary/30 p-4">
+          {hasMarkup && (
+            <div className="flex justify-between text-sm mb-1">
+              <span className="text-muted-foreground">Prix de base</span>
+              <span className="text-muted-foreground">
+                {basePriceNum.toLocaleString('fr-FR')} €
+              </span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Prix total</span>
+            <span className="text-muted-foreground">Prix contracté</span>
             <span className="font-medium text-foreground">
-              {totalPriceNum.toLocaleString('fr-FR')} €
+              {(totalPriceNum || basePriceNum).toLocaleString('fr-FR')} €
+              {hasMarkup && (
+                <span className="ml-1 text-xs text-profitable">(+{((markupAmount / basePriceNum) * 100).toFixed(0)}%)</span>
+              )}
             </span>
           </div>
           <div className="flex justify-between text-sm">
@@ -176,7 +259,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
             Annuler
           </Button>
         )}
-        <Button type="submit" className="flex-1" disabled={totalPriceNum <= 0}>
+        <Button type="submit" className="flex-1" disabled={basePriceNum <= 0}>
           {sale ? 'Enregistrer' : 'Ajouter la vente'}
         </Button>
       </div>
