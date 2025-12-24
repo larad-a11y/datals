@@ -9,7 +9,7 @@ interface SidebarProps {
 const navItems = [
   { id: 'dashboard', label: 'Tableau de b...', icon: LayoutDashboard },
   { id: 'tunnels', label: 'Tunnel de v...', icon: Target },
-  { id: 'sales', label: 'CRM', icon: Receipt },
+  { id: 'sales', label: 'Ventes', icon: Receipt },
   { id: 'charges', label: 'Charges', icon: Wallet },
   { id: 'kpi', label: 'KPI', icon: BarChart3 },
 ];
