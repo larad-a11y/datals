@@ -208,7 +208,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   <div className="flex flex-col items-end">
-                    <span>{sale.totalPrice.toLocaleString('fr-FR')} €</span>
+                    <span className="whitespace-nowrap">{sale.totalPrice.toLocaleString('fr-FR')} €</span>
                     {sale.basePrice && sale.basePrice < sale.totalPrice && (
                       <span className="text-xs text-profitable">
                         +{(((sale.totalPrice - sale.basePrice) / sale.basePrice) * 100).toFixed(0)}%
