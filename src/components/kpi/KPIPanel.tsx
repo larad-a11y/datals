@@ -10,16 +10,18 @@ import {
   ArrowDown,
   ArrowRight
 } from 'lucide-react';
-import { KPIData, Charges, Salary } from '@/types/business';
+import { KPIData, Charges, Salary, CoachingExpense } from '@/types/business';
 
 interface KPIPanelProps {
   kpis: KPIData;
   charges: Charges;
   salaries: Salary[];
+  coachingExpenses: CoachingExpense[];
 }
 
-export function KPIPanel({ kpis, charges, salaries }: KPIPanelProps) {
+export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanelProps) {
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
+  const totalCoachingExpenses = coachingExpenses.reduce((sum, e) => sum + e.amount, 0);
   const isAboveAgencyThreshold = kpis.collectedRevenue > charges.agencyThreshold;
   
   // Calculate intermediate values
@@ -30,10 +32,12 @@ export function KPIPanel({ kpis, charges, salaries }: KPIPanelProps) {
   const afterAgency = afterClosers - agencyCost;
   
   const fixedCharges = charges.advertising + charges.marketing + 
-                       charges.software + charges.coaching + charges.otherCosts;
+                       charges.software + charges.otherCosts;
   const afterFixed = afterAgency - fixedCharges;
+
+  const afterCoaching = afterFixed - totalCoachingExpenses;
   
-  const afterSalaries = afterFixed - totalSalaries;
+  const afterSalaries = afterCoaching - totalSalaries;
   
   const associateCost = afterSalaries > 0 ? afterSalaries * (charges.associatePercent / 100) : 0;
 
@@ -183,6 +187,15 @@ export function KPIPanel({ kpis, charges, salaries }: KPIPanelProps) {
               <span className="text-foreground">- Charges fixes</span>
               <span className="font-medium text-danger">
                 -{fixedCharges.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+              </span>
+            </div>
+          )}
+
+          {totalCoachingExpenses > 0 && (
+            <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+              <span className="text-foreground">- Coaching / Mentorat</span>
+              <span className="font-medium text-danger">
+                -{totalCoachingExpenses.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
               </span>
             </div>
           )}

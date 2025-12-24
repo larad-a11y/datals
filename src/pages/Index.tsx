@@ -30,6 +30,10 @@ const Index = () => {
     updateSalary,
     deleteSalary,
     getAllSales,
+    filteredCoachingExpenses,
+    addCoachingExpense,
+    updateCoachingExpense,
+    deleteCoachingExpense,
   } = useBusinessData();
 
   // Sale operations from CRM
@@ -196,6 +200,11 @@ const Index = () => {
             onAddSalary={addSalary}
             onUpdateSalary={updateSalary}
             onDeleteSalary={deleteSalary}
+            selectedMonth={selectedMonth}
+            coachingExpenses={filteredCoachingExpenses}
+            onAddCoachingExpense={addCoachingExpense}
+            onUpdateCoachingExpense={updateCoachingExpense}
+            onDeleteCoachingExpense={deleteCoachingExpense}
           />
         );
       case 'kpi':
@@ -204,6 +213,7 @@ const Index = () => {
             kpis={kpis}
             charges={charges}
             salaries={salaries}
+            coachingExpenses={filteredCoachingExpenses}
           />
         );
       default:
