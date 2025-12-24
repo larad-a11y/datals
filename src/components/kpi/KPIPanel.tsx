@@ -98,10 +98,20 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />
-            Paiements à venir
+            Paiements à venir (ce mois)
           </div>
           <p className="stat-value mt-2 text-foreground">
-            {kpis.upcomingPayments.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            {kpis.upcomingPaymentsThisMonth.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+          </p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            Paiements à venir (total)
+          </div>
+          <p className="stat-value mt-2 text-foreground">
+            {kpis.upcomingPaymentsTotal.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
       </div>

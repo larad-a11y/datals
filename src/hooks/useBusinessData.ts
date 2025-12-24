@@ -121,8 +121,28 @@ export function useBusinessData() {
       ? ((totalContracted - totalAdBudget) / totalAdBudget) * 100 
       : 0;
 
-    // Paiements à venir = Contracté - Collecté (reste à encaisser)
-    const upcomingPayments = totalContracted - totalCollectedTTC;
+    // Paiements à venir CE MOIS = ventes des mois précédents avec next_payment_date ce mois
+    const upcomingPaymentsThisMonth = tunnels
+      .filter(t => t.month !== selectedMonth) // Ventes des mois précédents
+      .flatMap(t => t.sales)
+      .filter(sale => {
+        if (!sale.nextPaymentDate) return false;
+        const paymentMonth = sale.nextPaymentDate.substring(0, 7); // "YYYY-MM"
+        return paymentMonth === selectedMonth && sale.amountCollected < sale.totalPrice;
+      })
+      .reduce((sum, sale) => {
+        // Montant restant à collecter pour cette vente
+        const remaining = sale.totalPrice - sale.amountCollected;
+        // On estime le prochain paiement comme le montant restant divisé par les paiements restants
+        const paymentsRemaining = sale.numberOfPayments ? 
+          sale.numberOfPayments - (sale.paymentHistory?.length || 1) : 1;
+        return sum + (paymentsRemaining > 0 ? remaining / paymentsRemaining : remaining);
+      }, 0);
+
+    // Paiements à venir TOTAL = somme de tous les montants restants à encaisser (toutes ventes)
+    const upcomingPaymentsTotal = tunnels
+      .flatMap(t => t.sales)
+      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0);
 
     // Cost per call
     const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
@@ -161,7 +181,8 @@ export function useBusinessData() {
       paymentProcessorCost,
       closersCost,
       agencyCost,
-      upcomingPayments,
+      upcomingPaymentsThisMonth,
+      upcomingPaymentsTotal,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 
