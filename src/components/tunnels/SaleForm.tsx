@@ -34,6 +34,13 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     }
   }, [totalPriceNum, formData.numberOfPayments, sale]);
 
+  // Calculate next payment date (1 month from now for new sales)
+  const calculateNextPaymentDate = () => {
+    const date = new Date();
+    date.setMonth(date.getMonth() + 1);
+    return date.toISOString().split('T')[0];
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (totalPriceNum <= 0) return;
@@ -44,6 +51,10 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
       totalPrice: totalPriceNum,
       numberOfPayments: formData.numberOfPayments,
       amountCollected: amountCollectedNum,
+      paymentHistory: sale?.paymentHistory || [],
+      nextPaymentDate: formData.numberOfPayments > 1 && amountCollectedNum < totalPriceNum
+        ? calculateNextPaymentDate()
+        : undefined,
     });
     
     // Reset form for inline mode

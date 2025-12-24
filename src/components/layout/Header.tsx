@@ -9,13 +9,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { PaymentNotification } from '@/types/business';
 
 interface HeaderProps {
   selectedMonth: string;
   onMonthChange: (month: string) => void;
+  notifications?: PaymentNotification[];
+  onNavigateToSale?: (saleId: string, tunnelId: string) => void;
+  onDismissNotification?: (notificationId: string) => void;
+  onDismissAllNotifications?: () => void;
 }
 
-export function Header({ selectedMonth, onMonthChange }: HeaderProps) {
+export function Header({ 
+  selectedMonth, 
+  onMonthChange, 
+  notifications = [],
+  onNavigateToSale,
+  onDismissNotification,
+  onDismissAllNotifications,
+}: HeaderProps) {
   const [open, setOpen] = useState(false);
 
   const currentDate = parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date());
@@ -45,7 +58,17 @@ export function Header({ selectedMonth, onMonthChange }: HeaderProps) {
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {/* Notification Bell */}
+        {onNavigateToSale && onDismissNotification && onDismissAllNotifications && (
+          <NotificationBell
+            notifications={notifications}
+            onNavigateToSale={onNavigateToSale}
+            onDismiss={onDismissNotification}
+            onDismissAll={onDismissAllNotifications}
+          />
+        )}
+        
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button

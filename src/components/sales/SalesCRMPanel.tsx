@@ -19,6 +19,8 @@ interface SalesCRMPanelProps {
   onDeleteSale: (tunnelId: string, saleId: string) => void;
   onNavigateToTunnel?: (tunnelId: string) => void;
   initialTunnelFilter?: string;
+  onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
+  onFullyPaid: (saleId: string, tunnelId: string) => void;
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -30,6 +32,8 @@ export function SalesCRMPanel({
   onDeleteSale,
   onNavigateToTunnel,
   initialTunnelFilter = '',
+  onRecordPayment,
+  onFullyPaid,
 }: SalesCRMPanelProps) {
   const [selectedTunnelId, setSelectedTunnelId] = useState(initialTunnelFilter);
   const [selectedStatus, setSelectedStatus] = useState<PaymentStatus>('all');
@@ -232,6 +236,8 @@ export function SalesCRMPanel({
         onEdit={handleEditSale}
         onDelete={handleDeleteSale}
         onViewTunnel={onNavigateToTunnel}
+        onRecordPayment={onRecordPayment}
+        onFullyPaid={onFullyPaid}
       />
 
       {/* Pagination */}
