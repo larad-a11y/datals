@@ -1,4 +1,4 @@
-import { User, TrendingUp, Wallet, Target, Phone } from 'lucide-react';
+import { User, TrendingUp, Wallet, Target, Phone, PhoneCall, Percent } from 'lucide-react';
 import { Tunnel, Charges } from '@/types/business';
 import { 
   BarChart, 
@@ -56,6 +56,10 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
     });
   });
   
+  // Track calls generated per closer (based on tunnel data)
+  // We need to track which tunnels each closer worked on
+  const closerTunnelsMap = new Map<string, Set<string>>();
+  
   // Aggregate sales data per closer
   tunnels.forEach(tunnel => {
     tunnel.sales.forEach(sale => {
@@ -66,19 +70,57 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
           stats.totalCollected += sale.amountCollected;
           stats.totalContracted += sale.totalPrice;
           stats.callsClosed += 1;
+          
+          // Track which tunnels this closer worked on
+          if (!closerTunnelsMap.has(sale.closerId)) {
+            closerTunnelsMap.set(sale.closerId, new Set());
+          }
+          closerTunnelsMap.get(sale.closerId)!.add(tunnel.id);
         }
       }
     });
   });
   
+  // Calculate calls generated per closer
+  // Approach: For each tunnel a closer worked on, attribute a proportional share of calls
+  closerTunnelsMap.forEach((tunnelIds, closerId) => {
+    const stats = closerStatsMap.get(closerId);
+    if (stats) {
+      tunnelIds.forEach(tunnelId => {
+        const tunnel = tunnels.find(t => t.id === tunnelId);
+        if (tunnel && tunnel.callsGenerated > 0) {
+          // Count how many closers worked on this tunnel
+          const closersOnTunnel = new Set(
+            tunnel.sales.filter(s => s.closerId).map(s => s.closerId)
+          ).size;
+          
+          // Attribute calls proportionally based on sales
+          const closerSalesInTunnel = tunnel.sales.filter(s => s.closerId === closerId).length;
+          const totalSalesInTunnel = tunnel.sales.filter(s => s.closerId).length;
+          
+          if (totalSalesInTunnel > 0) {
+            // Proportional attribution of calls generated
+            const callsShare = (closerSalesInTunnel / totalSalesInTunnel) * tunnel.callsGenerated;
+            stats.callsGenerated += callsShare;
+          }
+        }
+      });
+    }
+  });
+  
   // Calculate derived metrics for each closer
-  closerStatsMap.forEach((stats, closerId) => {
+  closerStatsMap.forEach((stats) => {
     // Calculate commission (on HT amount)
     const collectedHT = stats.totalCollected * (1 / (1 + taxRate));
     stats.commission = collectedHT * (charges.closersPercent / 100);
     
     // Calculate average price per sale
     stats.averagePrice = stats.totalSales > 0 ? stats.totalContracted / stats.totalSales : 0;
+    
+    // Calculate closing rate (calls closed / calls generated)
+    stats.closingRate = stats.callsGenerated > 0 
+      ? (stats.callsClosed / stats.callsGenerated) * 100 
+      : 0;
   });
   
   // Convert to array and sort by total collected (descending)
@@ -249,6 +291,28 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
               </div>
               
               <div className="space-y-3">
+                {/* Closing Rate - New */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <Percent className="h-3.5 w-3.5" />
+                    Taux de closing
+                  </span>
+                  <span className={`font-medium ${stats.closingRate > 30 ? 'text-profitable' : stats.closingRate > 15 ? 'text-warning' : 'text-danger'}`}>
+                    {stats.closingRate > 0 ? `${stats.closingRate.toFixed(1)}%` : 'N/A'}
+                  </span>
+                </div>
+                
+                {/* Calls Info */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <PhoneCall className="h-3.5 w-3.5" />
+                    Appels
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {stats.callsClosed} / {Math.round(stats.callsGenerated) || '–'}
+                  </span>
+                </div>
+                
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <Target className="h-3.5 w-3.5" />
