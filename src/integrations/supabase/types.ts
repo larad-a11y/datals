@@ -108,7 +108,10 @@ export type Database = {
           client_name: string | null
           closer_id: string | null
           created_at: string | null
+          defaulted_at: string | null
           id: string
+          is_defaulted: boolean | null
+          last_payment_update: string | null
           next_payment_date: string | null
           number_of_payments: number | null
           offer_id: string | null
@@ -126,7 +129,10 @@ export type Database = {
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
+          defaulted_at?: string | null
           id?: string
+          is_defaulted?: boolean | null
+          last_payment_update?: string | null
           next_payment_date?: string | null
           number_of_payments?: number | null
           offer_id?: string | null
@@ -144,7 +150,10 @@ export type Database = {
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
+          defaulted_at?: string | null
           id?: string
+          is_defaulted?: boolean | null
+          last_payment_update?: string | null
           next_payment_date?: string | null
           number_of_payments?: number | null
           offer_id?: string | null

@@ -50,6 +50,9 @@ export interface Sale {
   createdAt: string;
   paymentHistory: PaymentRecord[];
   nextPaymentDate?: string; // Date of next expected payment
+  isDefaulted?: boolean; // Vente en impayé
+  defaultedAt?: string; // Date de mise en impayé
+  lastPaymentUpdate?: string; // Dernière mise à jour du paiement
 }
 
 export interface PaymentNotification {
@@ -162,6 +165,7 @@ export interface KPIData {
   agencyCost: number;
   upcomingPaymentsThisMonth: number;
   upcomingPaymentsTotal: number;
+  defaultedAmount: number; // Montant total en impayé
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [

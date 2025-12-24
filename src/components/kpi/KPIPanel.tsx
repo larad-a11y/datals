@@ -11,6 +11,7 @@ import {
   Sparkles,
   UserCheck,
   Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
@@ -114,6 +115,18 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             {kpis.upcomingPaymentsTotal.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
+
+        {kpis.defaultedAmount > 0 && (
+          <div className="kpi-card kpi-danger">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <AlertTriangle className="h-4 w-4" />
+              Impayés
+            </div>
+            <p className="stat-value mt-2 text-danger">
+              {kpis.defaultedAmount.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Performance metrics */}

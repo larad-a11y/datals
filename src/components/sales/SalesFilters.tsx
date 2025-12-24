@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-export type PaymentStatus = 'all' | 'paid' | 'pending' | 'partial';
+export type PaymentStatus = 'all' | 'paid' | 'pending' | 'partial' | 'defaulted';
 
 interface DateRange {
   from: Date | undefined;
@@ -57,7 +57,8 @@ export function SalesFilters({
     { value: 'all', label: 'Tous' },
     { value: 'paid', label: 'Payé' },
     { value: 'partial', label: 'En cours' },
-    { value: 'pending', label: 'Impayé' },
+    { value: 'pending', label: 'À payer' },
+    { value: 'defaulted', label: 'Impayés' },
   ];
 
   const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
