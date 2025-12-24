@@ -11,16 +11,19 @@ import {
   Sparkles,
   UserCheck,
 } from 'lucide-react';
-import { KPIData, Charges, Salary, CoachingExpense } from '@/types/business';
+import { KPIData, Charges, Salary, CoachingExpense, Tunnel } from '@/types/business';
+import { KPITrendChart } from './KPITrendChart';
 
 interface KPIPanelProps {
   kpis: KPIData;
   charges: Charges;
   salaries: Salary[];
   coachingExpenses: CoachingExpense[];
+  tunnels: Tunnel[];
+  selectedMonth: string;
 }
 
-export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanelProps) {
+export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, selectedMonth }: KPIPanelProps) {
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
   const totalCoachingExpenses = coachingExpenses.reduce((sum, e) => sum + e.amount, 0);
   const isAboveAgencyThreshold = kpis.collectedRevenueHT > charges.agencyThreshold;
@@ -159,6 +162,15 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
           </p>
         </div>
       </div>
+
+      {/* KPI Trend Chart */}
+      <KPITrendChart
+        tunnels={tunnels}
+        charges={charges}
+        salaries={salaries}
+        coachingExpenses={coachingExpenses}
+        selectedMonth={selectedMonth}
+      />
 
       {/* Calculation breakdown */}
       <div className="rounded-xl border border-border/50 bg-card p-6">
