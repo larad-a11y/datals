@@ -26,7 +26,6 @@ const Index = () => {
   }, [authLoading, user, navigate]);
   
   const {
-    loading: dataLoading,
     selectedMonth,
     setSelectedMonth,
     tunnels,
@@ -258,15 +257,10 @@ const Index = () => {
     }
   };
 
-  if (authLoading || dataLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            {authLoading ? 'Vérification...' : 'Chargement des données...'}
-          </p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
