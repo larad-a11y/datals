@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { X, CalendarDays } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState, useMemo } from 'react';
+import { X, CalendarDays, Plus, Trash2 } from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Tunnel, TunnelType, tunnelTypeLabels } from '@/types/business';
+import { Tunnel, TunnelType, tunnelTypeLabels, ChallengeDay } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -32,10 +32,32 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     averagePrice: tunnel?.averagePrice || '',
     collectedAmount: tunnel?.collectedAmount || '',
     sales: tunnel?.sales || [],
+    // New traffic metrics
+    registrations: tunnel?.registrations || '',
+    attendees: tunnel?.attendees || '',
+    challengeDays: tunnel?.challengeDays || [] as ChallengeDay[],
+    callsBooked: tunnel?.callsBooked || '',
   });
 
   const [dateOpen, setDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
+
+  // Calculate number of challenge days
+  const numberOfChallengeDays = useMemo(() => {
+    if (formData.type !== 'challenge' || !formData.date || !formData.endDate) return 0;
+    return differenceInDays(new Date(formData.endDate), new Date(formData.date)) + 1;
+  }, [formData.type, formData.date, formData.endDate]);
+
+  // Update challenge days when dates change
+  const updateChallengeDays = (numDays: number) => {
+    const currentDays = formData.challengeDays;
+    const newDays: ChallengeDay[] = [];
+    for (let i = 1; i <= numDays; i++) {
+      const existing = currentDays.find(d => d.day === i);
+      newDays.push(existing || { day: i, attendees: 0 });
+    }
+    setFormData(prev => ({ ...prev, challengeDays: newDays }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +68,10 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
       callsClosed: tunnel?.callsClosed || 0, // Calculated from sales
       averagePrice: 0, // Calculated from sales
       collectedAmount: tunnel?.collectedAmount || 0, // Calculated from sales
+      registrations: parseInt(String(formData.registrations)) || 0,
+      attendees: formData.type === 'webinar' ? parseInt(String(formData.attendees)) || 0 : undefined,
+      challengeDays: formData.type === 'challenge' ? formData.challengeDays : undefined,
+      callsBooked: formData.type === 'vsl' ? parseInt(String(formData.callsBooked)) || 0 : undefined,
     });
   };
 
@@ -245,6 +271,116 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 </p>
               </div>
             </div>
+
+            {/* Registrations - common to all types */}
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
+                📝 Nombre d'inscrits
+              </label>
+              <input
+                type="number"
+                value={formData.registrations}
+                onChange={(e) => setFormData(prev => ({ ...prev, registrations: e.target.value }))}
+                className="input-field w-full"
+                min="0"
+                placeholder={formData.type === 'webinar' ? "Ex: 500" : formData.type === 'challenge' ? "Ex: 1000" : "Ex: 200"}
+              />
+            </div>
+
+            {/* Webinar specific: attendees */}
+            {formData.type === 'webinar' && (
+              <div className="mt-4">
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  👥 Nombre de présents
+                </label>
+                <input
+                  type="number"
+                  value={formData.attendees}
+                  onChange={(e) => setFormData(prev => ({ ...prev, attendees: e.target.value }))}
+                  className="input-field w-full"
+                  min="0"
+                  placeholder="Ex: 150"
+                />
+                {formData.registrations && formData.attendees && (
+                  <p className="mt-1 text-xs text-primary">
+                    Show-up rate: {((parseInt(String(formData.attendees)) / parseInt(String(formData.registrations))) * 100).toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Challenge specific: attendees per day */}
+            {formData.type === 'challenge' && formData.date && formData.endDate && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-foreground">
+                    👥 Présents par jour
+                  </label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => updateChallengeDays(numberOfChallengeDays)}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    Initialiser les jours
+                  </Button>
+                </div>
+                {formData.challengeDays.length > 0 ? (
+                  <div className="space-y-2">
+                    {formData.challengeDays.map((day, index) => {
+                      const showUpRate = formData.registrations 
+                        ? ((day.attendees / parseInt(String(formData.registrations))) * 100).toFixed(1)
+                        : '0';
+                      return (
+                        <div key={day.day} className="flex items-center gap-3 rounded-lg bg-secondary/30 p-2">
+                          <span className="text-sm font-medium text-foreground w-16">Jour {day.day}</span>
+                          <input
+                            type="number"
+                            value={day.attendees}
+                            onChange={(e) => {
+                              const newDays = [...formData.challengeDays];
+                              newDays[index] = { ...day, attendees: parseInt(e.target.value) || 0 };
+                              setFormData(prev => ({ ...prev, challengeDays: newDays }));
+                            }}
+                            className="input-field flex-1"
+                            min="0"
+                            placeholder="Présents"
+                          />
+                          <span className="text-xs text-primary w-20 text-right">{showUpRate}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Cliquez sur "Initialiser les jours" après avoir défini les dates
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* VSL specific: calls booked */}
+            {formData.type === 'vsl' && (
+              <div className="mt-4">
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  📅 Calls réservés
+                </label>
+                <input
+                  type="number"
+                  value={formData.callsBooked}
+                  onChange={(e) => setFormData(prev => ({ ...prev, callsBooked: e.target.value }))}
+                  className="input-field w-full"
+                  min="0"
+                  placeholder="Ex: 30"
+                />
+                {formData.registrations && formData.callsBooked && (
+                  <p className="mt-1 text-xs text-primary">
+                    Taux de booking: {((parseInt(String(formData.callsBooked)) / parseInt(String(formData.registrations))) * 100).toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Actions */}
