@@ -80,10 +80,13 @@ const Index = () => {
     const sale = tunnel.sales.find(s => s.id === saleId);
     if (!sale) return;
     
+    // Use YYYY-MM-DD format consistently
+    const today = new Date().toISOString().split('T')[0];
+    
     const newPayment: PaymentRecord = {
       id: `payment-${Date.now()}`,
       amount,
-      date: new Date().toISOString(),
+      date: today,
       verified: true,
       verifiedAt: new Date().toISOString(),
     };
@@ -117,10 +120,13 @@ const Index = () => {
     const remaining = sale.totalPrice - sale.amountCollected;
     if (remaining <= 0) return;
     
+    // Use YYYY-MM-DD format consistently
+    const today = new Date().toISOString().split('T')[0];
+    
     const newPayment: PaymentRecord = {
       id: `payment-${Date.now()}`,
       amount: remaining,
-      date: new Date().toISOString(),
+      date: today,
       verified: true,
       verifiedAt: new Date().toISOString(),
     };

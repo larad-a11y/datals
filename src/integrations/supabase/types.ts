@@ -14,7 +14,284 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coaching_expenses: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          month: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          month: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          month?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      salaries: {
+        Row: {
+          created_at: string | null
+          employee_name: string
+          employer_charges: number | null
+          gross_salary: number
+          id: string
+          total_cost: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          employee_name: string
+          employer_charges?: number | null
+          gross_salary: number
+          id?: string
+          total_cost: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          employee_name?: string
+          employer_charges?: number | null
+          gross_salary?: number
+          id?: string
+          total_cost?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          amount_collected: number | null
+          base_price: number
+          client_name: string | null
+          closer_id: string | null
+          created_at: string | null
+          id: string
+          next_payment_date: string | null
+          number_of_payments: number | null
+          offer_id: string | null
+          payment_history: Json | null
+          payment_method: string
+          sale_date: string
+          total_price: number
+          tunnel_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_collected?: number | null
+          base_price: number
+          client_name?: string | null
+          closer_id?: string | null
+          created_at?: string | null
+          id?: string
+          next_payment_date?: string | null
+          number_of_payments?: number | null
+          offer_id?: string | null
+          payment_history?: Json | null
+          payment_method: string
+          sale_date: string
+          total_price: number
+          tunnel_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_collected?: number | null
+          base_price?: number
+          client_name?: string | null
+          closer_id?: string | null
+          created_at?: string | null
+          id?: string
+          next_payment_date?: string | null
+          number_of_payments?: number | null
+          offer_id?: string | null
+          payment_history?: Json | null
+          payment_method?: string
+          sale_date?: string
+          total_price?: number
+          tunnel_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_tunnel_id_fkey"
+            columns: ["tunnel_id"]
+            isOneToOne: false
+            referencedRelation: "tunnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tunnels: {
+        Row: {
+          ad_budget: number | null
+          attendees: number | null
+          average_price: number | null
+          calls_booked: number | null
+          calls_closed: number | null
+          calls_generated: number | null
+          challenge_days: Json | null
+          collected_amount: number | null
+          created_at: string | null
+          date: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          month: string
+          name: string
+          registrations: number | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ad_budget?: number | null
+          attendees?: number | null
+          average_price?: number | null
+          calls_booked?: number | null
+          calls_closed?: number | null
+          calls_generated?: number | null
+          challenge_days?: Json | null
+          collected_amount?: number | null
+          created_at?: string | null
+          date?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          month: string
+          name: string
+          registrations?: number | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ad_budget?: number | null
+          attendees?: number | null
+          average_price?: number | null
+          calls_booked?: number | null
+          calls_closed?: number | null
+          calls_generated?: number | null
+          challenge_days?: Json | null
+          collected_amount?: number | null
+          created_at?: string | null
+          date?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          month?: string
+          name?: string
+          registrations?: number | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_charges: {
+        Row: {
+          advertising: number | null
+          agency_percent: number | null
+          agency_threshold: number | null
+          associate_percent: number | null
+          closers: Json | null
+          closers_percent: number | null
+          created_at: string | null
+          id: string
+          installment_plans: Json | null
+          marketing: number | null
+          offers: Json | null
+          other_costs: number | null
+          payment_processor_percent: number | null
+          software: number | null
+          tax_percent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          advertising?: number | null
+          agency_percent?: number | null
+          agency_threshold?: number | null
+          associate_percent?: number | null
+          closers?: Json | null
+          closers_percent?: number | null
+          created_at?: string | null
+          id?: string
+          installment_plans?: Json | null
+          marketing?: number | null
+          offers?: Json | null
+          other_costs?: number | null
+          payment_processor_percent?: number | null
+          software?: number | null
+          tax_percent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          advertising?: number | null
+          agency_percent?: number | null
+          agency_threshold?: number | null
+          associate_percent?: number | null
+          closers?: Json | null
+          closers_percent?: number | null
+          created_at?: string | null
+          id?: string
+          installment_plans?: Json | null
+          marketing?: number | null
+          offers?: Json | null
+          other_costs?: number | null
+          payment_processor_percent?: number | null
+          software?: number | null
+          tax_percent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer } from '@/types/business';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { DatePickerField } from '@/components/ui/date-picker-field';
 
 interface SaleFormProps {
   sale?: Sale;
@@ -177,35 +172,12 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Date de vente */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          📅 Date de la vente
-        </label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !formData.saleDate && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {formData.saleDate ? format(new Date(formData.saleDate + 'T12:00:00'), "PPP", { locale: fr }) : <span>Choisir une date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={formData.saleDate ? new Date(formData.saleDate + 'T12:00:00') : undefined}
-              onSelect={(date) => date && setFormData(prev => ({ ...prev, saleDate: format(date, 'yyyy-MM-dd') }))}
-              disabled={(date) => date > new Date()}
-              initialFocus
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <DatePickerField
+        label="📅 Date de la vente"
+        value={formData.saleDate}
+        onChange={(date) => setFormData(prev => ({ ...prev, saleDate: date }))}
+        maxDate={new Date()}
+      />
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
