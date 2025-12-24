@@ -315,8 +315,8 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
       </div>
 
       {/* Tunnels Overview */}
-      <div className="rounded-xl border border-border/50 bg-card p-6">
-        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
+      <div className="space-y-4">
+        <h3 className="font-display text-lg font-semibold text-foreground">
           Tunnels actifs ce mois
         </h3>
         {tunnels.length === 0 ? (
@@ -326,13 +326,14 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
         ) : (
           <div className="space-y-4">
             {tunnels.map((tunnel) => (
-              <TunnelCard 
-                key={tunnel.id}
-                tunnel={tunnel}
-                charges={charges}
-                salaries={salaries}
-                coachingExpenses={coachingExpenses.filter(e => e.month === selectedMonth)}
-              />
+              <div key={tunnel.id} className="rounded-xl border border-border/50 bg-card p-4">
+                <TunnelCard 
+                  tunnel={tunnel}
+                  charges={charges}
+                  salaries={salaries}
+                  coachingExpenses={coachingExpenses.filter(e => e.month === selectedMonth)}
+                />
+              </div>
             ))}
           </div>
         )}
