@@ -1,4 +1,14 @@
+import { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
+import { format, parse } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface HeaderProps {
   selectedMonth: string;
@@ -6,10 +16,22 @@ interface HeaderProps {
 }
 
 export function Header({ selectedMonth, onMonthChange }: HeaderProps) {
+  const [open, setOpen] = useState(false);
+
+  const currentDate = parse(selectedMonth + '-01', 'yyyy-MM-dd', new Date());
+
   const formatMonthLabel = (monthStr: string) => {
     const [year, month] = monthStr.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  };
+
+  const handleSelect = (date: Date | undefined) => {
+    if (date) {
+      const newMonth = format(date, 'yyyy-MM');
+      onMonthChange(newMonth);
+      setOpen(false);
+    }
   };
 
   return (
@@ -24,20 +46,26 @@ export function Header({ selectedMonth, onMonthChange }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/50 px-4 py-2">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => onMonthChange(e.target.value)}
-            className="bg-transparent text-sm font-medium text-foreground outline-none"
-          />
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-medium text-foreground capitalize">
-            {formatMonthLabel(selectedMonth)}
-          </p>
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-secondary/50"
+            >
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+              <span className="capitalize">{formatMonthLabel(selectedMonth)}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-card border-border" align="end">
+            <Calendar
+              mode="single"
+              selected={currentDate}
+              onSelect={handleSelect}
+              locale={fr}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
     </header>
   );

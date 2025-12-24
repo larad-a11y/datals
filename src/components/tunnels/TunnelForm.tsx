@@ -1,7 +1,15 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, CalendarDays } from 'lucide-react';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { Tunnel, TunnelType, tunnelTypeLabels } from '@/types/business';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface TunnelFormProps {
   tunnel?: Tunnel;
@@ -24,12 +32,23 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     collectedAmount: tunnel?.collectedAmount || 0,
   });
 
+  const [dateOpen, setDateOpen] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
   };
 
   const contractedRevenue = formData.callsClosed * formData.averagePrice;
+
+  const selectedDate = formData.date ? new Date(formData.date) : undefined;
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, date: format(date, 'yyyy-MM-dd') }));
+      setDateOpen(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -81,12 +100,30 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
               <label className="mb-1.5 block text-sm font-medium text-foreground">
                 Date de l'événement
               </label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                className="input-field w-full"
-              />
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal bg-secondary/30"
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {formData.date ? (
+                      format(new Date(formData.date), 'PPP', { locale: fr })
+                    ) : (
+                      <span className="text-muted-foreground">Choisir une date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={handleDateSelect}
+                    locale={fr}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 

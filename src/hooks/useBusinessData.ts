@@ -40,30 +40,34 @@ export function useBusinessData() {
     // Calculate deductions in order
     let remaining = totalCollected;
 
-    // 1. Closers percentage
+    // 1. Payment processor fees
+    const paymentProcessorCost = remaining * (charges.paymentProcessorPercent / 100);
+    remaining -= paymentProcessorCost;
+
+    // 2. Closers percentage
     const closersCost = remaining * (charges.closersPercent / 100);
     remaining -= closersCost;
 
-    // 2. Agency percentage (only if above threshold)
+    // 3. Agency percentage (only if above threshold)
     let agencyCost = 0;
     if (totalCollected > charges.agencyThreshold) {
       agencyCost = remaining * (charges.agencyPercent / 100);
       remaining -= agencyCost;
     }
 
-    // 3. Fixed charges
+    // 4. Fixed charges
     const fixedCharges = charges.advertising + charges.marketing + 
                          charges.software + charges.coaching + charges.otherCosts;
     remaining -= fixedCharges;
 
-    // 4. Salaries
+    // 5. Salaries
     const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
     remaining -= totalSalaries;
 
     // Net profit before associate
     const netProfit = remaining;
 
-    // 5. Associate percentage (on net profit only)
+    // 6. Associate percentage (on net profit only)
     const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
     const netNetProfit = netProfit - associateCost;
 
