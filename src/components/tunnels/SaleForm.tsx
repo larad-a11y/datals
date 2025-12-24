@@ -191,14 +191,21 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {formData.saleDate ? format(new Date(formData.saleDate), "PPP", { locale: fr }) : <span>Choisir une date</span>}
+              {formData.saleDate ? format(new Date(formData.saleDate + 'T12:00:00'), "PPP", { locale: fr }) : <span>Choisir une date</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
               mode="single"
-              selected={formData.saleDate ? new Date(formData.saleDate) : undefined}
-              onSelect={(date) => date && setFormData(prev => ({ ...prev, saleDate: date.toISOString().split('T')[0] }))}
+              selected={formData.saleDate ? new Date(formData.saleDate + 'T12:00:00') : undefined}
+              onSelect={(date) => {
+                if (date) {
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  setFormData(prev => ({ ...prev, saleDate: `${year}-${month}-${day}` }));
+                }
+              }}
               disabled={(date) => date > new Date()}
               initialFocus
               className="pointer-events-auto"
