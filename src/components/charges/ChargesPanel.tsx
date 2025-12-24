@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw, Users, GraduationCap } from 'lucide-react';
-import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary, CoachingExpense, CoachingExpenseType, coachingExpenseTypeLabels } from '@/types/business';
+import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary, CoachingExpense, CoachingExpenseType, coachingExpenseTypeLabels, Closer } from '@/types/business';
 import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
@@ -35,7 +35,10 @@ export function ChargesPanel({
   // Coaching expense form state
   const [newCoachingName, setNewCoachingName] = useState('');
   const [newCoachingAmount, setNewCoachingAmount] = useState('');
-  const [newCoachingType, setNewCoachingType] = useState<CoachingExpenseType>('coaching');
+  const [newCoachingType, setNewCoachingType] = useState<CoachingExpenseType>('group');
+  // Closer form state
+  const [newCloserFirstName, setNewCloserFirstName] = useState('');
+  const [newCloserLastName, setNewCloserLastName] = useState('');
 
   // Filter coaching expenses for selected month
   const monthlyCoachingExpenses = coachingExpenses.filter(e => e.month === selectedMonth);
@@ -123,6 +126,22 @@ export function ChargesPanel({
 
   const isAboveAgencyThreshold = collectedRevenue > charges.agencyThreshold;
 
+  const addCloser = () => {
+    if (!newCloserFirstName.trim() || !newCloserLastName.trim()) return;
+    const newCloser: Closer = {
+      id: `closer-${Date.now()}`,
+      firstName: newCloserFirstName.trim(),
+      lastName: newCloserLastName.trim(),
+    };
+    onUpdate({ ...charges, closers: [...charges.closers, newCloser] });
+    setNewCloserFirstName('');
+    setNewCloserLastName('');
+  };
+
+  const removeCloser = (closerId: string) => {
+    onUpdate({ ...charges, closers: charges.closers.filter(c => c.id !== closerId) });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -198,7 +217,7 @@ export function ChargesPanel({
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Par défaut: 17,5%</p>
+            <p className="mt-1 text-xs text-muted-foreground">Par défaut: 17,5% (uniquement si closer assigné)</p>
           </div>
 
           <div>
@@ -259,6 +278,83 @@ export function ChargesPanel({
             step="1000"
           />
         </div>
+      </div>
+
+      {/* Closers Management */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-semibold text-foreground">
+              Équipe Closers
+            </h3>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            La commission closer s'applique uniquement aux ventes avec closer assigné
+          </span>
+        </div>
+
+        {/* Add new closer */}
+        <div className="mb-4 rounded-lg border border-dashed border-border/50 p-4">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Ajouter un closer</h4>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-muted-foreground">Prénom</label>
+              <input
+                type="text"
+                value={newCloserFirstName}
+                onChange={(e) => setNewCloserFirstName(e.target.value)}
+                className="input-field w-full"
+                placeholder="Ex: Jean"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-muted-foreground">Nom</label>
+              <input
+                type="text"
+                value={newCloserLastName}
+                onChange={(e) => setNewCloserLastName(e.target.value)}
+                className="input-field w-full"
+                placeholder="Ex: Dupont"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={addCloser}
+                disabled={!newCloserFirstName.trim() || !newCloserLastName.trim()}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Closers list */}
+        {charges.closers.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Aucun closer configuré
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {charges.closers.map((closer) => (
+              <div
+                key={closer.id}
+                className="flex items-center justify-between rounded-lg bg-secondary/30 p-3"
+              >
+                <span className="font-medium text-foreground">
+                  {closer.firstName} {closer.lastName}
+                </span>
+                <button
+                  onClick={() => removeCloser(closer.id)}
+                  className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Installment Plans Configuration */}
@@ -561,8 +657,8 @@ export function ChargesPanel({
                 onChange={(e) => setNewCoachingType(e.target.value as CoachingExpenseType)}
                 className="input-field w-full"
               >
-                <option value="coaching">Coaching</option>
-                <option value="mentoring">Mentorat</option>
+                <option value="group">Coaching de groupe</option>
+                <option value="private">Coaching privé</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -577,7 +673,7 @@ export function ChargesPanel({
                     });
                     setNewCoachingName('');
                     setNewCoachingAmount('');
-                    setNewCoachingType('coaching');
+                    setNewCoachingType('group');
                   }
                 }} 
                 disabled={!newCoachingName.trim() || !newCoachingAmount}
@@ -603,7 +699,7 @@ export function ChargesPanel({
               >
                 <div className="flex items-center gap-3">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    expense.type === 'coaching' 
+                    expense.type === 'group' 
                       ? 'bg-primary/10 text-primary' 
                       : 'bg-accent/10 text-accent-foreground'
                   }`}>

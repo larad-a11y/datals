@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Target, ExternalLink } from 'lucide-react';
-import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallmentPlans } from '@/types/business';
+import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
 import { SaleForm } from './SaleForm';
 import { Button } from '@/components/ui/button';
@@ -16,9 +16,10 @@ interface TunnelsListProps {
   onNavigateToSales?: (tunnelId?: string) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
+  closers?: Closer[];
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [] }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
@@ -283,6 +284,7 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                         inline
                         installmentPlans={installmentPlans}
                         offers={offers}
+                        closers={closers}
                       />
                     </div>
                   )}

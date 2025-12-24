@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Receipt, TrendingUp, Clock, CheckCircle } from 'lucide-react';
-import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans } from '@/types/business';
+import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
@@ -23,6 +23,7 @@ interface SalesCRMPanelProps {
   onFullyPaid: (saleId: string, tunnelId: string) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
+  closers?: Closer[];
 }
 
 const ITEMS_PER_PAGE = 20;
@@ -38,6 +39,7 @@ export function SalesCRMPanel({
   onFullyPaid,
   installmentPlans = defaultInstallmentPlans,
   offers = [],
+  closers = [],
 }: SalesCRMPanelProps) {
   const [selectedTunnelId, setSelectedTunnelId] = useState(initialTunnelFilter);
   const [selectedStatus, setSelectedStatus] = useState<PaymentStatus>('all');
@@ -300,6 +302,7 @@ export function SalesCRMPanel({
           onCancel={() => setEditingSale(null)}
           installmentPlans={installmentPlans}
           offers={offers}
+          closers={closers}
         />
       )}
     </div>

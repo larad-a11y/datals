@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
-import { Sale, InstallmentPlan, Offer, defaultInstallmentPlans } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SaleForm } from './SaleForm';
 
 interface SalesSectionProps {
@@ -10,9 +10,10 @@ interface SalesSectionProps {
   onDeleteSale: (id: string) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
+  closers?: Closer[];
 }
 
-export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, installmentPlans = defaultInstallmentPlans, offers = [] }: SalesSectionProps) {
+export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: SalesSectionProps) {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const handleSave = (data: Omit<Sale, 'id' | 'createdAt'>) => {
@@ -120,6 +121,7 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, ins
         inline
         installmentPlans={installmentPlans}
         offers={offers}
+        closers={closers}
       />
 
       {/* Edit modal */}
@@ -130,6 +132,7 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, ins
           onCancel={() => setEditingSale(null)}
           installmentPlans={installmentPlans}
           offers={offers}
+          closers={closers}
         />
       )}
     </div>
