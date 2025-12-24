@@ -14,6 +14,11 @@ import { cn } from '@/lib/utils';
 
 export type PaymentStatus = 'all' | 'paid' | 'pending' | 'partial';
 
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 interface SalesFiltersProps {
   tunnels: Tunnel[];
   selectedTunnelId: string;
@@ -27,8 +32,8 @@ interface SalesFiltersProps {
   closers: Closer[];
   selectedCloserId: string;
   onCloserChange: (closerId: string) => void;
-  selectedDate: Date | undefined;
-  onDateChange: (date: Date | undefined) => void;
+  dateRange: DateRange;
+  onDateRangeChange: (range: DateRange) => void;
 }
 
 export function SalesFilters({
@@ -44,8 +49,8 @@ export function SalesFilters({
   closers,
   selectedCloserId,
   onCloserChange,
-  selectedDate,
-  onDateChange,
+  dateRange,
+  onDateRangeChange,
 }: SalesFiltersProps) {
   const [dateOpen, setDateOpen] = useState(false);
   const statusOptions: { value: PaymentStatus; label: string }[] = [
@@ -55,7 +60,7 @@ export function SalesFilters({
     { value: 'pending', label: 'Impayé' },
   ];
 
-  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedDate !== undefined;
+  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
 
   const resetFilters = () => {
     onTunnelChange('');
@@ -63,7 +68,7 @@ export function SalesFilters({
     onSearchChange('');
     onMonthChange('');
     onCloserChange('');
-    onDateChange(undefined);
+    onDateRangeChange({ from: undefined, to: undefined });
   };
 
   // Generate month options (last 12 months)
@@ -131,31 +136,44 @@ export function SalesFilters({
         ))}
       </select>
 
-      {/* Date picker */}
+      {/* Date range picker */}
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "min-w-[150px] justify-start text-left font-normal",
-              !selectedDate && "text-muted-foreground"
+              "min-w-[200px] justify-start text-left font-normal",
+              !dateRange.from && !dateRange.to && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {selectedDate ? format(selectedDate, "dd/MM/yyyy", { locale: fr }) : "Date précise"}
+            {dateRange.from ? (
+              dateRange.to ? (
+                <>
+                  {format(dateRange.from, "dd/MM/yy", { locale: fr })} - {format(dateRange.to, "dd/MM/yy", { locale: fr })}
+                </>
+              ) : (
+                format(dateRange.from, "dd/MM/yyyy", { locale: fr })
+              )
+            ) : (
+              "Période"
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              onDateChange(date);
-              setDateOpen(false);
+            mode="range"
+            selected={dateRange}
+            onSelect={(range) => {
+              onDateRangeChange({ from: range?.from, to: range?.to });
+              if (range?.from && range?.to) {
+                setDateOpen(false);
+              }
             }}
             locale={fr}
             initialFocus
             className="pointer-events-auto"
+            numberOfMonths={2}
           />
         </PopoverContent>
       </Popover>
