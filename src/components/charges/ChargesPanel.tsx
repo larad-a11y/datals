@@ -115,6 +115,25 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Calculé APRÈS toutes les autres charges</p>
           </div>
+
+          <div>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
+              📅 Majoration facilités paiement
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={charges.installmentMarkupPercent}
+                onChange={(e) => handleChange('installmentMarkupPercent', parseFloat(e.target.value) || 0)}
+                className="input-field w-full pr-8"
+                min="0"
+                max="100"
+                step="0.5"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Appliqué aux paiements en plusieurs fois</p>
+          </div>
         </div>
 
         {/* Agency threshold setting */}

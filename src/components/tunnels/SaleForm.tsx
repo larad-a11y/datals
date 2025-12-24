@@ -8,20 +8,10 @@ interface SaleFormProps {
   onSave: (sale: Omit<Sale, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
   inline?: boolean;
+  installmentMarkupPercent?: number; // Pourcentage de majoration configurable
 }
 
-// Majorations par défaut pour les paiements échelonnés
-const DEFAULT_MARKUPS: Record<number, number> = {
-  1: 0,
-  2: 5,
-  3: 10,
-  4: 15,
-  6: 20,
-  10: 25,
-  12: 30,
-};
-
-export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false }: SaleFormProps) {
+export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentMarkupPercent = 5 }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
     basePrice: sale?.basePrice || sale?.totalPrice || '',
@@ -45,12 +35,14 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   // Calcul automatique du prix total avec majoration
   useEffect(() => {
-    if (basePriceNum > 0 && formData.useMarkup) {
-      const markup = DEFAULT_MARKUPS[formData.numberOfPayments] || 0;
-      const calculatedTotal = basePriceNum * (1 + markup / 100);
+    if (basePriceNum > 0 && formData.useMarkup && formData.numberOfPayments > 1) {
+      const calculatedTotal = basePriceNum * (1 + installmentMarkupPercent / 100);
       setFormData(prev => ({ ...prev, totalPrice: calculatedTotal }));
+    } else if (basePriceNum > 0 && formData.numberOfPayments === 1) {
+      // Pas de majoration pour paiement en 1x
+      setFormData(prev => ({ ...prev, totalPrice: basePriceNum }));
     }
-  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup]);
+  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, installmentMarkupPercent]);
 
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
   useEffect(() => {
@@ -97,7 +89,6 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     }
   };
 
-  const markupPercent = DEFAULT_MARKUPS[formData.numberOfPayments] || 0;
   const hasMarkup = totalPriceNum > basePriceNum && basePriceNum > 0;
   const markupAmount = totalPriceNum - basePriceNum;
   const remainingAmount = totalPriceNum - amountCollectedNum;
@@ -153,8 +144,8 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
               }`}
             >
               {n}x
-              {n > 1 && DEFAULT_MARKUPS[n] > 0 && (
-                <span className="ml-1 text-xs opacity-70">+{DEFAULT_MARKUPS[n]}%</span>
+              {n > 1 && (
+                <span className="ml-1 text-xs opacity-70">+{installmentMarkupPercent}%</span>
               )}
             </button>
           ))}
@@ -178,7 +169,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
                 }}
                 className="rounded"
               />
-              Appliquer majoration
+              Appliquer majoration (+{installmentMarkupPercent}%)
             </label>
           </div>
           <div className="flex items-center gap-2">

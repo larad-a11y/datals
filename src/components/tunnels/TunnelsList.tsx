@@ -14,9 +14,10 @@ interface TunnelsListProps {
   onUpdate: (id: string, updates: Partial<Tunnel>) => void;
   onDelete: (id: string) => void;
   onNavigateToSales?: (tunnelId?: string) => void;
+  installmentMarkupPercent?: number;
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentMarkupPercent = 5 }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
@@ -279,6 +280,7 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
                         onSave={(data) => handleQuickAddSale(tunnel.id, data)}
                         onCancel={() => setShowQuickSale(null)}
                         inline
+                        installmentMarkupPercent={installmentMarkupPercent}
                       />
                     </div>
                   )}
