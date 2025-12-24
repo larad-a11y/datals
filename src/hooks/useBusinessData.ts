@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale } from '@/types/business';
+import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale, CoachingExpense } from '@/types/business';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -12,11 +12,18 @@ export function useBusinessData() {
   const [tunnels, setTunnels] = useState<Tunnel[]>([]);
   const [charges, setCharges] = useState<Charges>(defaultCharges);
   const [salaries, setSalaries] = useState<Salary[]>([]);
+  const [coachingExpenses, setCoachingExpenses] = useState<CoachingExpense[]>([]);
 
   // Filter tunnels by selected month
   const filteredTunnels = useMemo(() => 
     tunnels.filter(t => t.month === selectedMonth && t.isActive),
     [tunnels, selectedMonth]
+  );
+
+  // Filter coaching expenses by selected month
+  const filteredCoachingExpenses = useMemo(() =>
+    coachingExpenses.filter(e => e.month === selectedMonth),
+    [coachingExpenses, selectedMonth]
   );
 
   // Calculate KPIs
@@ -59,19 +66,23 @@ export function useBusinessData() {
       remaining -= agencyCost;
     }
 
-    // 4. Fixed charges
+    // 4. Fixed charges (without coaching, now managed separately)
     const fixedCharges = charges.advertising + charges.marketing + 
-                         charges.software + charges.coaching + charges.otherCosts;
+                         charges.software + charges.otherCosts;
     remaining -= fixedCharges;
 
-    // 5. Salaries
+    // 5. Coaching expenses (filtered by month)
+    const totalCoachingExpenses = filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
+    remaining -= totalCoachingExpenses;
+
+    // 6. Salaries
     const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
     remaining -= totalSalaries;
 
     // Net profit before associate
     const netProfit = remaining;
 
-    // 6. Associate percentage (on net profit only)
+    // 7. Associate percentage (on net profit only)
     const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
     const netNetProfit = netProfit - associateCost;
 
@@ -102,7 +113,7 @@ export function useBusinessData() {
       totalClosedCalls,
       totalAdBudget,
     };
-  }, [filteredTunnels, charges, salaries]);
+  }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 
   // Tunnel operations
   const addTunnel = useCallback((tunnel: Omit<Tunnel, 'id'>) => {
@@ -135,6 +146,19 @@ export function useBusinessData() {
     setSalaries(prev => prev.filter(s => s.id !== id));
   }, []);
 
+  // Coaching expense operations
+  const addCoachingExpense = useCallback((expense: Omit<CoachingExpense, 'id'>) => {
+    setCoachingExpenses(prev => [...prev, { ...expense, id: generateId() }]);
+  }, []);
+
+  const updateCoachingExpense = useCallback((id: string, updates: Partial<CoachingExpense>) => {
+    setCoachingExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+  }, []);
+
+  const deleteCoachingExpense = useCallback((id: string) => {
+    setCoachingExpenses(prev => prev.filter(e => e.id !== id));
+  }, []);
+
   // Get all sales from all tunnels with tunnel info
   const getAllSales = useCallback(() => {
     return tunnels.flatMap(tunnel => 
@@ -165,5 +189,10 @@ export function useBusinessData() {
     updateSalary,
     deleteSalary,
     getAllSales,
+    coachingExpenses,
+    filteredCoachingExpenses,
+    addCoachingExpense,
+    updateCoachingExpense,
+    deleteCoachingExpense,
   };
 }

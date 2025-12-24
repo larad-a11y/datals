@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw, Users } from 'lucide-react';
-import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary } from '@/types/business';
+import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw, Users, GraduationCap } from 'lucide-react';
+import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary, CoachingExpense, CoachingExpenseType, coachingExpenseTypeLabels } from '@/types/business';
 import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
@@ -12,9 +12,19 @@ interface ChargesPanelProps {
   onAddSalary: (salary: Omit<Salary, 'id'>) => void;
   onUpdateSalary: (id: string, updates: Partial<Salary>) => void;
   onDeleteSalary: (id: string) => void;
+  // Coaching expenses
+  selectedMonth: string;
+  coachingExpenses: CoachingExpense[];
+  onAddCoachingExpense: (expense: Omit<CoachingExpense, 'id'>) => void;
+  onUpdateCoachingExpense: (id: string, updates: Partial<CoachingExpense>) => void;
+  onDeleteCoachingExpense: (id: string) => void;
 }
 
-export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedRevenue, salaries, onAddSalary, onUpdateSalary, onDeleteSalary }: ChargesPanelProps) {
+export function ChargesPanel({ 
+  charges, onUpdate, onResetCharges, collectedRevenue, 
+  salaries, onAddSalary, onUpdateSalary, onDeleteSalary,
+  selectedMonth, coachingExpenses, onAddCoachingExpense, onUpdateCoachingExpense, onDeleteCoachingExpense 
+}: ChargesPanelProps) {
   const [newSalaryName, setNewSalaryName] = useState('');
   const [newSalaryAmount, setNewSalaryAmount] = useState('');
   const [newOfferName, setNewOfferName] = useState('');
@@ -22,6 +32,14 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
   const [newOfferInstallments, setNewOfferInstallments] = useState<OfferInstallment[]>([
     { numberOfPayments: 1, markupPercent: 0 }
   ]);
+  // Coaching expense form state
+  const [newCoachingName, setNewCoachingName] = useState('');
+  const [newCoachingAmount, setNewCoachingAmount] = useState('');
+  const [newCoachingType, setNewCoachingType] = useState<CoachingExpenseType>('coaching');
+
+  // Filter coaching expenses for selected month
+  const monthlyCoachingExpenses = coachingExpenses.filter(e => e.month === selectedMonth);
+  const totalCoachingExpenses = monthlyCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const handleChange = (key: keyof Charges, value: number) => {
     onUpdate({ ...charges, [key]: value });
@@ -457,20 +475,6 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">
-              🎓 Coach / Mentorat
-            </label>
-            <input
-              type="number"
-              value={charges.coaching}
-              onChange={(e) => handleChange('coaching', parseFloat(e.target.value) || 0)}
-              className="input-field w-full"
-              min="0"
-              step="0.01"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-foreground">
               🧩 Autres coûts
             </label>
             <input
@@ -483,6 +487,139 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
             />
           </div>
         </div>
+      </div>
+
+      {/* Coaching / Mentoring expenses - Variable by month */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-semibold text-foreground">
+              Coaching / Mentorat
+            </h3>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+              Variable par mois
+            </span>
+          </div>
+          <div className="rounded-lg bg-secondary/50 px-4 py-2">
+            <span className="text-sm text-muted-foreground">Ce mois: </span>
+            <span className="font-display text-lg font-bold text-foreground">
+              {totalCoachingExpenses.toLocaleString('fr-FR')} €
+            </span>
+          </div>
+        </div>
+
+        {/* Add new coaching expense */}
+        <div className="mb-4 rounded-lg border border-dashed border-border/50 p-4">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Ajouter une prestation</h4>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[150px]">
+              <label className="mb-1 block text-xs text-muted-foreground">Nom</label>
+              <input
+                type="text"
+                value={newCoachingName}
+                onChange={(e) => setNewCoachingName(e.target.value)}
+                className="input-field w-full"
+                placeholder="Ex: Coach John"
+              />
+            </div>
+            <div className="w-32">
+              <label className="mb-1 block text-xs text-muted-foreground">Montant (€)</label>
+              <input
+                type="number"
+                value={newCoachingAmount}
+                onChange={(e) => setNewCoachingAmount(e.target.value)}
+                className="input-field w-full"
+                min="0"
+                step="0.01"
+                placeholder="0"
+              />
+            </div>
+            <div className="w-36">
+              <label className="mb-1 block text-xs text-muted-foreground">Type</label>
+              <select
+                value={newCoachingType}
+                onChange={(e) => setNewCoachingType(e.target.value as CoachingExpenseType)}
+                className="input-field w-full"
+              >
+                <option value="coaching">Coaching</option>
+                <option value="mentoring">Mentorat</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => {
+                  if (newCoachingName.trim() && newCoachingAmount) {
+                    onAddCoachingExpense({
+                      name: newCoachingName.trim(),
+                      amount: parseFloat(newCoachingAmount) || 0,
+                      month: selectedMonth,
+                      type: newCoachingType,
+                    });
+                    setNewCoachingName('');
+                    setNewCoachingAmount('');
+                    setNewCoachingType('coaching');
+                  }
+                }} 
+                disabled={!newCoachingName.trim() || !newCoachingAmount}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Coaching expenses list for this month */}
+        {monthlyCoachingExpenses.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Aucune prestation de coaching/mentorat ce mois-ci
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {monthlyCoachingExpenses.map((expense) => (
+              <div
+                key={expense.id}
+                className="flex items-center justify-between rounded-lg bg-secondary/30 p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                    expense.type === 'coaching' 
+                      ? 'bg-primary/10 text-primary' 
+                      : 'bg-accent/10 text-accent-foreground'
+                  }`}>
+                    {coachingExpenseTypeLabels[expense.type]}
+                  </span>
+                  <input
+                    type="text"
+                    value={expense.name}
+                    onChange={(e) => onUpdateCoachingExpense(expense.id, { name: e.target.value })}
+                    className="bg-transparent font-medium text-foreground outline-none focus:underline"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={expense.amount}
+                      onChange={(e) => onUpdateCoachingExpense(expense.id, { amount: parseFloat(e.target.value) || 0 })}
+                      className="w-28 rounded-lg bg-secondary/50 px-3 py-1.5 text-right font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50"
+                      min="0"
+                      step="0.01"
+                    />
+                    <span className="text-muted-foreground">€</span>
+                  </div>
+                  <button
+                    onClick={() => onDeleteCoachingExpense(expense.id)}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Salaries section */}
@@ -594,7 +731,6 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
         )}
       </div>
 
-      {/* Info box */}
       <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
         <AlertCircle className="mt-0.5 h-5 w-5 text-primary" />
         <div className="text-sm">
@@ -604,6 +740,7 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
             <li>Closeurs</li>
             <li>Agence (si seuil dépassé)</li>
             <li>Charges fixes (publicité, marketing, logiciels, etc.)</li>
+            <li>Coaching / Mentorat (variable par mois)</li>
             <li>Salaires</li>
             <li>Part associé (sur le bénéfice net uniquement)</li>
           </ol>

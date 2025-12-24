@@ -83,6 +83,16 @@ export interface Tunnel {
   callsBooked?: number; // Calls réservés (VSL only)
 }
 
+export type CoachingExpenseType = 'coaching' | 'mentoring';
+
+export interface CoachingExpense {
+  id: string;
+  name: string;
+  amount: number;
+  month: string; // Format "YYYY-MM"
+  type: CoachingExpenseType;
+}
+
 export interface Charges {
   // Percentage-based charges
   associatePercent: number; // Default 15%, calculated AFTER all other charges
@@ -101,7 +111,6 @@ export interface Charges {
   advertising: number;
   marketing: number;
   software: number;
-  coaching: number;
   otherCosts: number;
 }
 
@@ -150,8 +159,12 @@ export const defaultCharges: Charges = {
   advertising: 0,
   marketing: 0,
   software: 0,
-  coaching: 0,
   otherCosts: 0,
+};
+
+export const coachingExpenseTypeLabels: Record<CoachingExpenseType, string> = {
+  coaching: 'Coaching',
+  mentoring: 'Mentorat',
 };
 
 export const tunnelTypeLabels: Record<TunnelType, string> = {
