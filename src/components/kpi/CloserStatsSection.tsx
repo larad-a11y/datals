@@ -1,5 +1,18 @@
 import { User, TrendingUp, Wallet, Target, Phone } from 'lucide-react';
-import { Sale, Tunnel, Charges, Closer } from '@/types/business';
+import { Tunnel, Charges } from '@/types/business';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 
 interface CloserStats {
   closerId: string;
@@ -18,6 +31,8 @@ interface CloserStatsSectionProps {
   tunnels: Tunnel[];
   charges: Charges;
 }
+
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps) {
   const taxRate = charges.taxPercent / 100;
@@ -82,6 +97,56 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
     totalCommission: acc.totalCommission + stats.commission,
   }), { totalSales: 0, totalCollected: 0, totalContracted: 0, totalCommission: 0 });
 
+  // Prepare chart data
+  const barChartData = closerStats.map(stats => ({
+    name: stats.closerName.split(' ')[0], // First name only for chart
+    fullName: stats.closerName,
+    collected: Math.round(stats.totalCollected),
+    contracted: Math.round(stats.totalContracted),
+    commission: Math.round(stats.commission),
+    ventes: stats.totalSales,
+  }));
+
+  const pieChartData = closerStats.map((stats, index) => ({
+    name: stats.closerName,
+    value: Math.round(stats.totalCollected),
+    color: COLORS[index % COLORS.length],
+  }));
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
+          <p className="font-medium text-foreground mb-2">{payload[0]?.payload?.fullName || label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.value.toLocaleString('fr-FR')} {entry.name === 'ventes' ? '' : '€'}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const PieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      const percent = totals.totalCollected > 0 
+        ? ((data.value / totals.totalCollected) * 100).toFixed(1) 
+        : 0;
+      return (
+        <div className="rounded-lg border border-border bg-card p-3 shadow-lg">
+          <p className="font-medium text-foreground">{data.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {data.value.toLocaleString('fr-FR')} € ({percent}%)
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
       <h3 className="mb-6 font-display text-lg font-semibold text-foreground flex items-center gap-2">
@@ -89,8 +154,76 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
         Statistiques par Closer
       </h3>
 
+      {/* Charts Section */}
+      {closerStats.length > 0 && totals.totalCollected > 0 && (
+        <div className="mb-6 grid gap-6 lg:grid-cols-2">
+          {/* Bar Chart - CA Comparison */}
+          <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <h4 className="mb-4 text-sm font-medium text-foreground">Comparaison CA par Closer</h4>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={barChartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                />
+                <YAxis 
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  axisLine={{ stroke: 'hsl(var(--border))' }}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                />
+                <Bar 
+                  dataKey="collected" 
+                  name="Collecté" 
+                  fill="hsl(var(--primary))" 
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="contracted" 
+                  name="Contracté" 
+                  fill="hsl(var(--chart-2))" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Pie Chart - Revenue Share */}
+          <div className="rounded-lg border border-border/30 bg-secondary/10 p-4">
+            <h4 className="mb-4 text-sm font-medium text-foreground">Répartition du CA Collecté</h4>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name.split(' ')[0]} (${(percent * 100).toFixed(0)}%)`}
+                  labelLine={{ stroke: 'hsl(var(--muted-foreground))' }}
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<PieTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {closerStats.map((stats) => {
+        {closerStats.map((stats, index) => {
           const sharePercent = totals.totalCollected > 0 
             ? (stats.totalCollected / totals.totalCollected) * 100 
             : 0;
@@ -101,8 +234,11 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
               className="rounded-lg border border-border/30 bg-secondary/20 p-4 hover:bg-secondary/30 transition-colors"
             >
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                  <User className="h-5 w-5 text-primary" />
+                <div 
+                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: `${COLORS[index % COLORS.length]}20` }}
+                >
+                  <User className="h-5 w-5" style={{ color: COLORS[index % COLORS.length] }} />
                 </div>
                 <div>
                   <h4 className="font-medium text-foreground">{stats.closerName}</h4>
@@ -154,7 +290,7 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
                 <div className="pt-2 border-t border-border/30">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Commission</span>
-                    <span className="font-medium text-primary">
+                    <span className="font-medium" style={{ color: COLORS[index % COLORS.length] }}>
                       {stats.commission.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
                     </span>
                   </div>
