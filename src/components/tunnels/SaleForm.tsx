@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 
 interface SaleFormProps {
   sale?: Sale;
+  tunnelId?: string;
   onSave: (sale: Omit<Sale, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
   inline?: boolean;
 }
 
-export function SaleForm({ sale, onSave, onCancel, inline = false }: SaleFormProps) {
+export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
     totalPrice: sale?.totalPrice || '',
@@ -38,6 +39,7 @@ export function SaleForm({ sale, onSave, onCancel, inline = false }: SaleFormPro
     if (totalPriceNum <= 0) return;
     
     onSave({
+      tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
       totalPrice: totalPriceNum,
       numberOfPayments: formData.numberOfPayments,

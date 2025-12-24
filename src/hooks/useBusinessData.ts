@@ -135,6 +135,20 @@ export function useBusinessData() {
     setSalaries(prev => prev.filter(s => s.id !== id));
   }, []);
 
+  // Get all sales from all tunnels with tunnel info
+  const getAllSales = useCallback(() => {
+    return tunnels.flatMap(tunnel => 
+      tunnel.sales.map(sale => ({
+        ...sale,
+        tunnelId: tunnel.id,
+        tunnelName: tunnel.name,
+        tunnelType: tunnel.type,
+        tunnelDate: tunnel.date,
+        tunnelMonth: tunnel.month,
+      }))
+    );
+  }, [tunnels]);
+
   return {
     selectedMonth,
     setSelectedMonth,
@@ -150,5 +164,6 @@ export function useBusinessData() {
     addSalary,
     updateSalary,
     deleteSalary,
+    getAllSales,
   };
 }

@@ -2,6 +2,8 @@ export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
 export interface Sale {
   id: string;
+  tunnelId: string;
+  tunnelName?: string;
   clientName?: string;
   totalPrice: number;
   numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.

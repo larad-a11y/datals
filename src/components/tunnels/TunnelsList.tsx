@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Target, ExternalLink } from 'lucide-react';
 import { Tunnel, Sale, tunnelTypeLabels } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
-import { SalesSection } from './SalesSection';
+import { SaleForm } from './SaleForm';
 import { Button } from '@/components/ui/button';
 
 type TunnelTypeFilter = 'all' | 'webinar' | 'vsl' | 'challenge';
@@ -13,13 +13,14 @@ interface TunnelsListProps {
   onAdd: (tunnel: Omit<Tunnel, 'id'>) => void;
   onUpdate: (id: string, updates: Partial<Tunnel>) => void;
   onDelete: (id: string) => void;
+  onNavigateToSales?: (tunnelId?: string) => void;
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
-  const [expandedTunnel, setExpandedTunnel] = useState<string | null>(null);
+  const [showQuickSale, setShowQuickSale] = useState<string | null>(null);
 
   const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -33,14 +34,15 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
     setEditingTunnel(null);
   };
 
-  // Sale operations for a specific tunnel
-  const handleAddSale = (tunnelId: string, saleData: Omit<Sale, 'id' | 'createdAt'>) => {
+  // Quick add sale from tunnel card
+  const handleQuickAddSale = (tunnelId: string, saleData: Omit<Sale, 'id' | 'createdAt'>) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
     if (!tunnel) return;
     
     const newSale: Sale = {
       ...saleData,
       id: generateId(),
+      tunnelId: tunnelId,
       createdAt: new Date().toISOString(),
     };
     
@@ -50,35 +52,10 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
     onUpdate(tunnelId, { 
       sales: updatedSales,
       collectedAmount: totalCollected,
-      callsClosed: updatedSales.length, // Update calls closed based on sales count
-    });
-  };
-
-  const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    onUpdate(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-    });
-  };
-
-  const handleDeleteSale = (tunnelId: string, saleId: string) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    onUpdate(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
       callsClosed: updatedSales.length,
     });
+    
+    setShowQuickSale(null);
   };
 
   const filteredTunnels = tunnels
@@ -155,7 +132,7 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
               ? (tunnel.callsClosed / tunnel.callsGenerated) * 100 
               : 0;
             const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
-            const isExpanded = expandedTunnel === tunnel.id;
+            const remainingAmount = salesContracted - salesCollected;
 
             return (
               <div 
@@ -241,32 +218,46 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
                     </p>
                   </div>
 
-                  {/* Sales toggle */}
-                  <button
-                    onClick={() => setExpandedTunnel(isExpanded ? null : tunnel.id)}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-border/50 bg-background/50 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {isExpanded ? (
-                      <>
-                        <ChevronUp className="h-4 w-4" />
-                        Masquer les ventes
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4" />
-                        Ventes ({tunnel.sales.length})
-                      </>
-                    )}
-                  </button>
+                  {/* Sales summary */}
+                  <div className="border-t border-border/50 pt-3 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {tunnel.sales.length} vente{tunnel.sales.length !== 1 ? 's' : ''}
+                      </span>
+                      {remainingAmount > 0 && (
+                        <span className="text-xs text-warning">
+                          {remainingAmount.toLocaleString('fr-FR')} € restant
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowQuickSale(showQuickSale === tunnel.id ? null : tunnel.id)}
+                        className="flex-1 rounded-lg border border-border/50 bg-background/50 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                      >
+                        + Ajouter une vente
+                      </button>
+                      {onNavigateToSales && tunnel.sales.length > 0 && (
+                        <button
+                          onClick={() => onNavigateToSales(tunnel.id)}
+                          className="flex items-center gap-1 rounded-lg border border-border/50 bg-background/50 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                          title="Voir toutes les ventes"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-                  {/* Sales section */}
-                  {isExpanded && (
+                  {/* Quick sale form */}
+                  {showQuickSale === tunnel.id && (
                     <div className="border-t border-border/50 pt-4">
-                      <SalesSection
-                        sales={tunnel.sales}
-                        onAddSale={(data) => handleAddSale(tunnel.id, data)}
-                        onUpdateSale={(saleId, updates) => handleUpdateSale(tunnel.id, saleId, updates)}
-                        onDeleteSale={(saleId) => handleDeleteSale(tunnel.id, saleId)}
+                      <SaleForm
+                        tunnelId={tunnel.id}
+                        onSave={(data) => handleQuickAddSale(tunnel.id, data)}
+                        onCancel={() => setShowQuickSale(null)}
+                        inline
                       />
                     </div>
                   )}
