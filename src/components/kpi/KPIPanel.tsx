@@ -100,10 +100,20 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
-            ROI Pub
+            ROI Pub (Collecté)
           </div>
           <p className={`stat-value mt-2 ${kpis.adROI > 100 ? 'text-profitable' : kpis.adROI > 50 ? 'text-warning' : 'text-danger'}`}>
             {kpis.adROI.toFixed(1)}%
+          </p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <TrendingUp className="h-4 w-4" />
+            ROI Pub (Contracté)
+          </div>
+          <p className={`stat-value mt-2 ${kpis.adROIContracted > 100 ? 'text-profitable' : kpis.adROIContracted > 50 ? 'text-warning' : 'text-danger'}`}>
+            {kpis.adROIContracted.toFixed(1)}%
           </p>
         </div>
 

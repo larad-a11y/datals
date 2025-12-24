@@ -144,6 +144,7 @@ export interface KPIData {
   collectedRevenueHT: number; // HT (après déduction TVA)
   tvaAmount: number; // Montant de la TVA
   adROI: number;
+  adROIContracted: number;
   costPerCall: number;
   closingRate: number;
   cac: number;
