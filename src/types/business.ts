@@ -160,6 +160,7 @@ export interface KPIData {
   paymentProcessorCost: number;
   closersCost: number;
   agencyCost: number;
+  upcomingPayments: number;
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [
