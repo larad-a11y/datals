@@ -113,35 +113,64 @@ export function Dashboard({ kpis, tunnels }: DashboardProps) {
         ) : (
           <div className="space-y-3">
             {tunnels.map((tunnel) => {
-              const revenue = tunnel.callsClosed * tunnel.averagePrice;
+              const contractedRevenue = tunnel.sales.reduce((sum, s) => sum + s.totalPrice, 0);
               const roi = tunnel.adBudget > 0 
                 ? ((tunnel.collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
                 : 0;
               const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
+              const formattedDate = new Date(tunnel.date).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              });
               
               return (
                 <div 
                   key={tunnel.id}
-                  className="flex items-center justify-between rounded-lg bg-secondary/30 p-4"
+                  className="rounded-lg bg-secondary/30 p-4"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`badge-${trend}`}>
-                      {tunnel.type.toUpperCase()}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`badge-${trend}`}>
+                        {tunnel.type.toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{tunnel.name}</p>
+                        <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{tunnel.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tunnel.callsClosed} ventes • {tunnel.collectedAmount.toLocaleString('fr-FR')} € collectés
+                    <div className="text-right">
+                      <p className={`font-display text-lg font-semibold text-${trend}`}>
+                        {roi.toFixed(1)}% ROI
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`font-display text-lg font-semibold text-${trend}`}>
-                      {roi.toFixed(1)}% ROI
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Budget: {tunnel.adBudget.toLocaleString('fr-FR')} €
-                    </p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-border/30">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Pub dépensée</p>
+                      <p className="font-display text-base font-semibold text-foreground">
+                        {tunnel.adBudget.toLocaleString('fr-FR')} €
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Ventes</p>
+                      <p className="font-display text-base font-semibold text-foreground">
+                        {tunnel.callsClosed}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">CA Collecté</p>
+                      <p className="font-display text-base font-semibold text-foreground">
+                        {tunnel.collectedAmount.toLocaleString('fr-FR')} €
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">CA Contracté</p>
+                      <p className="font-display text-base font-semibold text-foreground">
+                        {contractedRevenue.toLocaleString('fr-FR')} €
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
