@@ -111,9 +111,14 @@ export function useBusinessData() {
     // 10. Bénéfice Net Net = Bénéfice Net - Part Associé - Salaires
     const netNetProfit = netProfit - associateCost - totalSalaries;
 
-    // ROI: (Collecté HT - Budget Pub) / Budget Pub
+    // ROI Collecté: (Collecté HT - Budget Pub) / Budget Pub
     const adROI = totalAdBudget > 0 
       ? ((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100 
+      : 0;
+
+    // ROI Contracté: (Contracté - Budget Pub) / Budget Pub
+    const adROIContracted = totalAdBudget > 0 
+      ? ((totalContracted - totalAdBudget) / totalAdBudget) * 100 
       : 0;
 
     // Cost per call
@@ -137,6 +142,7 @@ export function useBusinessData() {
       collectedRevenueHT: totalCollectedHT,
       tvaAmount,
       adROI,
+      adROIContracted,
       costPerCall,
       closingRate,
       cac,
