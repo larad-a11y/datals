@@ -16,11 +16,16 @@ export interface InstallmentPlan {
   markupPercent: number;
 }
 
+export interface OfferInstallment {
+  numberOfPayments: number;
+  markupPercent: number;
+}
+
 export interface Offer {
   id: string;
   name: string;
   basePrice: number;
-  availableInstallments: number[]; // Array of numberOfPayments allowed
+  availableInstallments: OfferInstallment[]; // Array with custom markup per installment
 }
 
 export interface Sale {

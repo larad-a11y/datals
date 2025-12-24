@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Percent, Euro, AlertCircle, Plus, Trash2, Package } from 'lucide-react';
-import { Charges, InstallmentPlan, Offer } from '@/types/business';
+import { Charges, InstallmentPlan, Offer, OfferInstallment } from '@/types/business';
 import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
@@ -12,7 +12,9 @@ interface ChargesPanelProps {
 export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPanelProps) {
   const [newOfferName, setNewOfferName] = useState('');
   const [newOfferPrice, setNewOfferPrice] = useState('');
-  const [newOfferInstallments, setNewOfferInstallments] = useState<number[]>([1]);
+  const [newOfferInstallments, setNewOfferInstallments] = useState<OfferInstallment[]>([
+    { numberOfPayments: 1, markupPercent: 0 }
+  ]);
 
   const handleChange = (key: keyof Charges, value: number) => {
     onUpdate({ ...charges, [key]: value });
@@ -52,21 +54,46 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
     onUpdate({ ...charges, offers: [...charges.offers, newOffer] });
     setNewOfferName('');
     setNewOfferPrice('');
-    setNewOfferInstallments([1]);
+    setNewOfferInstallments([{ numberOfPayments: 1, markupPercent: 0 }]);
   };
 
   const removeOffer = (offerId: string) => {
     onUpdate({ ...charges, offers: charges.offers.filter(o => o.id !== offerId) });
   };
 
-  const toggleOfferInstallment = (num: number) => {
-    if (newOfferInstallments.includes(num)) {
+  const toggleOfferInstallment = (plan: InstallmentPlan) => {
+    const existing = newOfferInstallments.find(i => i.numberOfPayments === plan.numberOfPayments);
+    if (existing) {
       if (newOfferInstallments.length > 1) {
-        setNewOfferInstallments(newOfferInstallments.filter(n => n !== num));
+        setNewOfferInstallments(newOfferInstallments.filter(i => i.numberOfPayments !== plan.numberOfPayments));
       }
     } else {
-      setNewOfferInstallments([...newOfferInstallments, num].sort((a, b) => a - b));
+      setNewOfferInstallments([
+        ...newOfferInstallments, 
+        { numberOfPayments: plan.numberOfPayments, markupPercent: plan.markupPercent }
+      ].sort((a, b) => a.numberOfPayments - b.numberOfPayments));
     }
+  };
+
+  const updateOfferInstallmentMarkup = (numberOfPayments: number, markupPercent: number) => {
+    setNewOfferInstallments(prev => 
+      prev.map(i => i.numberOfPayments === numberOfPayments ? { ...i, markupPercent } : i)
+    );
+  };
+
+  const updateExistingOfferInstallment = (offerId: string, numberOfPayments: number, markupPercent: number) => {
+    const updatedOffers = charges.offers.map(offer => {
+      if (offer.id === offerId) {
+        return {
+          ...offer,
+          availableInstallments: offer.availableInstallments.map(i => 
+            i.numberOfPayments === numberOfPayments ? { ...i, markupPercent } : i
+          )
+        };
+      }
+      return offer;
+    });
+    onUpdate({ ...charges, offers: updatedOffers });
   };
 
   const isAboveAgencyThreshold = collectedRevenue > charges.agencyThreshold;
@@ -255,25 +282,39 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
         {charges.offers.length > 0 && (
           <div className="mb-6 space-y-3">
             {charges.offers.map(offer => (
-              <div key={offer.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/20 p-4">
-                <div>
-                  <span className="font-medium text-foreground">{offer.name}</span>
-                  <span className="mx-2 text-muted-foreground">-</span>
-                  <span className="text-foreground">{offer.basePrice.toLocaleString('fr-FR')} €</span>
-                  <div className="mt-1 flex gap-1">
-                    {offer.availableInstallments.map(num => (
-                      <span key={num} className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                        {num}x
-                      </span>
-                    ))}
+              <div key={offer.id} className="rounded-lg border border-border/50 bg-secondary/20 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <span className="font-medium text-foreground">{offer.name}</span>
+                    <span className="mx-2 text-muted-foreground">-</span>
+                    <span className="text-foreground">{offer.basePrice.toLocaleString('fr-FR')} €</span>
                   </div>
+                  <button
+                    onClick={() => removeOffer(offer.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => removeOffer(offer.id)}
-                  className="text-muted-foreground hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {offer.availableInstallments.map(installment => (
+                    <div key={installment.numberOfPayments} className="flex items-center gap-1 rounded bg-primary/10 px-2 py-1">
+                      <span className="text-xs font-medium text-primary">{installment.numberOfPayments}x</span>
+                      <div className="relative flex items-center">
+                        <input
+                          type="number"
+                          value={installment.markupPercent}
+                          onChange={(e) => updateExistingOfferInstallment(offer.id, installment.numberOfPayments, parseFloat(e.target.value) || 0)}
+                          className="w-12 rounded bg-background/50 px-1 py-0.5 text-xs text-center"
+                          min="0"
+                          max="100"
+                          step="0.5"
+                        />
+                        <span className="text-xs text-muted-foreground ml-0.5">%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -307,24 +348,45 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
             </div>
           </div>
           <div className="mt-3">
-            <label className="mb-1 block text-xs text-muted-foreground">Facilités de paiement disponibles</label>
-            <div className="flex flex-wrap gap-2">
+            <label className="mb-2 block text-xs text-muted-foreground">Facilités de paiement et majorations</label>
+            <div className="space-y-2">
               {charges.installmentPlans
                 .sort((a, b) => a.numberOfPayments - b.numberOfPayments)
-                .map((plan) => (
-                <button
-                  key={plan.id}
-                  type="button"
-                  onClick={() => toggleOfferInstallment(plan.numberOfPayments)}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    newOfferInstallments.includes(plan.numberOfPayments)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {plan.numberOfPayments}x
-                </button>
-              ))}
+                .map((plan) => {
+                  const isSelected = newOfferInstallments.some(i => i.numberOfPayments === plan.numberOfPayments);
+                  const selectedInstallment = newOfferInstallments.find(i => i.numberOfPayments === plan.numberOfPayments);
+                  
+                  return (
+                    <div key={plan.id} className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleOfferInstallment(plan)}
+                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {plan.numberOfPayments}x
+                      </button>
+                      {isSelected && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground">Majoration:</span>
+                          <input
+                            type="number"
+                            value={selectedInstallment?.markupPercent ?? plan.markupPercent}
+                            onChange={(e) => updateOfferInstallmentMarkup(plan.numberOfPayments, parseFloat(e.target.value) || 0)}
+                            className="w-16 rounded border border-border/50 bg-background px-2 py-1 text-xs"
+                            min="0"
+                            max="100"
+                            step="0.5"
+                          />
+                          <span className="text-xs text-muted-foreground">%</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
           <Button onClick={addOffer} className="mt-4" disabled={!newOfferName || !newOfferPrice}>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -31,22 +31,34 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     useMarkup: !sale, // Par défaut on utilise la majoration pour les nouvelles ventes
   });
 
-  // Get available installment plans based on selected offer
-  const availableInstallments = useMemo(() => {
+  // Get the selected offer
+  const selectedOffer = useMemo(() => {
     if (formData.offerId) {
-      const offer = offers.find(o => o.id === formData.offerId);
-      if (offer) {
-        return installmentPlans.filter(p => offer.availableInstallments.includes(p.numberOfPayments));
-      }
+      return offers.find(o => o.id === formData.offerId);
+    }
+    return undefined;
+  }, [formData.offerId, offers]);
+
+  // Get available installment plans based on selected offer
+  const availableInstallments = useMemo((): (InstallmentPlan | OfferInstallment)[] => {
+    if (selectedOffer) {
+      // Return offer-specific installments with their custom markups
+      return selectedOffer.availableInstallments;
     }
     return installmentPlans;
-  }, [formData.offerId, offers, installmentPlans]);
+  }, [selectedOffer, installmentPlans]);
 
-  // Get current markup percent
+  // Get current markup percent based on offer or global plan
   const currentMarkupPercent = useMemo(() => {
+    if (selectedOffer) {
+      const offerInstallment = selectedOffer.availableInstallments.find(
+        i => i.numberOfPayments === formData.numberOfPayments
+      );
+      return offerInstallment?.markupPercent || 0;
+    }
     const plan = installmentPlans.find(p => p.numberOfPayments === formData.numberOfPayments);
     return plan?.markupPercent || 0;
-  }, [formData.numberOfPayments, installmentPlans]);
+  }, [formData.numberOfPayments, selectedOffer, installmentPlans]);
 
   const basePriceNum = typeof formData.basePrice === 'string' 
     ? parseFloat(formData.basePrice) || 0 
@@ -62,17 +74,20 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   // When offer is selected, auto-fill base price
   useEffect(() => {
-    if (formData.offerId) {
-      const offer = offers.find(o => o.id === formData.offerId);
-      if (offer) {
-        setFormData(prev => ({ ...prev, basePrice: offer.basePrice }));
-        // Reset numberOfPayments if not available in offer
-        if (!offer.availableInstallments.includes(formData.numberOfPayments)) {
-          setFormData(prev => ({ ...prev, numberOfPayments: offer.availableInstallments[0] || 1 }));
-        }
+    if (selectedOffer) {
+      setFormData(prev => ({ ...prev, basePrice: selectedOffer.basePrice }));
+      // Reset numberOfPayments if not available in offer
+      const isCurrentValid = selectedOffer.availableInstallments.some(
+        i => i.numberOfPayments === formData.numberOfPayments
+      );
+      if (!isCurrentValid && selectedOffer.availableInstallments.length > 0) {
+        setFormData(prev => ({ 
+          ...prev, 
+          numberOfPayments: selectedOffer.availableInstallments[0].numberOfPayments 
+        }));
       }
     }
-  }, [formData.offerId, offers]);
+  }, [selectedOffer]);
 
   // Calcul automatique du prix total avec majoration
   useEffect(() => {
@@ -246,23 +261,28 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           📅 Nombre de paiements
         </label>
         <div className="flex flex-wrap gap-2">
-          {availableInstallments.map((plan) => (
-            <button
-              key={plan.id}
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: plan.numberOfPayments, useMarkup: true }))}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                formData.numberOfPayments === plan.numberOfPayments
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {plan.numberOfPayments}x
-              {plan.markupPercent > 0 && (
-                <span className="ml-1 text-xs opacity-70">+{plan.markupPercent}%</span>
-              )}
-            </button>
-          ))}
+          {availableInstallments.map((installment) => {
+            const numPayments = installment.numberOfPayments;
+            const markup = installment.markupPercent;
+            
+            return (
+              <button
+                key={numPayments}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: numPayments, useMarkup: true }))}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  formData.numberOfPayments === numPayments
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {numPayments}x
+                {markup > 0 && (
+                  <span className="ml-1 text-xs opacity-70">+{markup}%</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
