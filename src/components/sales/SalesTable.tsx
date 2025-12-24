@@ -142,7 +142,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
         <TableHeader>
           <TableRow className="bg-secondary/30">
             <TableHead>
-              <SortHeader label="Date" sortKeyName="createdAt" />
+              <SortHeader label="Date vente" sortKeyName="createdAt" />
             </TableHead>
             <TableHead>
               <SortHeader label="Client" sortKeyName="clientName" />
@@ -150,12 +150,13 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>Date tunnel</TableHead>
             <TableHead>Closer</TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
             <TableHead className="text-center">Paiements</TableHead>
+            <TableHead>Dates paiements</TableHead>
             <TableHead className="text-right">
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
@@ -217,6 +218,25 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {sale.numberOfPayments}x
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-0.5">
+                    {sale.paymentHistory && sale.paymentHistory.length > 0 ? (
+                      sale.paymentHistory.slice(0, 3).map((payment, index) => (
+                        <span key={payment.id} className="text-xs text-muted-foreground">
+                          {index + 1}. {new Date(payment.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                          {payment.verified && <span className="ml-1 text-profitable">✓</span>}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Aucun</span>
+                    )}
+                    {sale.paymentHistory && sale.paymentHistory.length > 3 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{sale.paymentHistory.length - 3} autres
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right font-medium text-profitable">
                   {sale.amountCollected.toLocaleString('fr-FR')} €
