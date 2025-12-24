@@ -21,6 +21,7 @@ interface SalesCRMPanelProps {
   initialTunnelFilter?: string;
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid: (saleId: string, tunnelId: string) => void;
+  onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
   closers?: Closer[];
@@ -37,6 +38,7 @@ export function SalesCRMPanel({
   initialTunnelFilter = '',
   onRecordPayment,
   onFullyPaid,
+  onToggleDefaulted,
   installmentPlans = defaultInstallmentPlans,
   offers = [],
   closers = [],
@@ -95,12 +97,14 @@ export function SalesCRMPanel({
       if (selectedStatus !== 'all') {
         const remaining = sale.totalPrice - sale.amountCollected;
         const isPaid = remaining <= 0;
-        const isPartial = sale.amountCollected > 0 && remaining > 0;
-        const isPending = sale.amountCollected === 0;
+        const isPartial = sale.amountCollected > 0 && remaining > 0 && !sale.isDefaulted;
+        const isPending = sale.amountCollected === 0 && !sale.isDefaulted;
+        const isDefaulted = sale.isDefaulted === true;
 
         if (selectedStatus === 'paid' && !isPaid) return false;
         if (selectedStatus === 'partial' && !isPartial) return false;
         if (selectedStatus === 'pending' && !isPending) return false;
+        if (selectedStatus === 'defaulted' && !isDefaulted) return false;
       }
 
       return true;
@@ -279,6 +283,7 @@ export function SalesCRMPanel({
         onViewTunnel={onNavigateToTunnel}
         onRecordPayment={onRecordPayment}
         onFullyPaid={onFullyPaid}
+        onToggleDefaulted={onToggleDefaulted}
         closers={closers}
       />
 

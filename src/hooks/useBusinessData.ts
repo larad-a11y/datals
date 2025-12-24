@@ -121,11 +121,12 @@ export function useBusinessData() {
       ? ((totalContracted - totalAdBudget) / totalAdBudget) * 100 
       : 0;
 
-    // Paiements à venir CE MOIS = ventes des mois précédents avec next_payment_date ce mois
+    // Paiements à venir CE MOIS = ventes des mois précédents avec next_payment_date ce mois (exclut impayés)
     const upcomingPaymentsThisMonth = tunnels
       .filter(t => t.month !== selectedMonth) // Ventes des mois précédents
       .flatMap(t => t.sales)
       .filter(sale => {
+        if (sale.isDefaulted) return false; // Exclure les impayés
         if (!sale.nextPaymentDate) return false;
         const paymentMonth = sale.nextPaymentDate.substring(0, 7); // "YYYY-MM"
         return paymentMonth === selectedMonth && sale.amountCollected < sale.totalPrice;
@@ -139,9 +140,16 @@ export function useBusinessData() {
         return sum + (paymentsRemaining > 0 ? remaining / paymentsRemaining : remaining);
       }, 0);
 
-    // Paiements à venir TOTAL = somme de tous les montants restants à encaisser (toutes ventes)
+    // Paiements à venir TOTAL = somme de tous les montants restants à encaisser (ventes NON en impayé)
     const upcomingPaymentsTotal = tunnels
       .flatMap(t => t.sales)
+      .filter(sale => !sale.isDefaulted)
+      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0);
+
+    // Montant total en impayé
+    const defaultedAmount = tunnels
+      .flatMap(t => t.sales)
+      .filter(sale => sale.isDefaulted)
       .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0);
 
     // Cost per call
@@ -183,6 +191,7 @@ export function useBusinessData() {
       agencyCost,
       upcomingPaymentsThisMonth,
       upcomingPaymentsTotal,
+      defaultedAmount,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 

@@ -143,6 +143,17 @@ const Index = () => {
     });
   };
 
+  // Toggle sale defaulted status
+  const handleToggleDefaulted = (saleId: string, tunnelId: string, isDefaulted: boolean) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    handleUpdateSale(tunnelId, saleId, {
+      isDefaulted,
+      defaultedAt: isDefaulted ? new Date().toISOString() : undefined,
+    });
+  };
+
   // Generate notifications from all sales
   const notifications = useMemo(() => {
     const allSales = getAllSales();
@@ -208,6 +219,7 @@ const Index = () => {
             initialTunnelFilter={salesTunnelFilter}
             onRecordPayment={handleRecordPayment}
             onFullyPaid={handleFullyPaid}
+            onToggleDefaulted={handleToggleDefaulted}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
             closers={charges.closers}

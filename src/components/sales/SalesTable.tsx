@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit2, Trash2, ExternalLink, ArrowUpDown, User } from 'lucide-react';
+import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Sale, TunnelType, tunnelTypeLabels, Closer } from '@/types/business';
 import {
   Table,
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { PaymentActions, PaymentHistoryDialog } from './PaymentActions';
+import { Badge } from '@/components/ui/badge';
 
 interface EnrichedSale extends Sale {
   tunnelName?: string;
@@ -26,16 +27,36 @@ interface SalesTableProps {
   onViewTunnel?: (tunnelId: string) => void;
   onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
+  onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   closers?: Closer[];
 }
 
 type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, closers = [] }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, closers = [] }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
+
+  // Helper to check if sale should be auto-defaulted (14 days without payment update)
+  const isAutoDefaulted = (sale: EnrichedSale) => {
+    if (sale.isDefaulted) return true;
+    if (!sale.nextPaymentDate) return false;
+    
+    const remaining = sale.totalPrice - sale.amountCollected;
+    if (remaining <= 0) return false;
+    
+    const today = new Date();
+    const lastUpdate = sale.lastPaymentUpdate ? new Date(sale.lastPaymentUpdate) : new Date(sale.createdAt);
+    const daysSinceUpdate = Math.floor((today.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    const dueDate = new Date(sale.nextPaymentDate);
+    const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Auto-defaulted if payment is overdue AND no update in 14 days
+    return daysOverdue > 0 && daysSinceUpdate >= 14;
+  };
 
   // Helper to get closer name
   const getCloserName = (closerId?: string) => {
@@ -91,6 +112,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
     const isPaid = remaining <= 0;
     
     if (isPaid) return 'bg-profitable/5 border-l-2 border-l-profitable';
+    
+    // Check if sale is defaulted (manual or auto)
+    if (sale.isDefaulted || isAutoDefaulted(sale)) {
+      return 'bg-danger/10 border-l-4 border-l-danger';
+    }
     
     // Check if payment needs verification (1+ day after payment date)
     if (sale.nextPaymentDate) {
@@ -172,6 +198,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             const progress = sale.totalPrice > 0 ? (sale.amountCollected / sale.totalPrice) * 100 : 0;
             const isPaid = remaining <= 0;
             const rowClass = getRowStatusClass(sale);
+            const saleIsDefaulted = sale.isDefaulted || isAutoDefaulted(sale);
 
             return (
               <TableRow key={sale.id} className={`hover:bg-secondary/20 ${rowClass}`}>
@@ -179,7 +206,15 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   {new Date(sale.createdAt).toLocaleDateString('fr-FR')}
                 </TableCell>
                 <TableCell className="font-medium">
-                  {sale.clientName || <span className="text-muted-foreground italic">Sans nom</span>}
+                  <div className="flex items-center gap-2">
+                    {sale.clientName || <span className="text-muted-foreground italic">Sans nom</span>}
+                    {saleIsDefaulted && (
+                      <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                        <AlertTriangle className="h-3 w-3 mr-1" />
+                        Impayé
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -278,6 +313,18 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    {/* Toggle defaulted button */}
+                    {onToggleDefaulted && !isPaid && (
+                      <button
+                        onClick={() => onToggleDefaulted(sale.id, sale.tunnelId, !saleIsDefaulted)}
+                        className={`rounded p-1.5 ${saleIsDefaulted 
+                          ? 'text-profitable hover:bg-profitable/10' 
+                          : 'text-muted-foreground hover:bg-danger/10 hover:text-danger'}`}
+                        title={saleIsDefaulted ? 'Réactiver' : 'Marquer en impayé'}
+                      >
+                        {saleIsDefaulted ? <RefreshCw className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(sale)}
                       className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
