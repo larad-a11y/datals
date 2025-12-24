@@ -7,7 +7,6 @@ import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
 import { ChargesPanel } from '@/components/charges/ChargesPanel';
 import { SalariesPanel } from '@/components/salaries/SalariesPanel';
 import { KPIPanel } from '@/components/kpi/KPIPanel';
-import { SettingsPanel } from '@/components/settings/SettingsPanel';
 import { useBusinessData } from '@/hooks/useBusinessData';
 import { defaultCharges, Sale, PaymentNotification, generatePaymentNotifications, PaymentRecord } from '@/types/business';
 
@@ -192,6 +191,7 @@ const Index = () => {
           <ChargesPanel
             charges={charges}
             onUpdate={setCharges}
+            onResetCharges={() => setCharges(defaultCharges)}
             collectedRevenue={kpis.collectedRevenue}
           />
         );
@@ -210,13 +210,6 @@ const Index = () => {
             kpis={kpis}
             charges={charges}
             salaries={salaries}
-          />
-        );
-      case 'settings':
-        return (
-          <SettingsPanel
-            charges={charges}
-            onResetCharges={() => setCharges(defaultCharges)}
           />
         );
       default:

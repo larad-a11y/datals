@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { Percent, Euro, AlertCircle, Plus, Trash2, Package } from 'lucide-react';
-import { Charges, InstallmentPlan, Offer, OfferInstallment } from '@/types/business';
+import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw } from 'lucide-react';
+import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges } from '@/types/business';
 import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
   charges: Charges;
   onUpdate: (charges: Charges) => void;
+  onResetCharges: () => void;
   collectedRevenue: number;
 }
 
-export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPanelProps) {
+export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedRevenue }: ChargesPanelProps) {
   const [newOfferName, setNewOfferName] = useState('');
   const [newOfferPrice, setNewOfferPrice] = useState('');
   const [newOfferInstallments, setNewOfferInstallments] = useState<OfferInstallment[]>([
@@ -491,6 +492,29 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
             <li>Salaires</li>
             <li>Part associé (sur le bénéfice net uniquement)</li>
           </ol>
+        </div>
+      </div>
+
+      {/* Reset button */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
+          Réinitialisation
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Réinitialiser tous les paramètres aux valeurs par défaut.
+        </p>
+        <Button variant="outline" onClick={onResetCharges}>
+          <RotateCcw className="mr-2 h-4 w-4" />
+          Réinitialiser les charges par défaut
+        </Button>
+        <div className="mt-4 rounded-lg border border-border/50 p-4">
+          <h4 className="mb-2 text-sm font-medium text-foreground">Valeurs par défaut</h4>
+          <div className="grid gap-1 text-xs text-muted-foreground">
+            <p>• Closeurs: {defaultCharges.closersPercent}%</p>
+            <p>• Agence: {defaultCharges.agencyPercent}%</p>
+            <p>• Associé: {defaultCharges.associatePercent}%</p>
+            <p>• Seuil agence: {defaultCharges.agencyThreshold.toLocaleString('fr-FR')} €</p>
+          </div>
         </div>
       </div>
     </div>
