@@ -28,11 +28,18 @@ export interface Offer {
   availableInstallments: OfferInstallment[]; // Array with custom markup per installment
 }
 
+export interface Closer {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface Sale {
   id: string;
   tunnelId: string;
   tunnelName?: string;
   clientName?: string;
+  closerId?: string; // Reference to a closer (optional - no closer = no commission)
   saleDate: string; // Date de la vente
   offerId?: string; // Reference to an offer
   paymentMethod: PaymentMethod;
@@ -83,7 +90,7 @@ export interface Tunnel {
   callsBooked?: number; // Calls réservés (VSL only)
 }
 
-export type CoachingExpenseType = 'coaching' | 'mentoring';
+export type CoachingExpenseType = 'group' | 'private';
 
 export interface CoachingExpense {
   id: string;
@@ -101,6 +108,9 @@ export interface Charges {
   agencyThreshold: number; // 130000€
   paymentProcessorPercent: number; // Default 4%
   taxPercent: number; // Default 20% (TVA)
+  
+  // Closers list
+  closers: Closer[];
   
   // Installment plans with individual markups
   installmentPlans: InstallmentPlan[];
@@ -161,6 +171,7 @@ export const defaultCharges: Charges = {
   agencyThreshold: 130000,
   paymentProcessorPercent: 4,
   taxPercent: 20,
+  closers: [],
   installmentPlans: defaultInstallmentPlans,
   offers: [],
   advertising: 0,
@@ -170,8 +181,8 @@ export const defaultCharges: Charges = {
 };
 
 export const coachingExpenseTypeLabels: Record<CoachingExpenseType, string> = {
-  coaching: 'Coaching',
-  mentoring: 'Mentorat',
+  group: 'Coaching de groupe',
+  private: 'Coaching privé',
 };
 
 export const tunnelTypeLabels: Record<TunnelType, string> = {

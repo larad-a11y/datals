@@ -59,8 +59,17 @@ export function useBusinessData() {
     // 2. Frais processeur de paiement (sur TTC)
     const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
     
-    // 3. Closers (calculé sur le HT)
-    const closersCost = totalCollectedHT * (charges.closersPercent / 100);
+    // 3. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
+    // On doit calculer le HT des ventes qui ont un closer
+    const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
+      const tunnelSalesWithCloser = t.sales
+        .filter(sale => sale.closerId)
+        .reduce((s, sale) => s + sale.amountCollected, 0);
+      return sum + tunnelSalesWithCloser;
+    }, 0);
+    // Convertir TTC en HT pour les ventes avec closer
+    const salesWithCloserHTAmount = salesWithCloserHT * (1 / (1 + taxRate));
+    const closersCost = salesWithCloserHTAmount * (charges.closersPercent / 100);
     
     // 4. Agence : uniquement sur l'excédent au-delà du seuil HT
     // Calculé sur le CA HT GLOBAL, pas sur le restant après déductions

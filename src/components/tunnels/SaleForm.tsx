@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -16,11 +16,13 @@ interface SaleFormProps {
   inline?: boolean;
   installmentPlans: InstallmentPlan[];
   offers: Offer[];
+  closers: Closer[];
 }
 
-export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers }: SaleFormProps) {
+export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers, closers }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
+    closerId: sale?.closerId || '',
     saleDate: sale?.saleDate || new Date().toISOString().split('T')[0],
     offerId: sale?.offerId || '',
     paymentMethod: sale?.paymentMethod || 'cb' as PaymentMethod,
@@ -122,6 +124,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
+      closerId: formData.closerId || undefined,
       saleDate: formData.saleDate,
       offerId: formData.offerId || undefined,
       paymentMethod: formData.paymentMethod,
@@ -139,6 +142,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     if (inline) {
       setFormData({
         clientName: '',
+        closerId: '',
         saleDate: new Date().toISOString().split('T')[0],
         offerId: '',
         paymentMethod: 'cb',
@@ -202,6 +206,30 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           className="input-field w-full"
           placeholder="Ex: Jean Dupont"
         />
+      </div>
+
+      {/* Closer selection */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          📞 Closer (optionnel)
+        </label>
+        <select
+          value={formData.closerId}
+          onChange={(e) => setFormData(prev => ({ ...prev, closerId: e.target.value }))}
+          className="input-field w-full"
+        >
+          <option value="">Aucun closer (pas de commission)</option>
+          {closers.map(closer => (
+            <option key={closer.id} value={closer.id}>
+              {closer.firstName} {closer.lastName}
+            </option>
+          ))}
+        </select>
+        {!formData.closerId && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sans closer, aucune commission ne sera déduite
+          </p>
+        )}
       </div>
 
       {/* Offer selection */}
