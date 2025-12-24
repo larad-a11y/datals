@@ -21,6 +21,7 @@ export interface Charges {
   closersPercent: number; // Default 17.5%
   agencyPercent: number; // Default 20%, only above 130k€ HT
   agencyThreshold: number; // 130000€
+  paymentProcessorPercent: number; // Default 4%
   
   // Fixed charges
   advertising: number;
@@ -62,6 +63,7 @@ export const defaultCharges: Charges = {
   closersPercent: 17.5,
   agencyPercent: 20,
   agencyThreshold: 130000,
+  paymentProcessorPercent: 4,
   advertising: 0,
   marketing: 0,
   software: 0,

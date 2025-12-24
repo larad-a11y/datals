@@ -34,7 +34,26 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
           </h3>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
+              💳 Processeur de paiement
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={charges.paymentProcessorPercent}
+                onChange={(e) => handleChange('paymentProcessorPercent', parseFloat(e.target.value) || 0)}
+                className="input-field w-full pr-8"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Par défaut: 4%</p>
+          </div>
+
           <div>
             <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
               📞 Closeurs
@@ -202,7 +221,8 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
         <div className="text-sm">
           <p className="font-medium text-foreground">Ordre de calcul des déductions</p>
           <ol className="mt-2 list-inside list-decimal text-muted-foreground">
-            <li>Closeurs (sur le CA collecté)</li>
+            <li>Processeur de paiement (sur le CA collecté)</li>
+            <li>Closeurs</li>
             <li>Agence (si seuil dépassé)</li>
             <li>Charges fixes (publicité, marketing, logiciels, etc.)</li>
             <li>Salaires</li>
