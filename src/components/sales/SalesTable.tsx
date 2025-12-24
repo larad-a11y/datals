@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Edit2, Trash2, ExternalLink, ArrowUpDown } from 'lucide-react';
-import { Sale, TunnelType, tunnelTypeLabels } from '@/types/business';
+import { Edit2, Trash2, ExternalLink, ArrowUpDown, User } from 'lucide-react';
+import { Sale, TunnelType, tunnelTypeLabels, Closer } from '@/types/business';
 import {
   Table,
   TableBody,
@@ -26,15 +26,23 @@ interface SalesTableProps {
   onViewTunnel?: (tunnelId: string) => void;
   onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
+  closers?: Closer[];
 }
 
 type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, closers = [] }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
+
+  // Helper to get closer name
+  const getCloserName = (closerId?: string) => {
+    if (!closerId) return null;
+    const closer = closers.find(c => c.id === closerId);
+    return closer ? `${closer.firstName} ${closer.lastName}` : null;
+  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -143,6 +151,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Closer</TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
@@ -183,6 +192,18 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {sale.tunnelDate ? new Date(sale.tunnelDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '-'}
+                </TableCell>
+                <TableCell>
+                  {sale.closerId ? (
+                    <div className="flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-sm font-medium text-foreground">
+                        {getCloserName(sale.closerId)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Aucun</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   <div className="flex flex-col items-end">
