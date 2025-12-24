@@ -130,7 +130,9 @@ export interface MonthData {
 
 export interface KPIData {
   contractedRevenue: number;
-  collectedRevenue: number;
+  collectedRevenue: number; // TTC
+  collectedRevenueHT: number; // HT (après déduction TVA)
+  tvaAmount: number; // Montant de la TVA
   adROI: number;
   costPerCall: number;
   closingRate: number;
@@ -140,6 +142,9 @@ export interface KPIData {
   totalCalls: number;
   totalClosedCalls: number;
   totalAdBudget: number;
+  paymentProcessorCost: number;
+  closersCost: number;
+  agencyCost: number;
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [

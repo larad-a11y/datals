@@ -8,7 +8,6 @@ import {
   Receipt,
   FileText,
   ArrowDown,
-  ArrowRight
 } from 'lucide-react';
 import { KPIData, Charges, Salary, CoachingExpense } from '@/types/business';
 
@@ -22,24 +21,10 @@ interface KPIPanelProps {
 export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanelProps) {
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
   const totalCoachingExpenses = coachingExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const isAboveAgencyThreshold = kpis.collectedRevenue > charges.agencyThreshold;
-  
-  // Calculate intermediate values
-  const closersCost = kpis.collectedRevenue * (charges.closersPercent / 100);
-  const afterClosers = kpis.collectedRevenue - closersCost;
-  
-  const agencyCost = isAboveAgencyThreshold ? afterClosers * (charges.agencyPercent / 100) : 0;
-  const afterAgency = afterClosers - agencyCost;
+  const isAboveAgencyThreshold = kpis.collectedRevenueHT > charges.agencyThreshold;
   
   const fixedCharges = charges.advertising + charges.marketing + 
                        charges.software + charges.otherCosts;
-  const afterFixed = afterAgency - fixedCharges;
-
-  const afterCoaching = afterFixed - totalCoachingExpenses;
-  
-  const afterSalaries = afterCoaching - totalSalaries;
-  
-  const associateCost = afterSalaries > 0 ? afterSalaries * (charges.associatePercent / 100) : 0;
 
   const getTrend = (value: number) => {
     if (value > 0) return 'profitable';
@@ -83,10 +68,13 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Receipt className="h-4 w-4" />
-            CA Collecté
+            CA Collecté HT
           </div>
           <p className="stat-value mt-2 text-foreground">
-            {kpis.collectedRevenue.toLocaleString('fr-FR')} €
+            {kpis.collectedRevenueHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            TTC: {kpis.collectedRevenue.toLocaleString('fr-FR')} € | TVA: {kpis.tvaAmount.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
 
@@ -151,8 +139,9 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
         </h3>
 
         <div className="space-y-4">
+          {/* CA TTC */}
           <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-4">
-            <span className="text-foreground">CA Collecté</span>
+            <span className="text-foreground">CA Collecté TTC</span>
             <span className="font-display text-xl font-bold text-foreground">
               {kpis.collectedRevenue.toLocaleString('fr-FR')} €
             </span>
@@ -162,22 +151,56 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
             <ArrowDown className="h-5 w-5 text-muted-foreground" />
           </div>
 
+          {/* TVA */}
           <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
             <span className="text-foreground">
-              - Closeurs ({charges.closersPercent}%)
+              - TVA ({charges.taxPercent}%)
             </span>
             <span className="font-medium text-danger">
-              -{closersCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+              -{kpis.tvaAmount.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
             </span>
           </div>
 
+          {/* CA HT */}
+          <div className="flex items-center justify-between rounded-lg bg-profitable/10 p-4">
+            <span className="font-medium text-foreground">= CA Collecté HT</span>
+            <span className="font-display text-lg font-bold text-profitable">
+              {kpis.collectedRevenueHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center">
+            <ArrowDown className="h-5 w-5 text-muted-foreground" />
+          </div>
+
+          {/* Payment Processor (on TTC) */}
+          <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+            <span className="text-foreground">
+              - Processeur paiement ({charges.paymentProcessorPercent}% du TTC)
+            </span>
+            <span className="font-medium text-danger">
+              -{kpis.paymentProcessorCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </span>
+          </div>
+
+          {/* Closers (on HT) */}
+          <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+            <span className="text-foreground">
+              - Closeurs ({charges.closersPercent}% du HT)
+            </span>
+            <span className="font-medium text-danger">
+              -{kpis.closersCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </span>
+          </div>
+
+          {/* Agency (on excess HT) */}
           {isAboveAgencyThreshold && (
             <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
               <span className="text-foreground">
-                - Agence ({charges.agencyPercent}%)
+                - Agence ({charges.agencyPercent}% sur excédent &gt; {charges.agencyThreshold.toLocaleString('fr-FR')}€ HT)
               </span>
               <span className="font-medium text-danger">
-                -{agencyCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+                -{kpis.agencyCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
               </span>
             </div>
           )}
@@ -229,7 +252,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses }: KPIPanel
               - Part associé ({charges.associatePercent}% du net)
             </span>
             <span className="font-medium text-danger">
-              -{associateCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+              -{(kpis.netProfit > 0 ? kpis.netProfit * (charges.associatePercent / 100) : 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
             </span>
           </div>
 

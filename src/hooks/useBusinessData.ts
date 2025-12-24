@@ -33,7 +33,8 @@ export function useBusinessData() {
       return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
     }, 0);
     
-    const totalCollected = filteredTunnels.reduce((sum, t) => {
+    // CA Collecté TTC
+    const totalCollectedTTC = filteredTunnels.reduce((sum, t) => {
       const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
       return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
     }, 0);
@@ -48,47 +49,54 @@ export function useBusinessData() {
       (sum, t) => sum + t.callsClosed, 0
     );
 
-    // Calculate deductions in order
-    let remaining = totalCollected;
-
-    // 1. Payment processor fees
-    const paymentProcessorCost = remaining * (charges.paymentProcessorPercent / 100);
-    remaining -= paymentProcessorCost;
-
-    // 2. Closers percentage
-    const closersCost = remaining * (charges.closersPercent / 100);
-    remaining -= closersCost;
-
-    // 3. Agency percentage (only if above threshold)
+    // === NOUVEL ORDRE DE CALCUL ===
+    
+    // 1. Calcul TVA et CA HT
+    const taxRate = charges.taxPercent / 100;
+    const tvaAmount = totalCollectedTTC * taxRate / (1 + taxRate);
+    const totalCollectedHT = totalCollectedTTC - tvaAmount;
+    
+    // 2. Frais processeur de paiement (sur TTC)
+    const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
+    
+    // 3. Closers (calculé sur le HT)
+    const closersCost = totalCollectedHT * (charges.closersPercent / 100);
+    
+    // 4. Agence : uniquement sur l'excédent au-delà du seuil HT
+    // Calculé sur le CA HT GLOBAL, pas sur le restant après déductions
     let agencyCost = 0;
-    if (totalCollected > charges.agencyThreshold) {
-      agencyCost = remaining * (charges.agencyPercent / 100);
-      remaining -= agencyCost;
+    if (totalCollectedHT > charges.agencyThreshold) {
+      const excessHT = totalCollectedHT - charges.agencyThreshold;
+      agencyCost = excessHT * (charges.agencyPercent / 100);
     }
-
-    // 4. Fixed charges (without coaching, now managed separately)
+    
+    // 5. Charges fixes
     const fixedCharges = charges.advertising + charges.marketing + 
                          charges.software + charges.otherCosts;
-    remaining -= fixedCharges;
-
-    // 5. Coaching expenses (filtered by month)
+    
+    // 6. Coaching / Mentorat (filtré par mois)
     const totalCoachingExpenses = filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
-    remaining -= totalCoachingExpenses;
-
-    // 6. Salaries
+    
+    // 7. Salaires
     const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
-    remaining -= totalSalaries;
+    
+    // Calcul du bénéfice net
+    // CA HT - Processeur - Closers - Agence - Charges fixes - Coaching - Salaires
+    const netProfit = totalCollectedHT 
+      - paymentProcessorCost 
+      - closersCost 
+      - agencyCost 
+      - fixedCharges 
+      - totalCoachingExpenses 
+      - totalSalaries;
 
-    // Net profit before associate
-    const netProfit = remaining;
-
-    // 7. Associate percentage (on net profit only)
+    // 8. Part associé (sur le bénéfice net uniquement)
     const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
     const netNetProfit = netProfit - associateCost;
 
-    // ROI: (Collected - Ad Budget) / Ad Budget
+    // ROI: (Collecté HT - Budget Pub) / Budget Pub
     const adROI = totalAdBudget > 0 
-      ? ((totalCollected - totalAdBudget) / totalAdBudget) * 100 
+      ? ((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100 
       : 0;
 
     // Cost per call
@@ -102,7 +110,9 @@ export function useBusinessData() {
 
     return {
       contractedRevenue: totalContracted,
-      collectedRevenue: totalCollected,
+      collectedRevenue: totalCollectedTTC,
+      collectedRevenueHT: totalCollectedHT,
+      tvaAmount,
       adROI,
       costPerCall,
       closingRate,
@@ -112,6 +122,9 @@ export function useBusinessData() {
       totalCalls,
       totalClosedCalls,
       totalAdBudget,
+      paymentProcessorCost,
+      closersCost,
+      agencyCost,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 
