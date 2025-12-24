@@ -10,7 +10,7 @@
     --background: 235 32% 8%;
     --foreground: 210 20% 95%;
 
-    --card: 225 28% 10%;
+    --card: 235 39% 18%;
     --card-foreground: 210 20% 95%;
 
     --popover: 225 28% 10%;
@@ -58,8 +58,8 @@
     --gradient-profitable: linear-gradient(135deg, hsl(145 70% 45%), hsl(145 70% 35%));
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 50%), hsl(38 92% 40%));
     --gradient-danger: linear-gradient(135deg, hsl(0 72% 55%), hsl(0 72% 45%));
-    --gradient-card: linear-gradient(135deg, hsl(225 28% 12%), hsl(225 28% 8%));
-    --gradient-hero: linear-gradient(180deg, hsl(225 30% 9%), hsl(225 30% 5%));
+    --gradient-card: linear-gradient(135deg, hsl(235 39% 18%), hsl(240 29% 10%));
+    --gradient-hero: linear-gradient(180deg, hsl(235 32% 10%), hsl(235 32% 6%));
     --gradient-primary: linear-gradient(135deg, hsl(24 95% 55%), hsl(24 95% 45%));
 
     /* Shadows */
