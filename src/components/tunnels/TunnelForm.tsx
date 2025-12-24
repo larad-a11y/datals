@@ -23,6 +23,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     name: tunnel?.name || '',
     type: tunnel?.type || 'webinar' as TunnelType,
     date: tunnel?.date || '',
+    endDate: tunnel?.endDate || '',
     month: tunnel?.month || selectedMonth,
     isActive: tunnel?.isActive ?? true,
     adBudget: tunnel?.adBudget || 0,
@@ -33,6 +34,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
   });
 
   const [dateOpen, setDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +44,19 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
   const contractedRevenue = formData.callsClosed * formData.averagePrice;
 
   const selectedDate = formData.date ? new Date(formData.date) : undefined;
+  const selectedEndDate = formData.endDate ? new Date(formData.endDate) : undefined;
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setFormData(prev => ({ ...prev, date: format(date, 'yyyy-MM-dd') }));
       setDateOpen(false);
+    }
+  };
+
+  const handleEndDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, endDate: format(date, 'yyyy-MM-dd') }));
+      setEndDateOpen(false);
     }
   };
 
@@ -94,11 +104,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
             </div>
           </div>
 
-          {/* Date (for Webinar & Challenge) */}
-          {(formData.type === 'webinar' || formData.type === 'challenge') && (
+          {/* Date (for Webinar only - single date) */}
+          {formData.type === 'webinar' && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Date de l'événement
+                Date du webinar
               </label>
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
@@ -124,6 +134,71 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+          )}
+
+          {/* Date range (for Challenge - multiple days) */}
+          {formData.type === 'challenge' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Date de début
+                </label>
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-secondary/30"
+                    >
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {formData.date ? (
+                        format(new Date(formData.date), 'PPP', { locale: fr })
+                      ) : (
+                        <span className="text-muted-foreground">Début</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      locale={fr}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Date de fin
+                </label>
+                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal bg-secondary/30"
+                    >
+                      <CalendarDays className="mr-2 h-4 w-4" />
+                      {formData.endDate ? (
+                        format(new Date(formData.endDate), 'PPP', { locale: fr })
+                      ) : (
+                        <span className="text-muted-foreground">Fin</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={selectedEndDate}
+                      onSelect={handleEndDateSelect}
+                      disabled={(date) => formData.date ? date < new Date(formData.date) : false}
+                      locale={fr}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           )}
 
