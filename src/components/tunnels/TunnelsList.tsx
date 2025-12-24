@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Target } from 'lucide-react';
-import { Tunnel, tunnelTypeLabels } from '@/types/business';
+import { Plus, Edit2, Trash2, Target, ChevronDown, ChevronUp } from 'lucide-react';
+import { Tunnel, Sale, tunnelTypeLabels } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
+import { SalesSection } from './SalesSection';
 import { Button } from '@/components/ui/button';
 
 type TunnelTypeFilter = 'all' | 'webinar' | 'vsl' | 'challenge';
@@ -18,6 +19,9 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
+  const [expandedTunnel, setExpandedTunnel] = useState<string | null>(null);
+
+  const generateId = () => Math.random().toString(36).substring(2, 9);
 
   const handleSave = (data: Omit<Tunnel, 'id'>) => {
     if (editingTunnel) {
@@ -27,6 +31,54 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
     }
     setShowForm(false);
     setEditingTunnel(null);
+  };
+
+  // Sale operations for a specific tunnel
+  const handleAddSale = (tunnelId: string, saleData: Omit<Sale, 'id' | 'createdAt'>) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const newSale: Sale = {
+      ...saleData,
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+    };
+    
+    const updatedSales = [...tunnel.sales, newSale];
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    onUpdate(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+      callsClosed: updatedSales.length, // Update calls closed based on sales count
+    });
+  };
+
+  const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    onUpdate(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+    });
+  };
+
+  const handleDeleteSale = (tunnelId: string, saleId: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
+    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    
+    onUpdate(tunnelId, { 
+      sales: updatedSales,
+      collectedAmount: totalCollected,
+      callsClosed: updatedSales.length,
+    });
   };
 
   const filteredTunnels = tunnels
@@ -91,14 +143,19 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTunnels.map((tunnel) => {
-            const contractedRevenue = tunnel.callsClosed * tunnel.averagePrice;
+            const salesContracted = tunnel.sales.reduce((sum, s) => sum + s.totalPrice, 0);
+            const salesCollected = tunnel.sales.reduce((sum, s) => sum + s.amountCollected, 0);
+            const contractedRevenue = salesContracted > 0 ? salesContracted : tunnel.callsClosed * tunnel.averagePrice;
+            const collectedAmount = salesCollected > 0 ? salesCollected : tunnel.collectedAmount;
+            
             const roi = tunnel.adBudget > 0 
-              ? ((tunnel.collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
+              ? ((collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
               : 0;
             const closingRate = tunnel.callsGenerated > 0 
               ? (tunnel.callsClosed / tunnel.callsGenerated) * 100 
               : 0;
             const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
+            const isExpanded = expandedTunnel === tunnel.id;
 
             return (
               <div 
@@ -173,7 +230,7 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Collecté</span>
                       <span className="font-semibold text-profitable">
-                        {tunnel.collectedAmount.toLocaleString('fr-FR')} €
+                        {collectedAmount.toLocaleString('fr-FR')} €
                       </span>
                     </div>
                   </div>
@@ -183,6 +240,36 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete 
                       {roi.toFixed(1)}%
                     </p>
                   </div>
+
+                  {/* Sales toggle */}
+                  <button
+                    onClick={() => setExpandedTunnel(isExpanded ? null : tunnel.id)}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg border border-border/50 bg-background/50 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Masquer les ventes
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        Ventes ({tunnel.sales.length})
+                      </>
+                    )}
+                  </button>
+
+                  {/* Sales section */}
+                  {isExpanded && (
+                    <div className="border-t border-border/50 pt-4">
+                      <SalesSection
+                        sales={tunnel.sales}
+                        onAddSale={(data) => handleAddSale(tunnel.id, data)}
+                        onUpdateSale={(saleId, updates) => handleUpdateSale(tunnel.id, saleId, updates)}
+                        onDeleteSale={(saleId) => handleDeleteSale(tunnel.id, saleId)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             );
