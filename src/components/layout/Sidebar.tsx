@@ -1,5 +1,12 @@
-import { LayoutDashboard, Target, Receipt, Wallet, Users, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Target, Receipt, Wallet, Users, BarChart3, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface SidebarProps {
   activeTab: string;
@@ -13,7 +20,6 @@ const navItems = [
   { id: 'charges', label: 'Charges & Déductions', icon: Wallet },
   { id: 'salaries', label: 'Salaires', icon: Users },
   { id: 'kpi', label: 'KPI & Rentabilité', icon: BarChart3 },
-  { id: 'settings', label: 'Paramètres', icon: Settings },
 ];
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
@@ -56,6 +62,29 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             <p className="text-xs text-muted-foreground">
               Pilotez votre business par les chiffres, pas à l'instinct.
             </p>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline">
+                  <Info className="h-3 w-3" />
+                  À propos
+                </button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>À propos de ProfitPilot</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 text-sm text-muted-foreground">
+                  <p>
+                    ProfitPilot est une application de calcul de rentabilité business 
+                    conçue pour les entrepreneurs utilisant des tunnels de vente 
+                    (Webinar, VSL, Challenge).
+                  </p>
+                  <p>
+                    Pilotez votre business par les chiffres, pas à l'instinct.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
