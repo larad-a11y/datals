@@ -26,11 +26,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     endDate: tunnel?.endDate || '',
     month: tunnel?.month || selectedMonth,
     isActive: tunnel?.isActive ?? true,
-    adBudget: tunnel?.adBudget || 0,
-    callsGenerated: tunnel?.callsGenerated || 0,
-    callsClosed: tunnel?.callsClosed || 0,
-    averagePrice: tunnel?.averagePrice || 0,
-    collectedAmount: tunnel?.collectedAmount || 0,
+    adBudget: tunnel?.adBudget || '',
+    callsGenerated: tunnel?.callsGenerated || '',
+    callsClosed: tunnel?.callsClosed || '',
+    averagePrice: tunnel?.averagePrice || '',
+    collectedAmount: tunnel?.collectedAmount || '',
     sales: tunnel?.sales || [],
   });
 
@@ -39,10 +39,20 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    onSave({
+      ...formData,
+      adBudget: parseFloat(String(formData.adBudget)) || 0,
+      callsGenerated: parseInt(String(formData.callsGenerated)) || 0,
+      callsClosed: parseInt(String(formData.callsClosed)) || 0,
+      averagePrice: parseFloat(String(formData.averagePrice)) || 0,
+      collectedAmount: parseFloat(String(formData.collectedAmount)) || 0,
+    });
   };
 
-  const contractedRevenue = formData.callsClosed * formData.averagePrice;
+  const adBudgetNum = parseFloat(String(formData.adBudget)) || 0;
+  const callsClosedNum = parseInt(String(formData.callsClosed)) || 0;
+  const averagePriceNum = parseFloat(String(formData.averagePrice)) || 0;
+  const contractedRevenue = callsClosedNum * averagePriceNum;
 
   const selectedDate = formData.date ? new Date(formData.date) : undefined;
   const selectedEndDate = formData.endDate ? new Date(formData.endDate) : undefined;
@@ -216,10 +226,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 <input
                   type="number"
                   value={formData.adBudget}
-                  onChange={(e) => setFormData(prev => ({ ...prev, adBudget: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, adBudget: e.target.value }))}
                   className="input-field w-full"
                   min="0"
                   step="0.01"
+                  placeholder="0"
                 />
               </div>
               <div>
@@ -229,9 +240,10 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 <input
                   type="number"
                   value={formData.callsGenerated}
-                  onChange={(e) => setFormData(prev => ({ ...prev, callsGenerated: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, callsGenerated: e.target.value }))}
                   className="input-field w-full"
                   min="0"
+                  placeholder="0"
                 />
               </div>
               <div>
@@ -241,9 +253,10 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 <input
                   type="number"
                   value={formData.callsClosed}
-                  onChange={(e) => setFormData(prev => ({ ...prev, callsClosed: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, callsClosed: e.target.value }))}
                   className="input-field w-full"
                   min="0"
+                  placeholder="0"
                 />
               </div>
               <div>
@@ -253,10 +266,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 <input
                   type="number"
                   value={formData.averagePrice}
-                  onChange={(e) => setFormData(prev => ({ ...prev, averagePrice: parseFloat(e.target.value) || 0 }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, averagePrice: e.target.value }))}
                   className="input-field w-full"
                   min="0"
                   step="0.01"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -277,7 +291,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
               <input
                 type="number"
                 value={formData.collectedAmount}
-                onChange={(e) => setFormData(prev => ({ ...prev, collectedAmount: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, collectedAmount: e.target.value }))}
                 className="input-field w-full"
                 min="0"
                 step="0.01"
