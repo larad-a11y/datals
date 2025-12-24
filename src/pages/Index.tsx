@@ -30,6 +30,7 @@ const Index = () => {
     updateSalary,
     deleteSalary,
     getAllSales,
+    coachingExpenses,
     filteredCoachingExpenses,
     addCoachingExpense,
     updateCoachingExpense,
@@ -157,7 +158,17 @@ const Index = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard kpis={kpis} tunnels={filteredTunnels} />;
+        return (
+          <Dashboard 
+            kpis={kpis} 
+            tunnels={filteredTunnels}
+            charges={charges}
+            salaries={salaries}
+            coachingExpenses={coachingExpenses}
+            allTunnels={tunnels}
+            selectedMonth={selectedMonth}
+          />
+        );
       case 'tunnels':
       case 'events':
         return (
@@ -219,7 +230,17 @@ const Index = () => {
           />
         );
       default:
-        return <Dashboard kpis={kpis} tunnels={filteredTunnels} />;
+        return (
+          <Dashboard 
+            kpis={kpis} 
+            tunnels={filteredTunnels}
+            charges={charges}
+            salaries={salaries}
+            coachingExpenses={coachingExpenses}
+            allTunnels={tunnels}
+            selectedMonth={selectedMonth}
+          />
+        );
     }
   };
 
