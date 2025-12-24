@@ -77,27 +77,32 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
     </button>
   );
 
-  // Get row status class
+  // Get row status class based on payment verification status
   const getRowStatusClass = (sale: EnrichedSale) => {
     const remaining = sale.totalPrice - sale.amountCollected;
     const isPaid = remaining <= 0;
     
     if (isPaid) return 'bg-profitable/5 border-l-2 border-l-profitable';
     
-    // Check if has pending payment (based on nextPaymentDate)
+    // Check if payment needs verification (1+ day after payment date)
     if (sale.nextPaymentDate) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const dueDate = new Date(sale.nextPaymentDate);
       dueDate.setHours(0, 0, 0, 0);
       
+      // diffDays: negative = payment date has passed
       const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       
-      if (diffDays < 0) return 'bg-danger/5 border-l-2 border-l-danger'; // Overdue
-      if (diffDays <= 3) return 'bg-warning/5 border-l-2 border-l-warning'; // Due soon
+      // Highlight rows that need verification (payment date has passed)
+      if (diffDays <= -1) {
+        const daysOverdue = Math.abs(diffDays);
+        if (daysOverdue > 3) return 'bg-danger/5 border-l-2 border-l-danger'; // Urgent - more than 3 days
+        return 'bg-warning/5 border-l-2 border-l-warning'; // To verify - 1-3 days after
+      }
     }
     
-    return ''; // Default - no special styling
+    return ''; // Default - payment not yet due
   };
 
   // Handle payment recording

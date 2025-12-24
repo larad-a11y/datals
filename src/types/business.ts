@@ -112,6 +112,7 @@ export const tunnelTypeLabels: Record<TunnelType, string> = {
 };
 
 // Helper to generate notifications from sales
+// Notifications appear 1 day AFTER the payment date (for verification that payment was collected)
 export function generatePaymentNotifications(sales: (Sale & { tunnelName?: string })[]): PaymentNotification[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -127,15 +128,18 @@ export function generatePaymentNotifications(sales: (Sale & { tunnelName?: strin
     const dueDate = new Date(sale.nextPaymentDate);
     dueDate.setHours(0, 0, 0, 0);
     
+    // diffDays: negative = payment date is in the past
     const diffDays = Math.floor((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    let type: PaymentNotification['type'] = 'upcoming';
-    if (diffDays < 0) type = 'overdue';
-    else if (diffDays <= 3) type = 'due';
-    
-    // Only show notifications for due or overdue, or upcoming within 7 days
-    if (diffDays <= 7) {
+    // Only show notification if payment date has passed (diffDays <= -1 means at least 1 day after)
+    // This is for VERIFICATION that the automatic payment was collected
+    if (diffDays <= -1) {
       const paymentAmount = sale.totalPrice / sale.numberOfPayments;
+      const daysOverdue = Math.abs(diffDays);
+      
+      // Type based on how long since payment should have been verified
+      let type: PaymentNotification['type'] = 'due'; // 1-3 days after = to verify
+      if (daysOverdue > 3) type = 'overdue'; // More than 3 days = urgent verification needed
       
       notifications.push({
         id: `notif-${sale.id}-${sale.nextPaymentDate}`,
@@ -150,7 +154,7 @@ export function generatePaymentNotifications(sales: (Sale & { tunnelName?: strin
     }
   });
   
-  // Sort by date (overdue first, then due, then upcoming)
+  // Sort by date (oldest overdue first - most urgent)
   return notifications.sort((a, b) => {
     const typeOrder = { overdue: 0, due: 1, upcoming: 2 };
     if (typeOrder[a.type] !== typeOrder[b.type]) {

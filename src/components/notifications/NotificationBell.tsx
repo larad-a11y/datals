@@ -40,13 +40,16 @@ export function NotificationBell({
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
     
     const diff = Math.floor((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diff < 0) return `${Math.abs(diff)} jour${Math.abs(diff) > 1 ? 's' : ''} en retard`;
-    if (diff === 0) return "Aujourd'hui";
-    if (diff === 1) return 'Demain';
-    return `Dans ${diff} jours`;
+    // Payment date is in the past - show how many days ago for verification
+    if (diff < 0) {
+      const daysAgo = Math.abs(diff);
+      return `Prélèvement du ${date.toLocaleDateString('fr-FR')} (il y a ${daysAgo} jour${daysAgo > 1 ? 's' : ''})`;
+    }
+    return date.toLocaleDateString('fr-FR');
   };
   
   const getTypeIcon = (type: PaymentNotification['type']) => {
@@ -63,9 +66,9 @@ export function NotificationBell({
   const getTypeBadge = (type: PaymentNotification['type']) => {
     switch (type) {
       case 'overdue':
-        return <span className="badge-danger">En retard</span>;
+        return <span className="badge-danger">Urgent</span>;
       case 'due':
-        return <span className="badge-warning">À encaisser</span>;
+        return <span className="badge-warning">À vérifier</span>;
       default:
         return <span className="badge-profitable">À venir</span>;
     }
@@ -107,10 +110,10 @@ export function NotificationBell({
           {activeNotifications.length > 0 && (
             <div className="mt-1 flex gap-2 text-xs">
               {overdueCount > 0 && (
-                <span className="text-danger">{overdueCount} en retard</span>
+                <span className="text-danger">{overdueCount} urgent{overdueCount > 1 ? 's' : ''}</span>
               )}
               {dueCount > 0 && (
-                <span className="text-warning">{dueCount} à encaisser</span>
+                <span className="text-warning">{dueCount} à vérifier</span>
               )}
             </div>
           )}
