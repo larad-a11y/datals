@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw } from 'lucide-react';
-import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges } from '@/types/business';
+import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw, Users } from 'lucide-react';
+import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary } from '@/types/business';
 import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
@@ -8,9 +8,15 @@ interface ChargesPanelProps {
   onUpdate: (charges: Charges) => void;
   onResetCharges: () => void;
   collectedRevenue: number;
+  salaries: Salary[];
+  onAddSalary: (salary: Omit<Salary, 'id'>) => void;
+  onUpdateSalary: (id: string, updates: Partial<Salary>) => void;
+  onDeleteSalary: (id: string) => void;
 }
 
-export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedRevenue }: ChargesPanelProps) {
+export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedRevenue, salaries, onAddSalary, onUpdateSalary, onDeleteSalary }: ChargesPanelProps) {
+  const [newSalaryName, setNewSalaryName] = useState('');
+  const [newSalaryAmount, setNewSalaryAmount] = useState('');
   const [newOfferName, setNewOfferName] = useState('');
   const [newOfferPrice, setNewOfferPrice] = useState('');
   const [newOfferInstallments, setNewOfferInstallments] = useState<OfferInstallment[]>([
@@ -477,6 +483,115 @@ export function ChargesPanel({ charges, onUpdate, onResetCharges, collectedReven
             />
           </div>
         </div>
+      </div>
+
+      {/* Salaries section */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-semibold text-foreground">
+              Salaires
+            </h3>
+          </div>
+          <div className="rounded-lg bg-secondary/50 px-4 py-2">
+            <span className="text-sm text-muted-foreground">Total: </span>
+            <span className="font-display text-lg font-bold text-foreground">
+              {salaries.reduce((sum, s) => sum + s.monthlyAmount, 0).toLocaleString('fr-FR')} €
+            </span>
+          </div>
+        </div>
+
+        {/* Add new salary */}
+        <div className="mb-4 rounded-lg border border-dashed border-border/50 p-4">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Ajouter un salaire</h4>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="mb-1 block text-xs text-muted-foreground">Nom</label>
+              <input
+                type="text"
+                value={newSalaryName}
+                onChange={(e) => setNewSalaryName(e.target.value)}
+                className="input-field w-full"
+                placeholder="Ex: Commercial"
+              />
+            </div>
+            <div className="w-40">
+              <label className="mb-1 block text-xs text-muted-foreground">Montant (€)</label>
+              <input
+                type="number"
+                value={newSalaryAmount}
+                onChange={(e) => setNewSalaryAmount(e.target.value)}
+                className="input-field w-full"
+                min="0"
+                step="0.01"
+                placeholder="0"
+              />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => {
+                  if (newSalaryName.trim() && newSalaryAmount) {
+                    onAddSalary({
+                      name: newSalaryName.trim(),
+                      monthlyAmount: parseFloat(newSalaryAmount) || 0,
+                    });
+                    setNewSalaryName('');
+                    setNewSalaryAmount('');
+                  }
+                }} 
+                disabled={!newSalaryName.trim() || !newSalaryAmount}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Ajouter
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Salaries list */}
+        {salaries.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Aucun salaire configuré
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {salaries.map((salary) => (
+              <div
+                key={salary.id}
+                className="flex items-center justify-between rounded-lg bg-secondary/30 p-3"
+              >
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={salary.name}
+                    onChange={(e) => onUpdateSalary(salary.id, { name: e.target.value })}
+                    className="bg-transparent font-medium text-foreground outline-none focus:underline"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={salary.monthlyAmount}
+                      onChange={(e) => onUpdateSalary(salary.id, { monthlyAmount: parseFloat(e.target.value) || 0 })}
+                      className="w-28 rounded-lg bg-secondary/50 px-3 py-1.5 text-right font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/50"
+                      min="0"
+                      step="0.01"
+                    />
+                    <span className="text-muted-foreground">€</span>
+                  </div>
+                  <button
+                    onClick={() => onDeleteSalary(salary.id)}
+                    className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Info box */}

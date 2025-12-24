@@ -1,4 +1,4 @@
-import { LayoutDashboard, Target, Receipt, Wallet, Users, BarChart3, Info } from 'lucide-react';
+import { LayoutDashboard, Target, Receipt, Wallet, BarChart3, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
@@ -18,7 +18,6 @@ const navItems = [
   { id: 'tunnels', label: 'Tunnels de vente', icon: Target },
   { id: 'sales', label: 'Ventes / CRM', icon: Receipt },
   { id: 'charges', label: 'Charges & Déductions', icon: Wallet },
-  { id: 'salaries', label: 'Salaires', icon: Users },
   { id: 'kpi', label: 'KPI & Rentabilité', icon: BarChart3 },
 ];
 
