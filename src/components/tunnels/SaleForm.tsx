@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Sale } from '@/types/business';
+import { useState, useEffect, useMemo } from 'react';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels } from '@/types/business';
 import { Button } from '@/components/ui/button';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SaleFormProps {
   sale?: Sale;
@@ -8,18 +14,39 @@ interface SaleFormProps {
   onSave: (sale: Omit<Sale, 'id' | 'createdAt'>) => void;
   onCancel: () => void;
   inline?: boolean;
-  installmentMarkupPercent?: number; // Pourcentage de majoration configurable
+  installmentPlans: InstallmentPlan[];
+  offers: Offer[];
 }
 
-export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentMarkupPercent = 5 }: SaleFormProps) {
+export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
+    saleDate: sale?.saleDate || new Date().toISOString().split('T')[0],
+    offerId: sale?.offerId || '',
+    paymentMethod: sale?.paymentMethod || 'cb' as PaymentMethod,
     basePrice: sale?.basePrice || sale?.totalPrice || '',
     numberOfPayments: sale?.numberOfPayments || 1,
     totalPrice: sale?.totalPrice || '',
     amountCollected: sale?.amountCollected || '',
     useMarkup: !sale, // Par défaut on utilise la majoration pour les nouvelles ventes
   });
+
+  // Get available installment plans based on selected offer
+  const availableInstallments = useMemo(() => {
+    if (formData.offerId) {
+      const offer = offers.find(o => o.id === formData.offerId);
+      if (offer) {
+        return installmentPlans.filter(p => offer.availableInstallments.includes(p.numberOfPayments));
+      }
+    }
+    return installmentPlans;
+  }, [formData.offerId, offers, installmentPlans]);
+
+  // Get current markup percent
+  const currentMarkupPercent = useMemo(() => {
+    const plan = installmentPlans.find(p => p.numberOfPayments === formData.numberOfPayments);
+    return plan?.markupPercent || 0;
+  }, [formData.numberOfPayments, installmentPlans]);
 
   const basePriceNum = typeof formData.basePrice === 'string' 
     ? parseFloat(formData.basePrice) || 0 
@@ -33,16 +60,30 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     ? parseFloat(formData.amountCollected) || 0
     : formData.amountCollected;
 
+  // When offer is selected, auto-fill base price
+  useEffect(() => {
+    if (formData.offerId) {
+      const offer = offers.find(o => o.id === formData.offerId);
+      if (offer) {
+        setFormData(prev => ({ ...prev, basePrice: offer.basePrice }));
+        // Reset numberOfPayments if not available in offer
+        if (!offer.availableInstallments.includes(formData.numberOfPayments)) {
+          setFormData(prev => ({ ...prev, numberOfPayments: offer.availableInstallments[0] || 1 }));
+        }
+      }
+    }
+  }, [formData.offerId, offers]);
+
   // Calcul automatique du prix total avec majoration
   useEffect(() => {
-    if (basePriceNum > 0 && formData.useMarkup && formData.numberOfPayments > 1) {
-      const calculatedTotal = basePriceNum * (1 + installmentMarkupPercent / 100);
+    if (basePriceNum > 0 && formData.useMarkup) {
+      const calculatedTotal = basePriceNum * (1 + currentMarkupPercent / 100);
       setFormData(prev => ({ ...prev, totalPrice: calculatedTotal }));
     } else if (basePriceNum > 0 && formData.numberOfPayments === 1) {
       // Pas de majoration pour paiement en 1x
       setFormData(prev => ({ ...prev, totalPrice: basePriceNum }));
     }
-  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, installmentMarkupPercent]);
+  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, currentMarkupPercent]);
 
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
   useEffect(() => {
@@ -52,9 +93,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     }
   }, [totalPriceNum, formData.numberOfPayments, sale]);
 
-  // Calculate next payment date (1 month from now for new sales)
+  // Calculate next payment date (1 month from sale date for new sales)
   const calculateNextPaymentDate = () => {
-    const date = new Date();
+    const date = new Date(formData.saleDate);
     date.setMonth(date.getMonth() + 1);
     return date.toISOString().split('T')[0];
   };
@@ -66,6 +107,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
+      saleDate: formData.saleDate,
+      offerId: formData.offerId || undefined,
+      paymentMethod: formData.paymentMethod,
       basePrice: basePriceNum,
       totalPrice: totalPriceNum || basePriceNum,
       numberOfPayments: formData.numberOfPayments,
@@ -80,6 +124,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     if (inline) {
       setFormData({
         clientName: '',
+        saleDate: new Date().toISOString().split('T')[0],
+        offerId: '',
+        paymentMethod: 'cb',
         basePrice: '',
         numberOfPayments: 1,
         totalPrice: '',
@@ -98,6 +145,37 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Date de vente */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          📅 Date de la vente
+        </label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !formData.saleDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {formData.saleDate ? format(new Date(formData.saleDate), "PPP", { locale: fr }) : <span>Choisir une date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={formData.saleDate ? new Date(formData.saleDate) : undefined}
+              onSelect={(date) => date && setFormData(prev => ({ ...prev, saleDate: date.toISOString().split('T')[0] }))}
+              disabled={(date) => date > new Date()}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
           Nom du client (optionnel)
@@ -111,6 +189,42 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         />
       </div>
 
+      {/* Offer selection */}
+      {offers.length > 0 && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            🎁 Offre
+          </label>
+          <select
+            value={formData.offerId}
+            onChange={(e) => setFormData(prev => ({ ...prev, offerId: e.target.value }))}
+            className="input-field w-full"
+          >
+            <option value="">Sélectionner une offre (optionnel)</option>
+            {offers.map(offer => (
+              <option key={offer.id} value={offer.id}>
+                {offer.name} - {offer.basePrice.toLocaleString('fr-FR')} €
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Payment method */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          💳 Moyen de paiement
+        </label>
+        <select
+          value={formData.paymentMethod}
+          onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as PaymentMethod }))}
+          className="input-field w-full"
+        >
+          <option value="cb">{paymentMethodLabels.cb}</option>
+          <option value="virement">{paymentMethodLabels.virement}</option>
+        </select>
+      </div>
+
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
           💵 Prix de base / Prix cash (€)
@@ -118,7 +232,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         <input
           type="number"
           value={formData.basePrice}
-          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value, offerId: '' }))}
           className="input-field w-full"
           min="0"
           step="0.01"
@@ -132,20 +246,20 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           📅 Nombre de paiements
         </label>
         <div className="flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 6, 10, 12].map((n) => (
+          {availableInstallments.map((plan) => (
             <button
-              key={n}
+              key={plan.id}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: n, useMarkup: true }))}
+              onClick={() => setFormData(prev => ({ ...prev, numberOfPayments: plan.numberOfPayments, useMarkup: true }))}
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                formData.numberOfPayments === n
+                formData.numberOfPayments === plan.numberOfPayments
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
               }`}
             >
-              {n}x
-              {n > 1 && (
-                <span className="ml-1 text-xs opacity-70">+{installmentMarkupPercent}%</span>
+              {plan.numberOfPayments}x
+              {plan.markupPercent > 0 && (
+                <span className="ml-1 text-xs opacity-70">+{plan.markupPercent}%</span>
               )}
             </button>
           ))}
@@ -169,7 +283,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
                 }}
                 className="rounded"
               />
-              Appliquer majoration (+{installmentMarkupPercent}%)
+              Appliquer majoration (+{currentMarkupPercent}%)
             </label>
           </div>
           <div className="flex items-center gap-2">
@@ -268,7 +382,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-6 shadow-lg animate-slide-up">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl border border-border/50 bg-card p-6 shadow-lg animate-slide-up">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-foreground">
             {sale ? 'Modifier la vente' : 'Nouvelle vente'}

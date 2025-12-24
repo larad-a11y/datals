@@ -1,5 +1,7 @@
-import { Percent, Euro, AlertCircle } from 'lucide-react';
-import { Charges } from '@/types/business';
+import { useState } from 'react';
+import { Percent, Euro, AlertCircle, Plus, Trash2, Package } from 'lucide-react';
+import { Charges, InstallmentPlan, Offer } from '@/types/business';
+import { Button } from '@/components/ui/button';
 
 interface ChargesPanelProps {
   charges: Charges;
@@ -8,8 +10,63 @@ interface ChargesPanelProps {
 }
 
 export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPanelProps) {
+  const [newOfferName, setNewOfferName] = useState('');
+  const [newOfferPrice, setNewOfferPrice] = useState('');
+  const [newOfferInstallments, setNewOfferInstallments] = useState<number[]>([1]);
+
   const handleChange = (key: keyof Charges, value: number) => {
     onUpdate({ ...charges, [key]: value });
+  };
+
+  const handlePlanChange = (planId: string, markupPercent: number) => {
+    const updatedPlans = charges.installmentPlans.map(p => 
+      p.id === planId ? { ...p, markupPercent } : p
+    );
+    onUpdate({ ...charges, installmentPlans: updatedPlans });
+  };
+
+  const addInstallmentPlan = () => {
+    const maxPayments = Math.max(...charges.installmentPlans.map(p => p.numberOfPayments), 0);
+    const newPlan: InstallmentPlan = {
+      id: `plan-${Date.now()}`,
+      numberOfPayments: maxPayments + 1,
+      markupPercent: 5,
+    };
+    onUpdate({ ...charges, installmentPlans: [...charges.installmentPlans, newPlan] });
+  };
+
+  const removeInstallmentPlan = (planId: string) => {
+    const plan = charges.installmentPlans.find(p => p.id === planId);
+    if (plan?.numberOfPayments === 1) return; // Cannot remove 1x payment
+    onUpdate({ ...charges, installmentPlans: charges.installmentPlans.filter(p => p.id !== planId) });
+  };
+
+  const addOffer = () => {
+    if (!newOfferName || !newOfferPrice) return;
+    const newOffer: Offer = {
+      id: `offer-${Date.now()}`,
+      name: newOfferName,
+      basePrice: parseFloat(newOfferPrice) || 0,
+      availableInstallments: newOfferInstallments,
+    };
+    onUpdate({ ...charges, offers: [...charges.offers, newOffer] });
+    setNewOfferName('');
+    setNewOfferPrice('');
+    setNewOfferInstallments([1]);
+  };
+
+  const removeOffer = (offerId: string) => {
+    onUpdate({ ...charges, offers: charges.offers.filter(o => o.id !== offerId) });
+  };
+
+  const toggleOfferInstallment = (num: number) => {
+    if (newOfferInstallments.includes(num)) {
+      if (newOfferInstallments.length > 1) {
+        setNewOfferInstallments(newOfferInstallments.filter(n => n !== num));
+      }
+    } else {
+      setNewOfferInstallments([...newOfferInstallments, num].sort((a, b) => a - b));
+    }
   };
 
   const isAboveAgencyThreshold = collectedRevenue > charges.agencyThreshold;
@@ -115,25 +172,6 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Calculé APRÈS toutes les autres charges</p>
           </div>
-
-          <div>
-            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-              📅 Majoration facilités paiement
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                value={charges.installmentMarkupPercent}
-                onChange={(e) => handleChange('installmentMarkupPercent', parseFloat(e.target.value) || 0)}
-                className="input-field w-full pr-8"
-                min="0"
-                max="100"
-                step="0.5"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">Appliqué aux paiements en plusieurs fois</p>
-          </div>
         </div>
 
         {/* Agency threshold setting */}
@@ -149,6 +187,150 @@ export function ChargesPanel({ charges, onUpdate, collectedRevenue }: ChargesPan
             min="0"
             step="1000"
           />
+        </div>
+      </div>
+
+      {/* Installment Plans Configuration */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Percent className="h-5 w-5 text-primary" />
+            <h3 className="font-display text-lg font-semibold text-foreground">
+              Plans de facilités de paiement
+            </h3>
+          </div>
+          <Button onClick={addInstallmentPlan} size="sm" variant="outline">
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter un plan
+          </Button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {charges.installmentPlans
+            .sort((a, b) => a.numberOfPayments - b.numberOfPayments)
+            .map((plan) => (
+            <div key={plan.id} className="rounded-lg border border-border/50 bg-secondary/20 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-lg font-semibold text-foreground">{plan.numberOfPayments}x</span>
+                {plan.numberOfPayments > 1 && (
+                  <button
+                    onClick={() => removeInstallmentPlan(plan.id)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Majoration</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={plan.markupPercent}
+                    onChange={(e) => handlePlanChange(plan.id, parseFloat(e.target.value) || 0)}
+                    className="input-field w-full pr-8"
+                    min="0"
+                    max="100"
+                    step="0.5"
+                    disabled={plan.numberOfPayments === 1}
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Offers Management */}
+      <div className="rounded-xl border border-border/50 bg-card p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Package className="h-5 w-5 text-primary" />
+          <h3 className="font-display text-lg font-semibold text-foreground">
+            Catalogue d'offres
+          </h3>
+        </div>
+
+        {/* Existing offers */}
+        {charges.offers.length > 0 && (
+          <div className="mb-6 space-y-3">
+            {charges.offers.map(offer => (
+              <div key={offer.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/20 p-4">
+                <div>
+                  <span className="font-medium text-foreground">{offer.name}</span>
+                  <span className="mx-2 text-muted-foreground">-</span>
+                  <span className="text-foreground">{offer.basePrice.toLocaleString('fr-FR')} €</span>
+                  <div className="mt-1 flex gap-1">
+                    {offer.availableInstallments.map(num => (
+                      <span key={num} className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        {num}x
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeOffer(offer.id)}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new offer */}
+        <div className="rounded-lg border border-dashed border-border/50 p-4">
+          <h4 className="mb-3 text-sm font-medium text-foreground">Ajouter une offre</h4>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Nom de l'offre</label>
+              <input
+                type="text"
+                value={newOfferName}
+                onChange={(e) => setNewOfferName(e.target.value)}
+                className="input-field w-full"
+                placeholder="Ex: Coaching 6 mois"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Prix de base (€)</label>
+              <input
+                type="number"
+                value={newOfferPrice}
+                onChange={(e) => setNewOfferPrice(e.target.value)}
+                className="input-field w-full"
+                placeholder="2000"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <label className="mb-1 block text-xs text-muted-foreground">Facilités de paiement disponibles</label>
+            <div className="flex flex-wrap gap-2">
+              {charges.installmentPlans
+                .sort((a, b) => a.numberOfPayments - b.numberOfPayments)
+                .map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => toggleOfferInstallment(plan.numberOfPayments)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    newOfferInstallments.includes(plan.numberOfPayments)
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary/50 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {plan.numberOfPayments}x
+                </button>
+              ))}
+            </div>
+          </div>
+          <Button onClick={addOffer} className="mt-4" disabled={!newOfferName || !newOfferPrice}>
+            <Plus className="mr-1 h-4 w-4" />
+            Ajouter l'offre
+          </Button>
         </div>
       </div>
 

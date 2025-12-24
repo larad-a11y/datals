@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
-import { Sale } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, defaultInstallmentPlans } from '@/types/business';
 import { SaleForm } from './SaleForm';
 
 interface SalesSectionProps {
@@ -8,9 +8,11 @@ interface SalesSectionProps {
   onAddSale: (sale: Omit<Sale, 'id' | 'createdAt'>) => void;
   onUpdateSale: (id: string, updates: Partial<Sale>) => void;
   onDeleteSale: (id: string) => void;
+  installmentPlans?: InstallmentPlan[];
+  offers?: Offer[];
 }
 
-export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: SalesSectionProps) {
+export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, installmentPlans = defaultInstallmentPlans, offers = [] }: SalesSectionProps) {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const handleSave = (data: Omit<Sale, 'id' | 'createdAt'>) => {
@@ -116,6 +118,8 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: S
         onSave={handleSave}
         onCancel={() => {}}
         inline
+        installmentPlans={installmentPlans}
+        offers={offers}
       />
 
       {/* Edit modal */}
@@ -124,6 +128,8 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale }: S
           sale={editingSale}
           onSave={handleEditSave}
           onCancel={() => setEditingSale(null)}
+          installmentPlans={installmentPlans}
+          offers={offers}
         />
       )}
     </div>
