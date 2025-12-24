@@ -63,6 +63,14 @@ export default {
           DEFAULT: "hsl(var(--danger))",
           foreground: "hsl(var(--danger-foreground))",
         },
+        chart: {
+          orange: "hsl(var(--chart-orange))",
+          yellow: "hsl(var(--chart-yellow))",
+          teal: "hsl(var(--chart-teal))",
+          blue: "hsl(var(--chart-blue))",
+          red: "hsl(var(--chart-red))",
+          green: "hsl(var(--chart-green))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
