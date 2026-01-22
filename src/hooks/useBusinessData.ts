@@ -198,6 +198,11 @@ export function useBusinessData() {
     const organicSalesCount = organicSales.length;
     const organicCollectedAmount = roundCurrency(organicSales.reduce((sum, s) => sum + s.amountCollected, 0));
 
+    // Placeholder values for new metrics (not used in legacy hook)
+    const directCollectedThisMonth = 0;
+    const installmentCollectedThisMonth = 0;
+    const remainingToCollectThisMonth = 0;
+
     return {
       contractedRevenue: totalContracted,
       collectedRevenue: totalCollectedTTC,
@@ -227,6 +232,9 @@ export function useBusinessData() {
       defaultedAmount,
       organicSalesCount,
       organicCollectedAmount,
+      directCollectedThisMonth,
+      installmentCollectedThisMonth,
+      remainingToCollectThisMonth,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 

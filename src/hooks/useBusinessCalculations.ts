@@ -73,10 +73,7 @@ export function useBusinessCalculations({
     const tvaAmount = roundCurrency(totalCollectedTTC * taxRate / (1 + taxRate));
     const totalCollectedHT = roundCurrency(totalCollectedTTC - tvaAmount);
     
-    // 2. Frais processeur de paiement (sur TTC)
-    const paymentProcessorCost = roundCurrency(totalCollectedTTC * (charges.paymentProcessorPercent / 100));
-    
-    // 3. Frais Klarna (sur le montant Klarna uniquement)
+    // 2. Calcul du montant Klarna total
     const totalKlarnaAmount = roundCurrency(filteredTunnels.reduce((sum, t) => {
       return sum + t.sales.reduce((s, sale) => {
         if (sale.klarnaAmount && sale.klarnaAmount > 0) {
@@ -86,7 +83,12 @@ export function useBusinessCalculations({
       }, 0);
     }, 0));
     
+    // 3. Frais Klarna (8% sur portion Klarna uniquement - PAS de frais processeur sur Klarna)
     const klarnaCost = roundCurrency(totalKlarnaAmount * (charges.klarnaPercent / 100));
+    
+    // 4. Frais processeur de paiement (sur CB uniquement, pas sur Klarna)
+    const totalCBAmount = roundCurrency(totalCollectedTTC - totalKlarnaAmount);
+    const paymentProcessorCost = roundCurrency(totalCBAmount * (charges.paymentProcessorPercent / 100));
     
     // 4. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
     const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
@@ -200,6 +202,53 @@ export function useBusinessCalculations({
     const organicSalesCount = organicSales.length;
     const organicCollectedAmount = roundCurrency(organicSales.reduce((sum, s) => sum + s.amountCollected, 0));
 
+    // === NOUVELLES MÉTRIQUES: Breakdown des encaissements du mois ===
+    
+    // Encaissé direct = 1ère échéance des ventes faites ce mois-ci
+    const directCollectedThisMonth = roundCurrency(filteredTunnels.reduce((sum, t) => {
+      return sum + t.sales.reduce((s, sale) => {
+        // Premier paiement = montant Klarna (si présent) + première échéance CB
+        const klarnaAmount = sale.klarnaAmount || 0;
+        const cbAmount = sale.cbAmount || (sale.totalPrice - klarnaAmount);
+        const firstInstallmentCB = sale.numberOfPayments > 1 ? cbAmount / sale.numberOfPayments : cbAmount;
+        return s + klarnaAmount + firstInstallmentCB;
+      }, 0);
+    }, 0));
+
+    // Encaissé depuis échéances = paiements échelonnés des mois précédents encaissés ce mois
+    const installmentCollectedThisMonth = roundCurrency(tunnels
+      .filter(t => t.month !== selectedMonth) // Ventes des mois précédents
+      .flatMap(t => t.sales)
+      .filter(sale => !sale.isDefaulted)
+      .reduce((sum, sale) => {
+        // Vérifier les paiements dont la date est dans le mois sélectionné
+        const paymentsThisMonth = (sale.paymentHistory || []).filter(payment => {
+          const paymentMonth = payment.date.substring(0, 7);
+          return paymentMonth === selectedMonth && payment.verified;
+        });
+        return sum + paymentsThisMonth.reduce((ps, p) => ps + p.amount, 0);
+      }, 0));
+
+    // Reste à encaisser ce mois = paiements attendus ce mois mais pas encore vérifiés
+    const remainingToCollectThisMonth = roundCurrency(tunnels
+      .flatMap(t => t.sales)
+      .filter(sale => !sale.isDefaulted && sale.nextPaymentDate)
+      .reduce((sum, sale) => {
+        const nextPaymentMonth = sale.nextPaymentDate!.substring(0, 7);
+        if (nextPaymentMonth === selectedMonth) {
+          // Calculer le montant de la prochaine échéance
+          const klarnaAmount = sale.klarnaAmount || 0;
+          const cbAmount = sale.cbAmount || (sale.totalPrice - klarnaAmount);
+          const installmentAmount = sale.numberOfPayments > 1 ? cbAmount / sale.numberOfPayments : 0;
+          // Ne compter que si pas encore payé
+          const remaining = sale.totalPrice - sale.amountCollected;
+          if (remaining > 0) {
+            return sum + Math.min(installmentAmount, remaining);
+          }
+        }
+        return sum;
+      }, 0));
+
     return {
       contractedRevenue: totalContracted,
       collectedRevenue: totalCollectedTTC,
@@ -229,6 +278,9 @@ export function useBusinessCalculations({
       defaultedAmount,
       organicSalesCount,
       organicCollectedAmount,
+      directCollectedThisMonth,
+      installmentCollectedThisMonth,
+      remainingToCollectThisMonth,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses, tunnels, selectedMonth]);
 
