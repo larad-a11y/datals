@@ -39,7 +39,8 @@ export function useBusinessCalculations({
   const kpis = useMemo((): KPIData => {
     const totalContracted = filteredTunnels.reduce((sum, t) => {
       const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
-      return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
+      // Use actual sales count for fallback calculation
+      return sum + (salesContracted > 0 ? salesContracted : t.sales.length * t.averagePrice);
     }, 0);
     
     // CA Collecté TTC
@@ -54,8 +55,9 @@ export function useBusinessCalculations({
     const totalCalls = filteredTunnels.reduce(
       (sum, t) => sum + t.callsGenerated, 0
     );
+    // Use actual sales count instead of manual callsClosed field
     const totalClosedCalls = filteredTunnels.reduce(
-      (sum, t) => sum + t.callsClosed, 0
+      (sum, t) => sum + t.sales.length, 0
     );
     const totalRegistrations = filteredTunnels.reduce(
       (sum, t) => sum + (t.registrations || 0), 0

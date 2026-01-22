@@ -50,14 +50,15 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
     ? tunnel.adBudget / tunnel.callsGenerated 
     : 0;
   
-  // Closing rate
+  // Use actual sales count for closing rate
+  const actualSalesCount = tunnel.sales.length;
   const closingRate = tunnel.callsGenerated > 0 
-    ? (tunnel.callsClosed / tunnel.callsGenerated) * 100 
+    ? (actualSalesCount / tunnel.callsGenerated) * 100 
     : 0;
   
-  // CAC
-  const cac = tunnel.callsClosed > 0 
-    ? tunnel.adBudget / tunnel.callsClosed 
+  // CAC (use actual sales count)
+  const cac = actualSalesCount > 0 
+    ? tunnel.adBudget / actualSalesCount 
     : 0;
   
   // CPL (Cost per Lead/Registration)
@@ -161,7 +162,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
         <MetricItem 
           icon={Target} 
           label="Ventes" 
-          value={tunnel.callsClosed.toString()}
+          value={actualSalesCount.toString()}
           small
         />
         <MetricItem 
