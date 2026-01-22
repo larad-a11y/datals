@@ -335,55 +335,61 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             🔄 Répartition CB + Klarna
           </div>
+          <p className="text-xs text-muted-foreground">
+            Klarna limité à {KLARNA_MAX.toLocaleString('fr-FR')} € max. Le reste sera encaissé par CB.
+          </p>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
                 Montant Klarna (max {KLARNA_MAX.toLocaleString('fr-FR')} €)
               </label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={formData.klarnaAmount}
                 onChange={(e) => {
-                  // Allow free typing without immediate clamping
+                  // Allow only numbers and decimal
+                  const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
                   setFormData(prev => ({
                     ...prev,
-                    klarnaAmount: e.target.value,
+                    klarnaAmount: value,
                   }));
                 }}
                 onBlur={(e) => {
-                  // Clamp value on blur
-                  const klarnaVal = roundCurrency(Math.min(
-                    parseFloat(e.target.value) || 0,
-                    KLARNA_MAX,
-                    totalPriceNum
-                  ));
+                  // Clamp value on blur - max is KLARNA_MAX or totalPrice if lower
+                  const inputVal = parseFloat(e.target.value.replace(',', '.')) || 0;
+                  const maxKlarna = totalPriceNum > 0 ? Math.min(KLARNA_MAX, totalPriceNum) : KLARNA_MAX;
+                  const klarnaVal = roundCurrency(Math.min(inputVal, maxKlarna));
+                  const cbVal = totalPriceNum > 0 ? roundCurrency(Math.max(0, totalPriceNum - klarnaVal)) : 0;
                   setFormData(prev => ({
                     ...prev,
-                    klarnaAmount: klarnaVal,
-                    cbAmount: roundCurrency(Math.max(0, totalPriceNum - klarnaVal)),
+                    klarnaAmount: klarnaVal || '',
+                    cbAmount: cbVal || '',
                   }));
                 }}
                 className="input-field w-full"
-                min="0"
-                max={Math.min(KLARNA_MAX, totalPriceNum)}
-                step="0.01"
-                placeholder={KLARNA_MAX.toString()}
+                placeholder={`Ex: ${Math.min(KLARNA_MAX, totalPriceNum || KLARNA_MAX)}`}
               />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
-                Montant CB (calculé automatiquement)
+                Montant CB (reste à payer)
               </label>
               <input
-                type="number"
-                value={formData.cbAmount || (totalPriceNum - (parseFloat(String(formData.klarnaAmount)) || 0))}
+                type="text"
+                value={(() => {
+                  const klarnaVal = parseFloat(String(formData.klarnaAmount).replace(',', '.')) || 0;
+                  const cbVal = totalPriceNum > 0 ? Math.max(0, totalPriceNum - klarnaVal) : 0;
+                  return cbVal > 0 ? roundCurrency(cbVal).toLocaleString('fr-FR') : '';
+                })()}
                 className="input-field w-full bg-secondary/30"
                 disabled
+                placeholder="Calculé automatiquement"
               />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Frais Klarna appliqués uniquement sur la portion Klarna
+          <p className="text-xs text-warning">
+            ⚠️ Frais Klarna (8%) appliqués uniquement sur la portion Klarna
           </p>
         </div>
       )}
