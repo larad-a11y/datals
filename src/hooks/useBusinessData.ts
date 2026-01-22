@@ -67,14 +67,16 @@ export function useBusinessData() {
     const paymentProcessorCost = roundCurrency(totalCollectedTTC * (charges.paymentProcessorPercent / 100));
     
     // 3. Frais Klarna (sur le montant Klarna uniquement)
-    const klarnaCost = roundCurrency(filteredTunnels.reduce((sum, t) => {
+    const totalKlarnaAmount = roundCurrency(filteredTunnels.reduce((sum, t) => {
       return sum + t.sales.reduce((s, sale) => {
         if (sale.klarnaAmount && sale.klarnaAmount > 0) {
-          return s + (sale.klarnaAmount * (charges.klarnaPercent / 100));
+          return s + sale.klarnaAmount;
         }
         return s;
       }, 0);
     }, 0));
+    
+    const klarnaCost = roundCurrency(totalKlarnaAmount * (charges.klarnaPercent / 100));
     
     // 4. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
     // On doit calculer le HT des ventes qui ont un closer
@@ -200,6 +202,7 @@ export function useBusinessData() {
       totalWebinarAttendees,
       paymentProcessorCost,
       klarnaCost,
+      totalKlarnaAmount,
       closersCost,
       agencyCost,
       upcomingPaymentsThisMonth,

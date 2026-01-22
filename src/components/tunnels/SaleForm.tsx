@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer, Charges } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -17,9 +17,10 @@ interface SaleFormProps {
   installmentPlans: InstallmentPlan[];
   offers: Offer[];
   closers: Closer[];
+  charges?: Charges;
 }
 
-export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers, closers }: SaleFormProps) {
+export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers, closers, charges }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
     closerId: sale?.closerId || '',
@@ -98,15 +99,24 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   }, [selectedOffer]);
 
   // Calcul automatique du prix total avec majoration
+  // Pour les paiements mixtes CB + Klarna, le total = Klarna + CB
   useEffect(() => {
-    if (basePriceNum > 0 && formData.useMarkup) {
+    if (formData.paymentMethod === 'cb_klarna') {
+      // Pour CB + Klarna, le total est la somme des deux
+      const klarnaVal = parseFloat(String(formData.klarnaAmount).replace(',', '.')) || 0;
+      const cbVal = parseFloat(String(formData.cbAmount).replace(',', '.')) || 0;
+      if (klarnaVal > 0 || cbVal > 0) {
+        const total = roundCurrency(klarnaVal + cbVal);
+        setFormData(prev => ({ ...prev, totalPrice: total, basePrice: total }));
+      }
+    } else if (basePriceNum > 0 && formData.useMarkup) {
       const calculatedTotal = roundCurrency(basePriceNum * (1 + currentMarkupPercent / 100));
       setFormData(prev => ({ ...prev, totalPrice: calculatedTotal }));
     } else if (basePriceNum > 0 && formData.numberOfPayments === 1) {
       // Pas de majoration pour paiement en 1x
       setFormData(prev => ({ ...prev, totalPrice: basePriceNum }));
     }
-  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, currentMarkupPercent]);
+  }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, currentMarkupPercent, formData.paymentMethod, formData.klarnaAmount, formData.cbAmount]);
 
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
   useEffect(() => {
@@ -336,7 +346,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
             🔄 Répartition CB + Klarna
           </div>
           <p className="text-xs text-muted-foreground">
-            Klarna limité à {KLARNA_MAX.toLocaleString('fr-FR')} € max. Le reste sera encaissé par CB.
+            Klarna limité à {KLARNA_MAX.toLocaleString('fr-FR')} € max. Le total sera Klarna + CB.
           </p>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
@@ -348,7 +358,6 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
                 inputMode="decimal"
                 value={formData.klarnaAmount}
                 onChange={(e) => {
-                  // Allow only numbers and decimal
                   const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
                   setFormData(prev => ({
                     ...prev,
@@ -356,59 +365,87 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
                   }));
                 }}
                 onBlur={(e) => {
-                  // Clamp value on blur - max is KLARNA_MAX or totalPrice if lower
                   const inputVal = parseFloat(e.target.value.replace(',', '.')) || 0;
-                  const maxKlarna = totalPriceNum > 0 ? Math.min(KLARNA_MAX, totalPriceNum) : KLARNA_MAX;
-                  const klarnaVal = roundCurrency(Math.min(inputVal, maxKlarna));
-                  const cbVal = totalPriceNum > 0 ? roundCurrency(Math.max(0, totalPriceNum - klarnaVal)) : 0;
+                  const klarnaVal = roundCurrency(Math.min(inputVal, KLARNA_MAX));
                   setFormData(prev => ({
                     ...prev,
                     klarnaAmount: klarnaVal || '',
-                    cbAmount: cbVal || '',
                   }));
                 }}
                 className="input-field w-full"
-                placeholder={`Ex: ${Math.min(KLARNA_MAX, totalPriceNum || KLARNA_MAX)}`}
+                placeholder={`Ex: ${KLARNA_MAX}`}
               />
             </div>
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">
-                Montant CB (reste à payer)
+                Montant CB
               </label>
               <input
                 type="text"
-                value={(() => {
-                  const klarnaVal = parseFloat(String(formData.klarnaAmount).replace(',', '.')) || 0;
-                  const cbVal = totalPriceNum > 0 ? Math.max(0, totalPriceNum - klarnaVal) : 0;
-                  return cbVal > 0 ? roundCurrency(cbVal).toLocaleString('fr-FR') : '';
-                })()}
-                className="input-field w-full bg-secondary/30"
-                disabled
-                placeholder="Calculé automatiquement"
+                inputMode="decimal"
+                value={formData.cbAmount}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+                  setFormData(prev => ({
+                    ...prev,
+                    cbAmount: value,
+                  }));
+                }}
+                onBlur={(e) => {
+                  const inputVal = parseFloat(e.target.value.replace(',', '.')) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    cbAmount: roundCurrency(inputVal) || '',
+                  }));
+                }}
+                className="input-field w-full"
+                placeholder="Ex: 1000"
               />
             </div>
           </div>
+          {(() => {
+            const klarnaVal = parseFloat(String(formData.klarnaAmount).replace(',', '.')) || 0;
+            const cbVal = parseFloat(String(formData.cbAmount).replace(',', '.')) || 0;
+            const total = klarnaVal + cbVal;
+            if (total > 0) {
+              return (
+                <div className="rounded-lg bg-primary/10 p-3 border border-primary/30">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-foreground">Total encaissé</span>
+                    <span className="text-lg font-bold text-primary">{total.toLocaleString('fr-FR')} €</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Klarna: {klarnaVal.toLocaleString('fr-FR')} € + CB: {cbVal.toLocaleString('fr-FR')} €
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
           <p className="text-xs text-warning">
-            ⚠️ Frais Klarna (8%) appliqués uniquement sur la portion Klarna
+            ⚠️ Frais Klarna ({charges?.klarnaPercent || 8}%) appliqués uniquement sur la portion Klarna
           </p>
         </div>
       )}
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">
-          💵 Prix de base / Prix cash (€)
-        </label>
-        <input
-          type="number"
-          value={formData.basePrice}
-          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value, offerId: '' }))}
-          className="input-field w-full"
-          min="0"
-          step="0.01"
-          placeholder="1000"
-          required
-        />
-      </div>
+      {/* Prix de base - hidden for cb_klarna since it's calculated */}
+      {formData.paymentMethod !== 'cb_klarna' && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-foreground">
+            💵 Prix de base / Prix cash (€)
+          </label>
+          <input
+            type="number"
+            value={formData.basePrice}
+            onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value, offerId: '' }))}
+            className="input-field w-full"
+            min="0"
+            step="0.01"
+            placeholder="1000"
+            required
+          />
+        </div>
+      )}
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">

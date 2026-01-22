@@ -169,6 +169,7 @@ export interface KPIData {
   totalWebinarAttendees: number;
   paymentProcessorCost: number;
   klarnaCost: number; // Frais Klarna
+  totalKlarnaAmount: number; // Total encaissé via Klarna
   closersCost: number;
   agencyCost: number;
   upcomingPaymentsThisMonth: number;
