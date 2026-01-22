@@ -272,14 +272,22 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
       </div>
 
       {/* Performance KPIs */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <KPICard
           title="ROAS Collecté"
           value={kpis.roasCollected}
           icon={TrendingUp}
           trend={roasTrend}
           suffix="x"
-          subtitle={`Budget: ${kpis.totalAdBudget.toLocaleString('fr-FR')} €`}
+          subtitle={`CA HT / Budget Pub`}
+        />
+        <KPICard
+          title="ROAS Contracté"
+          value={kpis.roasContracted}
+          icon={TrendingUp}
+          trend={kpis.roasContracted >= 3 ? 'profitable' : kpis.roasContracted >= 2 ? 'warning' : 'danger'}
+          suffix="x"
+          subtitle={`CA Contracté / Budget Pub`}
         />
         <KPICard
           title="Coût par Call"

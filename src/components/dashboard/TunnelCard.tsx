@@ -256,19 +256,41 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
               subtitle={tunnel.challengeDays ? `${tunnel.challengeDays.length} jours` : undefined}
               small
             />
-            <MetricItem 
-              icon={TrendingUp} 
-              label="Show-up Moyen" 
-              value={tunnel.challengeDays && tunnel.challengeDays.length > 0 && tunnel.registrations
-                ? `${((tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length / tunnel.registrations) * 100).toFixed(1)}%`
-                : '0%'
-              }
-              valueColor="text-primary"
-              small
-            />
           </>
         )}
       </div>
+
+      {/* Challenge Days Show-up Rate - separate section */}
+      {tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0 && tunnel.registrations && tunnel.registrations > 0 && (
+        <div className="pt-4 border-t border-border/30 mt-4">
+          <p className="text-xs text-muted-foreground mb-3 font-medium">Show-up par jour</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {tunnel.challengeDays.map((day, index) => {
+              const showUpRate = ((day.attendees / tunnel.registrations!) * 100);
+              // Calculate the actual date for this challenge day
+              const dayDate = tunnel.date 
+                ? new Date(new Date(tunnel.date).getTime() + index * 24 * 60 * 60 * 1000)
+                : null;
+              const formattedDayDate = dayDate 
+                ? dayDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                : `Jour ${day.day}`;
+              
+              return (
+                <div 
+                  key={day.day} 
+                  className="p-2 bg-background/50 rounded-lg text-center"
+                >
+                  <p className="text-[10px] text-muted-foreground">{formattedDayDate}</p>
+                  <p className="text-xs font-medium text-foreground">{day.attendees} présents</p>
+                  <p className={`text-sm font-bold ${showUpRate >= 50 ? 'text-profitable' : showUpRate >= 30 ? 'text-warning' : 'text-danger'}`}>
+                    {showUpRate.toFixed(1)}%
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
