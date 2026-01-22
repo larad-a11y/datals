@@ -127,6 +127,21 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             </p>
           </div>
         )}
+
+        {kpis.totalKlarnaAmount > 0 && (
+          <div className="kpi-card">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Wallet className="h-4 w-4" />
+              Total encaissé Klarna
+            </div>
+            <p className="stat-value mt-2 text-foreground">
+              {kpis.totalKlarnaAmount.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Frais: -{kpis.klarnaCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Performance metrics */}
