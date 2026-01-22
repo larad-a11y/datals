@@ -85,7 +85,7 @@ export function Sidebar({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p>Créer une sauvegarde manuelle</p>
+                <p>Archiver une copie de secours</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
