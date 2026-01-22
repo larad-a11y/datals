@@ -293,6 +293,7 @@ const Index = () => {
           onNavigateToSale={handleNavigateToSale}
           onDismissNotification={handleDismissNotification}
           onDismissAllNotifications={handleDismissAllNotifications}
+          activeTab={activeTab}
         />
         
         <main className="p-6">

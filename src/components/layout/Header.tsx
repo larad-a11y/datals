@@ -18,7 +18,17 @@ interface HeaderProps {
   onNavigateToSale?: (saleId: string, tunnelId: string) => void;
   onDismissNotification?: (notificationId: string) => void;
   onDismissAllNotifications?: () => void;
+  activeTab?: string;
 }
+
+const tabInfo: Record<string, { title: string; subtitle: string }> = {
+  dashboard: { title: 'Tableau de bord', subtitle: 'Analysez votre rentabilité en temps réel' },
+  tunnels: { title: 'Tunnels de vente', subtitle: 'Gérez vos différents tunnels de conversion' },
+  events: { title: 'Tunnels de vente', subtitle: 'Gérez vos différents tunnels de conversion' },
+  sales: { title: 'Ventes / CRM', subtitle: 'Suivez toutes vos ventes en un seul endroit' },
+  charges: { title: 'Charges et déductions', subtitle: 'Configurez vos frais et commissions' },
+  kpi: { title: 'Indicateurs KPI', subtitle: 'Analysez vos performances en détail' },
+};
 
 export function Header({ 
   selectedMonth, 
@@ -27,7 +37,9 @@ export function Header({
   onNavigateToSale,
   onDismissNotification,
   onDismissAllNotifications,
+  activeTab = 'dashboard',
 }: HeaderProps) {
+  const currentTabInfo = tabInfo[activeTab] || tabInfo.dashboard;
   const [open, setOpen] = useState(false);
 
   const [year, month] = selectedMonth.split('-').map(Number);
@@ -56,10 +68,10 @@ export function Header({
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div>
         <h1 className="font-display text-xl font-semibold text-foreground">
-          Tableau de bord
+          {currentTabInfo.title}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Analysez votre rentabilité en temps réel
+          {currentTabInfo.subtitle}
         </p>
       </div>
 

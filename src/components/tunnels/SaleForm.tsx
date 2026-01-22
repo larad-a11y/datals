@@ -6,7 +6,7 @@ import { fr } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, roundCurrency } from '@/lib/utils';
 
 interface SaleFormProps {
   sale?: Sale;
@@ -100,7 +100,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   // Calcul automatique du prix total avec majoration
   useEffect(() => {
     if (basePriceNum > 0 && formData.useMarkup) {
-      const calculatedTotal = basePriceNum * (1 + currentMarkupPercent / 100);
+      const calculatedTotal = roundCurrency(basePriceNum * (1 + currentMarkupPercent / 100));
       setFormData(prev => ({ ...prev, totalPrice: calculatedTotal }));
     } else if (basePriceNum > 0 && formData.numberOfPayments === 1) {
       // Pas de majoration pour paiement en 1x
@@ -111,7 +111,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
   useEffect(() => {
     if (totalPriceNum > 0 && !sale) {
-      const firstPayment = totalPriceNum / formData.numberOfPayments;
+      const firstPayment = roundCurrency(totalPriceNum / formData.numberOfPayments);
       setFormData(prev => ({ ...prev, amountCollected: firstPayment }));
     }
   }, [totalPriceNum, formData.numberOfPayments, sale]);
@@ -125,7 +125,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (basePriceNum <= 0) return;
+    if (basePriceNum <= 0 || !formData.clientName.trim()) return;
     
     // For new sales, create initial payment record if there's an amount collected
     let paymentHistory = sale?.paymentHistory || [];
@@ -193,10 +193,10 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   };
 
   const hasMarkup = totalPriceNum > basePriceNum && basePriceNum > 0;
-  const markupAmount = totalPriceNum - basePriceNum;
-  const remainingAmount = totalPriceNum - amountCollectedNum;
+  const markupAmount = roundCurrency(totalPriceNum - basePriceNum);
+  const remainingAmount = roundCurrency(totalPriceNum - amountCollectedNum);
   const paymentPerInstallment = formData.numberOfPayments > 0 && totalPriceNum > 0
-    ? totalPriceNum / formData.numberOfPayments 
+    ? roundCurrency(totalPriceNum / formData.numberOfPayments)
     : 0;
 
   const formContent = (
@@ -241,7 +241,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
-          Nom du client (optionnel)
+          Nom du client <span className="text-destructive">*</span>
         </label>
         <input
           type="text"
@@ -249,6 +249,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
           className="input-field w-full"
           placeholder="Ex: Jean Dupont"
+          required
         />
       </div>
 
@@ -343,15 +344,23 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
                 type="number"
                 value={formData.klarnaAmount}
                 onChange={(e) => {
-                  const klarnaVal = Math.min(
+                  // Allow free typing without immediate clamping
+                  setFormData(prev => ({
+                    ...prev,
+                    klarnaAmount: e.target.value,
+                  }));
+                }}
+                onBlur={(e) => {
+                  // Clamp value on blur
+                  const klarnaVal = roundCurrency(Math.min(
                     parseFloat(e.target.value) || 0,
                     KLARNA_MAX,
                     totalPriceNum
-                  );
+                  ));
                   setFormData(prev => ({
                     ...prev,
                     klarnaAmount: klarnaVal,
-                    cbAmount: Math.max(0, totalPriceNum - klarnaVal),
+                    cbAmount: roundCurrency(Math.max(0, totalPriceNum - klarnaVal)),
                   }));
                 }}
                 className="input-field w-full"
