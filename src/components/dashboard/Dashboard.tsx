@@ -12,7 +12,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  Leaf
+  Leaf,
+  Calendar,
+  CreditCard,
+  Clock
 } from 'lucide-react';
 import { KPICard } from './KPICard';
 import { TunnelCard } from './TunnelCard';
@@ -268,6 +271,52 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
               <ChangeIndicator value={contractedChange} />
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Payment Breakdown Section */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <CreditCard className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Encaissé direct</p>
+              <p className="text-2xl font-bold text-foreground">
+                {kpis.directCollectedThisMonth.toLocaleString('fr-FR')} €
+              </p>
+              <p className="text-xs text-muted-foreground">1ère échéance des ventes du mois</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+              <Calendar className="h-5 w-5 text-blue-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Encaissé échelonné</p>
+              <p className="text-2xl font-bold text-foreground">
+                {kpis.installmentCollectedThisMonth.toLocaleString('fr-FR')} €
+              </p>
+              <p className="text-xs text-muted-foreground">Échéances des mois précédents</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/20">
+              <Clock className="h-5 w-5 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">Reste à encaisser ce mois</p>
+              <p className="text-2xl font-bold text-amber-500">
+                {kpis.remainingToCollectThisMonth.toLocaleString('fr-FR')} €
+              </p>
+              <p className="text-xs text-muted-foreground">Échéances attendues ce mois</p>
+            </div>
+          </div>
         </div>
       </div>
 

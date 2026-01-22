@@ -176,7 +176,7 @@ export interface KPIData {
   totalRegistrations: number;
   totalWebinarAttendees: number;
   paymentProcessorCost: number;
-  klarnaCost: number; // Frais Klarna
+  klarnaCost: number; // Frais Klarna (8% sur portion Klarna uniquement)
   totalKlarnaAmount: number; // Total encaissé via Klarna
   closersCost: number;
   agencyCost: number;
@@ -186,6 +186,10 @@ export interface KPIData {
   // Organic stats
   organicSalesCount: number; // Nombre de ventes organiques
   organicCollectedAmount: number; // Montant encaissé en organique
+  // New: Payment breakdown for current month
+  directCollectedThisMonth: number; // Encaissé direct (1ère échéance des ventes du mois)
+  installmentCollectedThisMonth: number; // Encaissé depuis paiements échelonnés (échéances suivantes)
+  remainingToCollectThisMonth: number; // Reste à encaisser ce mois-ci
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [
