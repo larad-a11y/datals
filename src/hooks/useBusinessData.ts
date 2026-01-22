@@ -137,14 +137,14 @@ export function useBusinessData() {
     // 10. Bénéfice Net Net = Bénéfice Net - Part Associé - Salaires
     const netNetProfit = roundCurrency(netProfit - associateCost - totalSalaries);
 
-    // ROI Collecté: (Collecté HT - Budget Pub) / Budget Pub
-    const adROI = totalAdBudget > 0 
-      ? roundCurrency(((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100)
+    // ROAS Collecté = CA HT / Budget Pub (multiplicateur)
+    const roasCollected = totalAdBudget > 0 
+      ? roundCurrency(totalCollectedHT / totalAdBudget)
       : 0;
 
-    // ROI Contracté: (Contracté - Budget Pub) / Budget Pub
-    const adROIContracted = totalAdBudget > 0 
-      ? roundCurrency(((totalContracted - totalAdBudget) / totalAdBudget) * 100)
+    // ROAS Contracté = CA Contracté / Budget Pub (multiplicateur)
+    const roasContracted = totalAdBudget > 0 
+      ? roundCurrency(totalContracted / totalAdBudget)
       : 0;
 
     // Paiements à venir CE MOIS = ventes des mois précédents avec next_payment_date ce mois (exclut impayés)
@@ -203,8 +203,8 @@ export function useBusinessData() {
       collectedRevenue: totalCollectedTTC,
       collectedRevenueHT: totalCollectedHT,
       tvaAmount,
-      adROI,
-      adROIContracted,
+      roasCollected,
+      roasContracted,
       costPerCall,
       closingRate,
       cac,

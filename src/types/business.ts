@@ -161,8 +161,8 @@ export interface KPIData {
   collectedRevenue: number; // TTC
   collectedRevenueHT: number; // HT (après déduction TVA)
   tvaAmount: number; // Montant de la TVA
-  adROI: number;
-  adROIContracted: number;
+  roasCollected: number; // ROAS = CA Collecté HT / Budget Pub (multiplicateur)
+  roasContracted: number; // ROAS = CA Contracté / Budget Pub (multiplicateur)
   costPerCall: number;
   closingRate: number;
   cac: number;

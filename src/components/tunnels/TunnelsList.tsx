@@ -109,15 +109,16 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
             const contractedRevenue = salesContracted > 0 ? salesContracted : tunnel.callsClosed * tunnel.averagePrice;
             const collectedAmount = salesCollected > 0 ? salesCollected : tunnel.collectedAmount;
             
-            const roi = tunnel.adBudget > 0 
-              ? ((collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
+            // ROAS = CA / Budget (multiplicateur)
+            const roas = tunnel.adBudget > 0 
+              ? collectedAmount / tunnel.adBudget 
               : 0;
             // Use actual sales count instead of manual callsClosed
             const actualSalesCount = tunnel.sales.length;
             const closingRate = tunnel.callsGenerated > 0 
               ? (actualSalesCount / tunnel.callsGenerated) * 100 
               : 0;
-            const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
+            const trend = roas >= 3 ? 'profitable' : roas >= 2 ? 'warning' : 'danger';
             const remainingAmount = salesContracted - salesCollected;
 
             return (
@@ -214,11 +215,11 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
                     )}
                   </div>
 
-                  {/* ROI */}
+                  {/* ROAS */}
                   <div className="rounded-lg bg-secondary/50 p-3 text-center">
-                    <p className="text-xs text-muted-foreground">ROI</p>
+                    <p className="text-xs text-muted-foreground">ROAS</p>
                     <p className={`font-display text-2xl font-bold text-${trend}`}>
-                      {roi.toFixed(1)}%
+                      {roas.toFixed(2)}x
                     </p>
                   </div>
 

@@ -104,8 +104,8 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
     const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
     const netNetProfit = netProfit - associateCost;
     
-    const adROI = totalAdBudget > 0 
-      ? ((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100 
+    const roasCollected = totalAdBudget > 0 
+      ? totalCollectedHT / totalAdBudget
       : 0;
     const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
     const closingRate = totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0;
@@ -117,7 +117,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
       collectedRevenueHT: totalCollectedHT,
       netProfit,
       netNetProfit,
-      adROI,
+      roasCollected,
       costPerCall,
       closingRate,
       cac,
@@ -153,7 +153,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
   };
 
   const profitTrend = kpis.netNetProfit > 0 ? 'profitable' : kpis.netNetProfit === 0 ? 'warning' : 'danger';
-  const roiTrend = getTrend(kpis.adROI, { good: 100, warning: 50 });
+  const roasTrend = kpis.roasCollected >= 3 ? 'profitable' : kpis.roasCollected >= 2 ? 'warning' : 'danger';
   const closingTrend = getTrend(kpis.closingRate, { good: 30, warning: 15 });
   
   // Calculate global CPL
@@ -274,11 +274,11 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
       {/* Performance KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <KPICard
-          title="ROI Publicitaire"
-          value={kpis.adROI}
+          title="ROAS Collecté"
+          value={kpis.roasCollected}
           icon={TrendingUp}
-          trend={roiTrend}
-          suffix=" %"
+          trend={roasTrend}
+          suffix="x"
           subtitle={`Budget: ${kpis.totalAdBudget.toLocaleString('fr-FR')} €`}
         />
         <KPICard

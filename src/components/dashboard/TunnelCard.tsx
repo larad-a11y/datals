@@ -40,9 +40,9 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   const salesWithCloserHT = salesWithCloserTTC * (1 / (1 + taxRate));
   const closersCost = salesWithCloserHT * (charges.closersPercent / 100);
   
-  // ROI calculation
-  const roi = tunnel.adBudget > 0 
-    ? ((collectedRevenueHT - tunnel.adBudget) / tunnel.adBudget) * 100 
+  // ROAS calculation (multiplicateur)
+  const roas = tunnel.adBudget > 0 
+    ? collectedRevenueHT / tunnel.adBudget 
     : 0;
   
   // Cost per call
@@ -87,7 +87,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
   const netNetProfit = netProfit - associateCost;
   
-  const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
+  const trend = roas >= 3 ? 'profitable' : roas >= 2 ? 'warning' : 'danger';
   
   const formattedDate = tunnel.date ? new Date(tunnel.date).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -119,7 +119,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
         </div>
         <div className="text-right">
           <p className={`font-display text-xl font-bold text-${trend}`}>
-            {roi.toFixed(1)}% ROI
+            {roas.toFixed(2)}x ROAS
           </p>
         </div>
       </div>
@@ -167,9 +167,9 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
         />
         <MetricItem 
           icon={TrendingUp} 
-          label="ROI Pub" 
-          value={`${roi.toFixed(1)}%`}
-          valueColor={roi > 100 ? 'text-profitable' : roi > 50 ? 'text-warning' : 'text-danger'}
+          label="ROAS" 
+          value={`${roas.toFixed(2)}x`}
+          valueColor={roas >= 3 ? 'text-profitable' : roas >= 2 ? 'text-warning' : 'text-danger'}
           small
         />
         <MetricItem 
