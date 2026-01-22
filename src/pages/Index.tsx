@@ -283,16 +283,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        notifications={notifications}
+        onNavigateToSale={handleNavigateToSale}
+        onDismissNotification={handleDismissNotification}
+        onDismissAllNotifications={handleDismissAllNotifications}
+      />
       
       <div className="pl-20">
         <Header 
           selectedMonth={selectedMonth} 
           onMonthChange={setSelectedMonth}
-          notifications={notifications}
-          onNavigateToSale={handleNavigateToSale}
-          onDismissNotification={handleDismissNotification}
-          onDismissAllNotifications={handleDismissAllNotifications}
           activeTab={activeTab}
         />
         

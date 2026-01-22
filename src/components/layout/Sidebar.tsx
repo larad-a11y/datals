@@ -1,10 +1,16 @@
 import { LayoutDashboard, Target, Receipt, Wallet, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserProfile } from './UserProfile';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { PaymentNotification } from '@/types/business';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  notifications?: PaymentNotification[];
+  onNavigateToSale?: (saleId: string, tunnelId: string) => void;
+  onDismissNotification?: (notificationId: string) => void;
+  onDismissAllNotifications?: () => void;
 }
 
 const navItems = [
@@ -15,7 +21,14 @@ const navItems = [
   { id: 'kpi', label: 'KPI', icon: BarChart3 },
 ];
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ 
+  activeTab, 
+  onTabChange,
+  notifications = [],
+  onNavigateToSale,
+  onDismissNotification,
+  onDismissAllNotifications,
+}: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-20 border-r border-border/30 bg-sidebar flex flex-col">
       <div className="flex flex-1 flex-col items-center py-4">
@@ -51,8 +64,19 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </nav>
       </div>
       
-      {/* User Profile at bottom */}
-      <div className="px-2 pb-4">
+      {/* Bottom section: Notifications + User Profile */}
+      <div className="px-2 pb-4 flex flex-col items-center gap-3">
+        {/* Notification Bell */}
+        {onNavigateToSale && onDismissNotification && onDismissAllNotifications && (
+          <NotificationBell
+            notifications={notifications}
+            onNavigateToSale={onNavigateToSale}
+            onDismiss={onDismissNotification}
+            onDismissAll={onDismissAllNotifications}
+          />
+        )}
+        
+        {/* User Profile */}
         <UserProfile />
       </div>
     </aside>

@@ -8,16 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
-import { PaymentNotification } from '@/types/business';
 
 interface HeaderProps {
   selectedMonth: string;
   onMonthChange: (month: string) => void;
-  notifications?: PaymentNotification[];
-  onNavigateToSale?: (saleId: string, tunnelId: string) => void;
-  onDismissNotification?: (notificationId: string) => void;
-  onDismissAllNotifications?: () => void;
   activeTab?: string;
 }
 
@@ -33,10 +27,6 @@ const tabInfo: Record<string, { title: string; subtitle: string }> = {
 export function Header({ 
   selectedMonth, 
   onMonthChange, 
-  notifications = [],
-  onNavigateToSale,
-  onDismissNotification,
-  onDismissAllNotifications,
   activeTab = 'dashboard',
 }: HeaderProps) {
   const currentTabInfo = tabInfo[activeTab] || tabInfo.dashboard;
@@ -76,16 +66,6 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Notification Bell */}
-        {onNavigateToSale && onDismissNotification && onDismissAllNotifications && (
-          <NotificationBell
-            notifications={notifications}
-            onNavigateToSale={onNavigateToSale}
-            onDismiss={onDismissNotification}
-            onDismissAll={onDismissAllNotifications}
-          />
-        )}
-        
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
