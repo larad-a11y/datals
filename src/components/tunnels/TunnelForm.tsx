@@ -80,7 +80,13 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      setFormData(prev => ({ ...prev, date: format(date, 'yyyy-MM-dd') }));
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      const month = format(date, 'yyyy-MM'); // Synchroniser le mois avec la date
+      setFormData(prev => ({ 
+        ...prev, 
+        date: formattedDate,
+        month: month
+      }));
       setDateOpen(false);
     }
   };
@@ -136,11 +142,11 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
             </div>
           </div>
 
-          {/* Date (for Webinar only - single date) */}
-          {formData.type === 'webinar' && (
+          {/* Date (for Webinar and VSL - single date) */}
+          {(formData.type === 'webinar' || formData.type === 'vsl') && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">
-                Date du webinar
+                {formData.type === 'webinar' ? 'Date du webinar' : 'Date de la VSL'}
               </label>
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
@@ -163,75 +169,90 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                     onSelect={handleDateSelect}
                     locale={fr}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+              {formData.date && formData.month !== selectedMonth && (
+                <p className="mt-2 text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
+                  ℹ️ Ce tunnel sera visible dans le mois de {format(new Date(formData.date), 'MMMM yyyy', { locale: fr })}
+                </p>
+              )}
             </div>
           )}
 
           {/* Date range (for Challenge - multiple days) */}
           {formData.type === 'challenge' && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  Date de début
-                </label>
-                <Popover open={dateOpen} onOpenChange={setDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal bg-secondary/30"
-                    >
-                      <CalendarDays className="mr-2 h-4 w-4" />
-                      {formData.date ? (
-                        format(new Date(formData.date), 'PPP', { locale: fr })
-                      ) : (
-                        <span className="text-muted-foreground">Début</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={handleDateSelect}
-                      locale={fr}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Date de début
+                  </label>
+                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal bg-secondary/30"
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {formData.date ? (
+                          format(new Date(formData.date), 'PPP', { locale: fr })
+                        ) : (
+                          <span className="text-muted-foreground">Début</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={handleDateSelect}
+                        locale={fr}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
+                    Date de fin
+                  </label>
+                  <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal bg-secondary/30"
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {formData.endDate ? (
+                          format(new Date(formData.endDate), 'PPP', { locale: fr })
+                        ) : (
+                          <span className="text-muted-foreground">Fin</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedEndDate}
+                        onSelect={handleEndDateSelect}
+                        disabled={(date) => formData.date ? date < new Date(formData.date) : false}
+                        locale={fr}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">
-                  Date de fin
-                </label>
-                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal bg-secondary/30"
-                    >
-                      <CalendarDays className="mr-2 h-4 w-4" />
-                      {formData.endDate ? (
-                        format(new Date(formData.endDate), 'PPP', { locale: fr })
-                      ) : (
-                        <span className="text-muted-foreground">Fin</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-card border-border z-[60]" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedEndDate}
-                      onSelect={handleEndDateSelect}
-                      disabled={(date) => formData.date ? date < new Date(formData.date) : false}
-                      locale={fr}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+              {formData.date && formData.month !== selectedMonth && (
+                <p className="mt-2 text-xs text-primary bg-primary/10 rounded-lg px-3 py-2">
+                  ℹ️ Ce tunnel sera visible dans le mois de {format(new Date(formData.date), 'MMMM yyyy', { locale: fr })}
+                </p>
+              )}
+            </>
           )}
 
           {/* Traffic */}
