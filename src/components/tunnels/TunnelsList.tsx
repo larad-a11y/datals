@@ -4,12 +4,14 @@ import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallm
 import { TunnelForm } from './TunnelForm';
 import { SaleForm } from './SaleForm';
 import { Button } from '@/components/ui/button';
+import { MonthSelector } from '@/components/layout/MonthSelector';
 
 type TunnelTypeFilter = 'all' | 'webinar' | 'vsl' | 'challenge';
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
   selectedMonth: string;
+  onMonthChange: (month: string) => void;
   onAdd: (tunnel: Omit<Tunnel, 'id'>) => void;
   onUpdate: (id: string, updates: Partial<Tunnel>) => void;
   onDelete: (id: string) => void;
@@ -19,7 +21,7 @@ interface TunnelsListProps {
   closers?: Closer[];
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
@@ -75,13 +77,11 @@ export function TunnelsList({ tunnels, selectedMonth, onAdd, onUpdate, onDelete,
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="flex items-center gap-4">
           <h2 className="font-display text-xl font-semibold text-foreground">
             Tunnels de vente
           </h2>
-          <p className="text-sm text-muted-foreground">
-            Gérez vos différents tunnels de conversion
-          </p>
+          <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
         </div>
         <div className="flex items-center gap-3">
           <div className="flex rounded-lg border border-border/50 bg-secondary/30 p-1">

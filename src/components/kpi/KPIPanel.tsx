@@ -16,6 +16,7 @@ import {
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
 import { CloserStatsSection } from './CloserStatsSection';
+import { MonthSelector } from '@/components/layout/MonthSelector';
 
 interface KPIPanelProps {
   kpis: KPIData;
@@ -24,9 +25,10 @@ interface KPIPanelProps {
   coachingExpenses: CoachingExpense[];
   tunnels: Tunnel[];
   selectedMonth: string;
+  onMonthChange: (month: string) => void;
 }
 
-export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, selectedMonth }: KPIPanelProps) {
+export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, selectedMonth, onMonthChange }: KPIPanelProps) {
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
   const totalCoachingExpenses = coachingExpenses.reduce((sum, e) => sum + e.amount, 0);
   const isAboveAgencyThreshold = kpis.collectedRevenueHT > charges.agencyThreshold;
@@ -42,13 +44,11 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center gap-4">
         <h2 className="font-display text-xl font-semibold text-foreground">
           KPI & Rentabilité
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Analyse détaillée de votre performance
-        </p>
+        <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
       </div>
 
       {/* Main metrics */}

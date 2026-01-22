@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Percent, Euro, AlertCircle, Plus, Trash2, Package, RotateCcw, Users, GraduationCap } from 'lucide-react';
 import { Charges, InstallmentPlan, Offer, OfferInstallment, defaultCharges, Salary, CoachingExpense, CoachingExpenseType, coachingExpenseTypeLabels, Closer } from '@/types/business';
 import { Button } from '@/components/ui/button';
+import { MonthSelector } from '@/components/layout/MonthSelector';
 
 interface ChargesPanelProps {
   charges: Charges;
@@ -14,6 +15,7 @@ interface ChargesPanelProps {
   onDeleteSalary: (id: string) => void;
   // Coaching expenses
   selectedMonth: string;
+  onMonthChange: (month: string) => void;
   coachingExpenses: CoachingExpense[];
   onAddCoachingExpense: (expense: Omit<CoachingExpense, 'id'>) => void;
   onUpdateCoachingExpense: (id: string, updates: Partial<CoachingExpense>) => void;
@@ -23,7 +25,7 @@ interface ChargesPanelProps {
 export function ChargesPanel({ 
   charges, onUpdate, onResetCharges, collectedRevenue, 
   salaries, onAddSalary, onUpdateSalary, onDeleteSalary,
-  selectedMonth, coachingExpenses, onAddCoachingExpense, onUpdateCoachingExpense, onDeleteCoachingExpense 
+  selectedMonth, onMonthChange, coachingExpenses, onAddCoachingExpense, onUpdateCoachingExpense, onDeleteCoachingExpense 
 }: ChargesPanelProps) {
   const [newSalaryName, setNewSalaryName] = useState('');
   const [newSalaryAmount, setNewSalaryAmount] = useState('');
@@ -144,13 +146,11 @@ export function ChargesPanel({
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center gap-4">
         <h2 className="font-display text-xl font-semibold text-foreground">
           Charges & Déductions
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Configurez vos pourcentages et charges fixes
-        </p>
+        <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
       </div>
 
       {/* Percentage-based charges */}
