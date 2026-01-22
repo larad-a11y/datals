@@ -15,19 +15,18 @@ interface TunnelsListProps {
   onAdd: (tunnel: Omit<Tunnel, 'id'>) => void;
   onUpdate: (id: string, updates: Partial<Tunnel>) => void;
   onDelete: (id: string) => void;
+  onAddSale: (tunnelId: string, sale: Omit<Sale, 'id' | 'createdAt'>) => void;
   onNavigateToSales?: (tunnelId?: string) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
   closers?: Closer[];
 }
 
-export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUpdate, onDelete, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: TunnelsListProps) {
+export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUpdate, onDelete, onAddSale, onNavigateToSales, installmentPlans = defaultInstallmentPlans, offers = [], closers = [] }: TunnelsListProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingTunnel, setEditingTunnel] = useState<Tunnel | null>(null);
   const [typeFilter, setTypeFilter] = useState<TunnelTypeFilter>('all');
   const [showQuickSale, setShowQuickSale] = useState<string | null>(null);
-
-  const generateId = () => Math.random().toString(36).substring(2, 9);
 
   const handleSave = (data: Omit<Tunnel, 'id'>) => {
     if (editingTunnel) {
@@ -39,27 +38,9 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
     setEditingTunnel(null);
   };
 
-  // Quick add sale from tunnel card
+  // Quick add sale from tunnel card - now properly saves to database
   const handleQuickAddSale = (tunnelId: string, saleData: Omit<Sale, 'id' | 'createdAt'>) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const newSale: Sale = {
-      ...saleData,
-      id: generateId(),
-      tunnelId: tunnelId,
-      createdAt: new Date().toISOString(),
-    };
-    
-    const updatedSales = [...tunnel.sales, newSale];
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    onUpdate(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-      callsClosed: updatedSales.length,
-    });
-    
+    onAddSale(tunnelId, saleData);
     setShowQuickSale(null);
   };
 
