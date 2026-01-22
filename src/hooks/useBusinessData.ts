@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale, CoachingExpense } from '@/types/business';
+import { roundCurrency } from '@/lib/utils';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
@@ -59,21 +60,21 @@ export function useBusinessData() {
     
     // 1. Calcul TVA et CA HT
     const taxRate = charges.taxPercent / 100;
-    const tvaAmount = totalCollectedTTC * taxRate / (1 + taxRate);
-    const totalCollectedHT = totalCollectedTTC - tvaAmount;
+    const tvaAmount = roundCurrency(totalCollectedTTC * taxRate / (1 + taxRate));
+    const totalCollectedHT = roundCurrency(totalCollectedTTC - tvaAmount);
     
     // 2. Frais processeur de paiement (sur TTC)
-    const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
+    const paymentProcessorCost = roundCurrency(totalCollectedTTC * (charges.paymentProcessorPercent / 100));
     
     // 3. Frais Klarna (sur le montant Klarna uniquement)
-    const klarnaCost = filteredTunnels.reduce((sum, t) => {
+    const klarnaCost = roundCurrency(filteredTunnels.reduce((sum, t) => {
       return sum + t.sales.reduce((s, sale) => {
         if (sale.klarnaAmount && sale.klarnaAmount > 0) {
           return s + (sale.klarnaAmount * (charges.klarnaPercent / 100));
         }
         return s;
       }, 0);
-    }, 0);
+    }, 0));
     
     // 4. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
     // On doit calculer le HT des ventes qui ont un closer
@@ -84,56 +85,56 @@ export function useBusinessData() {
       return sum + tunnelSalesWithCloser;
     }, 0);
     // Convertir TTC en HT pour les ventes avec closer
-    const salesWithCloserHTAmount = salesWithCloserHT * (1 / (1 + taxRate));
-    const closersCost = salesWithCloserHTAmount * (charges.closersPercent / 100);
+    const salesWithCloserHTAmount = roundCurrency(salesWithCloserHT * (1 / (1 + taxRate)));
+    const closersCost = roundCurrency(salesWithCloserHTAmount * (charges.closersPercent / 100));
     
     // 5. Agence : uniquement sur l'excédent au-delà du seuil HT
     // Calculé sur le CA HT GLOBAL, pas sur le restant après déductions
     let agencyCost = 0;
     if (totalCollectedHT > charges.agencyThreshold) {
       const excessHT = totalCollectedHT - charges.agencyThreshold;
-      agencyCost = excessHT * (charges.agencyPercent / 100);
+      agencyCost = roundCurrency(excessHT * (charges.agencyPercent / 100));
     }
     
     // 6. Charges fixes
-    const fixedCharges = charges.advertising + charges.marketing + 
-                         charges.software + charges.otherCosts;
+    const fixedCharges = roundCurrency(charges.advertising + charges.marketing + 
+                         charges.software + charges.otherCosts);
     
     // 7. Coaching / Mentorat (filtré par mois)
-    const totalCoachingExpenses = filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalCoachingExpenses = roundCurrency(filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0));
     
     // 8. Bénéfice Net = AVANT associé et salaires
     // CA HT - Processeur - Klarna - Closers - Agence - Budget Pub - Charges fixes - Coaching
-    const netProfit = totalCollectedHT 
+    const netProfit = roundCurrency(totalCollectedHT 
       - paymentProcessorCost 
       - klarnaCost
       - closersCost 
       - agencyCost 
       - totalAdBudget
       - fixedCharges 
-      - totalCoachingExpenses;
+      - totalCoachingExpenses);
 
     // 8. Part associé (15% du Bénéfice Net)
-    const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
+    const associateCost = roundCurrency(netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0);
 
     // 9. Salaires (déduits APRÈS la part associé)
-    const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
+    const totalSalaries = roundCurrency(salaries.reduce((sum, s) => sum + s.monthlyAmount, 0));
     
     // 10. Bénéfice Net Net = Bénéfice Net - Part Associé - Salaires
-    const netNetProfit = netProfit - associateCost - totalSalaries;
+    const netNetProfit = roundCurrency(netProfit - associateCost - totalSalaries);
 
     // ROI Collecté: (Collecté HT - Budget Pub) / Budget Pub
     const adROI = totalAdBudget > 0 
-      ? ((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100 
+      ? roundCurrency(((totalCollectedHT - totalAdBudget) / totalAdBudget) * 100)
       : 0;
 
     // ROI Contracté: (Contracté - Budget Pub) / Budget Pub
     const adROIContracted = totalAdBudget > 0 
-      ? ((totalContracted - totalAdBudget) / totalAdBudget) * 100 
+      ? roundCurrency(((totalContracted - totalAdBudget) / totalAdBudget) * 100)
       : 0;
 
     // Paiements à venir CE MOIS = ventes des mois précédents avec next_payment_date ce mois (exclut impayés)
-    const upcomingPaymentsThisMonth = tunnels
+    const upcomingPaymentsThisMonth = roundCurrency(tunnels
       .filter(t => t.month !== selectedMonth) // Ventes des mois précédents
       .flatMap(t => t.sales)
       .filter(sale => {
@@ -149,34 +150,34 @@ export function useBusinessData() {
         const paymentsRemaining = sale.numberOfPayments ? 
           sale.numberOfPayments - (sale.paymentHistory?.length || 1) : 1;
         return sum + (paymentsRemaining > 0 ? remaining / paymentsRemaining : remaining);
-      }, 0);
+      }, 0));
 
     // Paiements à venir TOTAL = somme de tous les montants restants à encaisser (ventes NON en impayé)
-    const upcomingPaymentsTotal = tunnels
+    const upcomingPaymentsTotal = roundCurrency(tunnels
       .flatMap(t => t.sales)
       .filter(sale => !sale.isDefaulted)
-      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0);
+      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0));
 
     // Montant total en impayé
-    const defaultedAmount = tunnels
+    const defaultedAmount = roundCurrency(tunnels
       .flatMap(t => t.sales)
       .filter(sale => sale.isDefaulted)
-      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0);
+      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0));
 
     // Cost per call
-    const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
+    const costPerCall = roundCurrency(totalCalls > 0 ? totalAdBudget / totalCalls : 0);
 
     // Closing rate
-    const closingRate = totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0;
+    const closingRate = roundCurrency(totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0);
 
     // CAC (Customer Acquisition Cost)
-    const cac = totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0;
+    const cac = roundCurrency(totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0);
 
     // CPL (Cost Per Lead) - Coût par inscrit
-    const cpl = totalRegistrations > 0 ? totalAdBudget / totalRegistrations : 0;
+    const cpl = roundCurrency(totalRegistrations > 0 ? totalAdBudget / totalRegistrations : 0);
 
     // Coût par présent webinaire
-    const costPerWebinarAttendee = totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0;
+    const costPerWebinarAttendee = roundCurrency(totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0);
 
     return {
       contractedRevenue: totalContracted,
