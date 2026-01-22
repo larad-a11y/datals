@@ -151,9 +151,34 @@ function dbSaleToSale(dbSale: DbSale): Sale {
   };
 }
 
+// Transform DB installment plan to handle legacy format
+interface LegacyInstallmentPlan {
+  id: string;
+  name?: string;
+  payments?: number; // Legacy field
+  numberOfPayments?: number; // Current field
+  markupPercent: number;
+}
+
+function transformInstallmentPlans(dbPlans: unknown): InstallmentPlan[] {
+  if (!Array.isArray(dbPlans)) return [];
+  
+  return (dbPlans as LegacyInstallmentPlan[])
+    .map(plan => ({
+      id: plan.id,
+      // Handle both legacy 'payments' and current 'numberOfPayments'
+      numberOfPayments: plan.numberOfPayments ?? plan.payments ?? 0,
+      markupPercent: plan.markupPercent ?? 0,
+    }))
+    // Filter out invalid plans (numberOfPayments must be > 0)
+    .filter(plan => plan.numberOfPayments > 0);
+}
+
 // Transform DB charges to app Charges
 function dbChargesToCharges(dbCharges: DbUserCharges | null): Charges {
   if (!dbCharges) return defaultCharges;
+  
+  const installmentPlans = transformInstallmentPlans(dbCharges.installment_plans);
   
   return {
     associatePercent: Number(dbCharges.associate_percent) ?? 15,
@@ -165,7 +190,7 @@ function dbChargesToCharges(dbCharges: DbUserCharges | null): Charges {
     klarnaPercent: Number(dbCharges.klarna_percent) ?? 8,
     klarnaMaxAmount: Number(dbCharges.klarna_max_amount) ?? 1500,
     closers: (dbCharges.closers as Closer[]) || [],
-    installmentPlans: (dbCharges.installment_plans as InstallmentPlan[]) || [],
+    installmentPlans: installmentPlans.length > 0 ? installmentPlans : defaultCharges.installmentPlans,
     offers: (dbCharges.offers as Offer[]) || [],
     advertising: Number(dbCharges.advertising) || 0,
     marketing: Number(dbCharges.marketing) || 0,
