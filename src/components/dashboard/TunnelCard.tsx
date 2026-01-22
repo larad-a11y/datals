@@ -40,9 +40,14 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   const salesWithCloserHT = salesWithCloserTTC * (1 / (1 + taxRate));
   const closersCost = salesWithCloserHT * (charges.closersPercent / 100);
   
-  // ROAS calculation (multiplicateur)
-  const roas = tunnel.adBudget > 0 
+  // ROAS Collecté (multiplicateur)
+  const roasCollected = tunnel.adBudget > 0 
     ? collectedRevenueHT / tunnel.adBudget 
+    : 0;
+  
+  // ROAS Contracté (multiplicateur)
+  const roasContracted = tunnel.adBudget > 0 
+    ? contractedRevenue / tunnel.adBudget 
     : 0;
   
   // Cost per call
@@ -87,7 +92,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   const associateCost = netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0;
   const netNetProfit = netProfit - associateCost;
   
-  const trend = roas >= 3 ? 'profitable' : roas >= 2 ? 'warning' : 'danger';
+  const trend = roasCollected >= 3 ? 'profitable' : roasCollected >= 2 ? 'warning' : 'danger';
   
   const formattedDate = tunnel.date ? new Date(tunnel.date).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -118,8 +123,11 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
           </div>
         </div>
         <div className="text-right">
-          <p className={`font-display text-xl font-bold text-${trend}`}>
-            {roas.toFixed(2)}x ROAS
+          <p className={`font-display text-lg font-bold text-${trend}`}>
+            {roasCollected.toFixed(2)}x <span className="text-xs font-normal text-muted-foreground">collecté</span>
+          </p>
+          <p className={`font-display text-sm font-semibold ${roasContracted >= 3 ? 'text-profitable' : roasContracted >= 2 ? 'text-warning' : 'text-danger'}`}>
+            {roasContracted.toFixed(2)}x <span className="text-xs font-normal text-muted-foreground">contracté</span>
           </p>
         </div>
       </div>
@@ -167,9 +175,16 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
         />
         <MetricItem 
           icon={TrendingUp} 
-          label="ROAS" 
-          value={`${roas.toFixed(2)}x`}
-          valueColor={roas >= 3 ? 'text-profitable' : roas >= 2 ? 'text-warning' : 'text-danger'}
+          label="ROAS Collecté" 
+          value={`${roasCollected.toFixed(2)}x`}
+          valueColor={roasCollected >= 3 ? 'text-profitable' : roasCollected >= 2 ? 'text-warning' : 'text-danger'}
+          small
+        />
+        <MetricItem 
+          icon={TrendingUp} 
+          label="ROAS Contracté" 
+          value={`${roasContracted.toFixed(2)}x`}
+          valueColor={roasContracted >= 3 ? 'text-profitable' : roasContracted >= 2 ? 'text-warning' : 'text-danger'}
           small
         />
         <MetricItem 
