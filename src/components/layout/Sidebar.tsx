@@ -1,8 +1,10 @@
-import { LayoutDashboard, Target, Receipt, Wallet, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Target, Receipt, Wallet, BarChart3, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserProfile } from './UserProfile';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { PaymentNotification } from '@/types/business';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
   activeTab: string;
@@ -11,6 +13,7 @@ interface SidebarProps {
   onNavigateToSale?: (saleId: string, tunnelId: string) => void;
   onDismissNotification?: (notificationId: string) => void;
   onDismissAllNotifications?: () => void;
+  onCreateBackup?: () => void;
 }
 
 const navItems = [
@@ -28,6 +31,7 @@ export function Sidebar({
   onNavigateToSale,
   onDismissNotification,
   onDismissAllNotifications,
+  onCreateBackup,
 }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-20 border-r border-border/30 bg-sidebar flex flex-col">
@@ -64,8 +68,29 @@ export function Sidebar({
         </nav>
       </div>
       
-      {/* Bottom section: Notifications + User Profile */}
+      {/* Bottom section: Backup + Notifications + User Profile */}
       <div className="px-2 pb-4 flex flex-col items-center gap-3">
+        {/* Manual Backup Button */}
+        {onCreateBackup && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onCreateBackup}
+                  className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                >
+                  <Archive className="h-5 w-5 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Créer une sauvegarde manuelle</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        
         {/* Notification Bell */}
         {onNavigateToSale && onDismissNotification && onDismissAllNotifications && (
           <NotificationBell
