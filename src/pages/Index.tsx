@@ -200,6 +200,7 @@ const Index = () => {
             onAdd={addTunnel}
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
+            onAddSale={handleAddSaleToTunnel}
             onNavigateToSales={handleNavigateToSales}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
