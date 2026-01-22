@@ -1,16 +1,3 @@
-import { 
-  TrendingUp, 
-  PhoneCall, 
-  Target, 
-  Users, 
-  DollarSign,
-  Wallet,
-  Diamond,
-  Receipt,
-  FileText,
-  MousePointerClick,
-  Eye
-} from 'lucide-react';
 import { Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
 
 interface TunnelCardProps {
@@ -112,7 +99,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   return (
     <div className="rounded-xl border border-border/50 bg-secondary/20 p-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <div className={`badge-${trend}`}>
             {tunnel.type.toUpperCase()}
@@ -132,157 +119,140 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
         </div>
       </div>
       
-      {/* Main Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
-        {/* Revenus */}
-        <MetricItem 
-          icon={Receipt} 
-          label="CA Collecté HT" 
-          value={`${collectedRevenueHT.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-        />
-        <MetricItem 
-          icon={FileText} 
-          label="CA Contracté" 
-          value={`${contractedRevenue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-        />
-        <MetricItem 
-          icon={Wallet} 
-          label="Bénéfice Net" 
-          value={`${netProfit.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-          valueColor={netProfit > 0 ? 'text-profitable' : 'text-danger'}
-        />
-        <MetricItem 
-          icon={Diamond} 
-          label="Bénéfice Net Net" 
-          value={`${netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
-          valueColor={netNetProfit > 0 ? 'text-profitable' : 'text-danger'}
-        />
+      {/* Section 1: Revenus & Profits */}
+      <div className="mb-4">
+        <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">💰 Revenus & Profits</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <MetricCard 
+            label="CA Collecté HT" 
+            value={`${collectedRevenueHT.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
+          />
+          <MetricCard 
+            label="CA Contracté" 
+            value={`${contractedRevenue.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
+          />
+          <MetricCard 
+            label="Bénéfice Net" 
+            value={`${netProfit.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
+            valueColor={netProfit > 0 ? 'text-profitable' : 'text-danger'}
+          />
+          <MetricCard 
+            label="Bénéfice Net Net" 
+            value={`${netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`}
+            valueColor={netNetProfit > 0 ? 'text-profitable' : 'text-danger'}
+          />
+        </div>
       </div>
       
-      {/* Performance Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t border-border/30">
-        <MetricItem 
-          icon={DollarSign} 
-          label="Pub dépensée" 
-          value={`${tunnel.adBudget.toLocaleString('fr-FR')} €`}
-          small
-        />
-        <MetricItem 
-          icon={Target} 
-          label="Ventes" 
-          value={actualSalesCount.toString()}
-          small
-        />
-        <MetricItem 
-          icon={TrendingUp} 
-          label="ROAS Collecté" 
-          value={`${roasCollected.toFixed(2)}x`}
-          valueColor={roasCollected >= 3 ? 'text-profitable' : roasCollected >= 2 ? 'text-warning' : 'text-danger'}
-          small
-        />
-        <MetricItem 
-          icon={TrendingUp} 
-          label="ROAS Contracté" 
-          value={`${roasContracted.toFixed(2)}x`}
-          valueColor={roasContracted >= 3 ? 'text-profitable' : roasContracted >= 2 ? 'text-warning' : 'text-danger'}
-          small
-        />
-        <MetricItem 
-          icon={PhoneCall} 
-          label="Coût/Call" 
-          value={costPerCall > 0 ? `${costPerCall.toFixed(0)} €` : '-'}
-          small
-        />
-        <MetricItem 
-          icon={Target} 
-          label="Taux Closing" 
-          value={`${closingRate.toFixed(1)}%`}
-          valueColor={closingRate >= 30 ? 'text-profitable' : closingRate >= 15 ? 'text-warning' : 'text-danger'}
-          small
-        />
-        <MetricItem 
-          icon={Users} 
-          label="CAC" 
-          value={cac > 0 ? `${cac.toFixed(0)} €` : '-'}
-          small
-        />
+      {/* Section 2: Performance Publicitaire */}
+      <div className="mb-4 pt-4 border-t border-border/30">
+        <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">📊 Performance Pub</p>
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+          <MetricCard 
+            label="Budget Pub" 
+            value={`${tunnel.adBudget.toLocaleString('fr-FR')} €`}
+            highlight
+          />
+          <MetricCard 
+            label="ROAS Collecté" 
+            value={`${roasCollected.toFixed(2)}x`}
+            valueColor={roasCollected >= 3 ? 'text-profitable' : roasCollected >= 2 ? 'text-warning' : 'text-danger'}
+          />
+          <MetricCard 
+            label="ROAS Contracté" 
+            value={`${roasContracted.toFixed(2)}x`}
+            valueColor={roasContracted >= 3 ? 'text-profitable' : roasContracted >= 2 ? 'text-warning' : 'text-danger'}
+          />
+          <MetricCard 
+            label="CAC" 
+            value={cac > 0 ? `${cac.toFixed(0)} €` : '-'}
+          />
+          <MetricCard 
+            label="CPL" 
+            value={cpl > 0 ? `${cpl.toFixed(0)} €` : '-'}
+          />
+          <MetricCard 
+            label="Coût/Call" 
+            value={costPerCall > 0 ? `${costPerCall.toFixed(0)} €` : '-'}
+          />
+        </div>
       </div>
       
-      {/* Acquisition Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-border/30 mt-4">
-        <MetricItem 
-          icon={MousePointerClick} 
-          label="CPL (Coût/Lead)" 
-          value={cpl > 0 ? `${cpl.toFixed(2)} €` : '-'}
-          small
-        />
-        {tunnel.type === 'webinar' && (
-          <>
-            <MetricItem 
-              icon={Eye} 
-              label="Coût/Présent" 
-              value={costPerAttendee > 0 ? `${costPerAttendee.toFixed(2)} €` : '-'}
-              small
-            />
-            <MetricItem 
-              icon={Users} 
-              label="Inscrits / Présents" 
-              value={`${tunnel.registrations || 0} / ${tunnel.attendees || 0}`}
-              small
-            />
-            <MetricItem 
-              icon={TrendingUp} 
-              label="Show-up Rate" 
-              value={showUpRate ? `${showUpRate}%` : '0%'}
-              valueColor="text-primary"
-              small
-            />
-          </>
-        )}
-        {tunnel.type === 'vsl' && (
-          <>
-            <MetricItem 
-              icon={Users} 
-              label="Inscrits / Calls" 
-              value={`${tunnel.registrations || 0} / ${tunnel.callsBooked || 0}`}
-              small
-            />
-            <MetricItem 
-              icon={TrendingUp} 
-              label="Taux Booking" 
-              value={bookingRate ? `${bookingRate}%` : '0%'}
-              valueColor="text-primary"
-              small
-            />
-          </>
-        )}
-        {tunnel.type === 'challenge' && (
-          <>
-            <MetricItem 
-              icon={Eye} 
-              label="Coût/Présent Moy" 
-              value={costPerAttendee > 0 ? `${costPerAttendee.toFixed(2)} €` : '-'}
-              small
-            />
-            <MetricItem 
-              icon={Users} 
-              label="Inscrits" 
-              value={(tunnel.registrations || 0).toString()}
-              subtitle={tunnel.challengeDays ? `${tunnel.challengeDays.length} jours` : undefined}
-              small
-            />
-          </>
-        )}
+      {/* Section 3: Conversion */}
+      <div className="pt-4 border-t border-border/30">
+        <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">🎯 Conversion</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+          <MetricCard 
+            label="Ventes" 
+            value={actualSalesCount.toString()}
+            subtitle={`sur ${tunnel.callsGenerated} calls`}
+          />
+          <MetricCard 
+            label="Taux Closing" 
+            value={`${closingRate.toFixed(1)}%`}
+            valueColor={closingRate >= 30 ? 'text-profitable' : closingRate >= 15 ? 'text-warning' : 'text-danger'}
+          />
+          
+          {/* Type-specific metrics */}
+          {tunnel.type === 'webinar' && (
+            <>
+              <MetricCard 
+                label="Inscrits → Présents" 
+                value={`${tunnel.registrations || 0} → ${tunnel.attendees || 0}`}
+              />
+              <MetricCard 
+                label="Show-up Rate" 
+                value={showUpRate ? `${showUpRate}%` : '0%'}
+                valueColor={Number(showUpRate) >= 50 ? 'text-profitable' : Number(showUpRate) >= 30 ? 'text-warning' : 'text-danger'}
+              />
+              {costPerAttendee > 0 && (
+                <MetricCard 
+                  label="Coût/Présent" 
+                  value={`${costPerAttendee.toFixed(0)} €`}
+                />
+              )}
+            </>
+          )}
+          
+          {tunnel.type === 'vsl' && (
+            <>
+              <MetricCard 
+                label="Inscrits → Calls" 
+                value={`${tunnel.registrations || 0} → ${tunnel.callsBooked || 0}`}
+              />
+              <MetricCard 
+                label="Taux Booking" 
+                value={bookingRate ? `${bookingRate}%` : '0%'}
+                valueColor={Number(bookingRate) >= 30 ? 'text-profitable' : Number(bookingRate) >= 15 ? 'text-warning' : 'text-danger'}
+              />
+            </>
+          )}
+          
+          {tunnel.type === 'challenge' && (
+            <>
+              <MetricCard 
+                label="Inscrits" 
+                value={(tunnel.registrations || 0).toString()}
+                subtitle={tunnel.challengeDays ? `${tunnel.challengeDays.length} jours` : undefined}
+              />
+              {costPerAttendee > 0 && (
+                <MetricCard 
+                  label="Coût/Présent Moy" 
+                  value={`${costPerAttendee.toFixed(0)} €`}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Challenge Days Show-up Rate - separate section */}
+      {/* Challenge Days Show-up Rate */}
       {tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0 && tunnel.registrations && tunnel.registrations > 0 && (
         <div className="pt-4 border-t border-border/30 mt-4">
-          <p className="text-xs text-muted-foreground mb-3 font-medium">Show-up par jour</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">📅 Show-up par jour</p>
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {tunnel.challengeDays.map((day, index) => {
-              const showUpRate = ((day.attendees / tunnel.registrations!) * 100);
-              // Calculate the actual date for this challenge day
+              const dayShowUpRate = ((day.attendees / tunnel.registrations!) * 100);
               const dayDate = tunnel.date 
                 ? new Date(new Date(tunnel.date).getTime() + index * 24 * 60 * 60 * 1000)
                 : null;
@@ -293,13 +263,13 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
               return (
                 <div 
                   key={day.day} 
-                  className="p-2 bg-background/50 rounded-lg text-center"
+                  className="p-2 bg-background/50 rounded-lg text-center border border-border/30"
                 >
-                  <p className="text-[10px] text-muted-foreground">{formattedDayDate}</p>
-                  <p className="text-xs font-medium text-foreground">{day.attendees} présents</p>
-                  <p className={`text-sm font-bold ${showUpRate >= 50 ? 'text-profitable' : showUpRate >= 30 ? 'text-warning' : 'text-danger'}`}>
-                    {showUpRate.toFixed(1)}%
+                  <p className="text-[10px] text-muted-foreground font-medium">{formattedDayDate}</p>
+                  <p className={`text-lg font-bold ${dayShowUpRate >= 50 ? 'text-profitable' : dayShowUpRate >= 30 ? 'text-warning' : 'text-danger'}`}>
+                    {dayShowUpRate.toFixed(0)}%
                   </p>
+                  <p className="text-[10px] text-muted-foreground">{day.attendees} présents</p>
                 </div>
               );
             })}
@@ -310,28 +280,24 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   );
 }
 
-interface MetricItemProps {
-  icon: React.ElementType;
+interface MetricCardProps {
   label: string;
   value: string;
   valueColor?: string;
   subtitle?: string;
-  small?: boolean;
+  highlight?: boolean;
 }
 
-function MetricItem({ icon: Icon, label, value, valueColor = 'text-foreground', subtitle, small = false }: MetricItemProps) {
+function MetricCard({ label, value, valueColor = 'text-foreground', subtitle, highlight = false }: MetricCardProps) {
   return (
-    <div className={`flex items-start gap-2 ${small ? 'p-2 bg-background/50 rounded-lg' : 'p-3 bg-background/30 rounded-lg'}`}>
-      <Icon className={`${small ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-muted-foreground mt-0.5 flex-shrink-0`} />
-      <div className="min-w-0">
-        <p className={`${small ? 'text-[10px]' : 'text-xs'} text-muted-foreground truncate`}>{label}</p>
-        <p className={`font-display ${small ? 'text-sm' : 'text-base'} font-semibold ${valueColor} truncate`}>
-          {value}
-        </p>
-        {subtitle && (
-          <p className="text-[10px] text-muted-foreground">{subtitle}</p>
-        )}
-      </div>
+    <div className={`p-2.5 rounded-lg ${highlight ? 'bg-primary/10 border border-primary/20' : 'bg-background/50'}`}>
+      <p className="text-[10px] text-muted-foreground truncate mb-0.5">{label}</p>
+      <p className={`font-display text-sm font-semibold ${valueColor} truncate`}>
+        {value}
+      </p>
+      {subtitle && (
+        <p className="text-[10px] text-muted-foreground">{subtitle}</p>
+      )}
     </div>
   );
 }
