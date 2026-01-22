@@ -226,7 +226,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
               <MetricCard 
                 label="Show-up Rate" 
                 value={showUpRate ? `${showUpRate}%` : '0%'}
-                valueColor={Number(showUpRate) >= 50 ? 'text-profitable' : Number(showUpRate) >= 30 ? 'text-warning' : 'text-danger'}
+                valueColor={Number(showUpRate) >= 30 ? 'text-profitable' : Number(showUpRate) >= 20 ? 'text-warning' : 'text-danger'}
               />
               {costPerAttendee > 0 && (
                 <MetricCard 
@@ -289,7 +289,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
                   className="p-2 bg-background/50 rounded-lg text-center border border-border/30"
                 >
                   <p className="text-[10px] text-muted-foreground font-medium">{formattedDayDate}</p>
-                  <p className={`text-lg font-bold ${dayShowUpRate >= 50 ? 'text-profitable' : dayShowUpRate >= 30 ? 'text-warning' : 'text-danger'}`}>
+                  <p className={`text-lg font-bold ${dayShowUpRate >= 30 ? 'text-profitable' : dayShowUpRate >= 20 ? 'text-warning' : 'text-danger'}`}>
                     {dayShowUpRate.toFixed(0)}%
                   </p>
                   <p className="text-[10px] text-muted-foreground">{day.attendees} présents</p>
