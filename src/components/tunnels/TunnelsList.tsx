@@ -112,8 +112,10 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
             const roi = tunnel.adBudget > 0 
               ? ((collectedAmount - tunnel.adBudget) / tunnel.adBudget) * 100 
               : 0;
+            // Use actual sales count instead of manual callsClosed
+            const actualSalesCount = tunnel.sales.length;
             const closingRate = tunnel.callsGenerated > 0 
-              ? (tunnel.callsClosed / tunnel.callsGenerated) * 100 
+              ? (actualSalesCount / tunnel.callsGenerated) * 100 
               : 0;
             const trend = roi > 100 ? 'profitable' : roi > 50 ? 'warning' : 'danger';
             const remainingAmount = salesContracted - salesCollected;
@@ -176,9 +178,9 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
 
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Calls</span>
+                    <span className="text-muted-foreground">Ventes / Calls</span>
                     <span className="font-medium text-foreground">
-                      {tunnel.callsClosed} / {tunnel.callsGenerated}
+                      {actualSalesCount} / {tunnel.callsGenerated}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
