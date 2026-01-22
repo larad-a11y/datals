@@ -162,7 +162,7 @@ export function ChargesPanel({
           </h3>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <div>
             <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
               💳 Processeur de paiement
@@ -180,6 +180,25 @@ export function ChargesPanel({
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">Par défaut: 4%</p>
+          </div>
+
+          <div>
+            <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
+              🟣 Klarna
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={charges.klarnaPercent}
+                onChange={(e) => handleChange('klarnaPercent', parseFloat(e.target.value) || 0)}
+                className="input-field w-full pr-8"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Sur portion Klarna uniquement</p>
           </div>
 
           <div>
@@ -217,7 +236,7 @@ export function ChargesPanel({
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Par défaut: 17,5% (uniquement si closer assigné)</p>
+            <p className="mt-1 text-xs text-muted-foreground">Par défaut: 17,5%</p>
           </div>
 
           <div>
@@ -240,7 +259,7 @@ export function ChargesPanel({
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Appliqué au-delà de {charges.agencyThreshold.toLocaleString('fr-FR')} € HT
+              Au-delà de {charges.agencyThreshold.toLocaleString('fr-FR')} € HT
             </p>
           </div>
 
@@ -260,23 +279,41 @@ export function ChargesPanel({
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Calculé APRÈS toutes les autres charges</p>
+            <p className="mt-1 text-xs text-muted-foreground">Sur bénéfice net</p>
           </div>
         </div>
 
-        {/* Agency threshold setting */}
-        <div className="mt-6 border-t border-border/50 pt-6">
-          <label className="mb-1.5 block text-sm font-medium text-foreground">
-            Seuil agence (€ HT)
-          </label>
-          <input
-            type="number"
-            value={charges.agencyThreshold}
-            onChange={(e) => handleChange('agencyThreshold', parseFloat(e.target.value) || 0)}
-            className="input-field w-full max-w-xs"
-            min="0"
-            step="1000"
-          />
+        {/* Agency threshold and Klarna max amount settings */}
+        <div className="mt-6 border-t border-border/50 pt-6 grid gap-6 md:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              Seuil agence (€ HT)
+            </label>
+            <input
+              type="number"
+              value={charges.agencyThreshold}
+              onChange={(e) => handleChange('agencyThreshold', parseFloat(e.target.value) || 0)}
+              className="input-field w-full"
+              min="0"
+              step="1000"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              🟣 Montant max Klarna (€)
+            </label>
+            <input
+              type="number"
+              value={charges.klarnaMaxAmount}
+              onChange={(e) => handleChange('klarnaMaxAmount', parseFloat(e.target.value) || 0)}
+              className="input-field w-full"
+              min="0"
+              step="100"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Limite Klarna par transaction (défaut: 1500€)
+            </p>
+          </div>
         </div>
       </div>
 

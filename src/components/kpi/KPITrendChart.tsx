@@ -46,6 +46,16 @@ function calculateMonthKPIs(
   // Frais processeur
   const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
 
+  // Frais Klarna (sur le montant Klarna uniquement)
+  const klarnaCost = filteredTunnels.reduce((sum, t) => {
+    return sum + t.sales.reduce((s, sale) => {
+      if (sale.klarnaAmount && sale.klarnaAmount > 0) {
+        return s + (sale.klarnaAmount * (charges.klarnaPercent / 100));
+      }
+      return s;
+    }, 0);
+  }, 0);
+
   // Closers
   const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
     const tunnelSalesWithCloser = t.sales
@@ -76,6 +86,7 @@ function calculateMonthKPIs(
   // Bénéfice Net = AVANT associé et salaires
   const netProfit = totalCollectedHT 
     - paymentProcessorCost 
+    - klarnaCost
     - closersCost 
     - agencyCost 
     - totalAdBudget

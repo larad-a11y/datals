@@ -1,6 +1,6 @@
 export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
-export type PaymentMethod = 'cb' | 'virement';
+export type PaymentMethod = 'cb' | 'virement' | 'klarna' | 'cb_klarna';
 
 export interface PaymentRecord {
   id: string;
@@ -53,6 +53,9 @@ export interface Sale {
   isDefaulted?: boolean; // Vente en impayé
   defaultedAt?: string; // Date de mise en impayé
   lastPaymentUpdate?: string; // Dernière mise à jour du paiement
+  // Klarna mixed payment support
+  klarnaAmount?: number; // Montant payé via Klarna (max klarnaMaxAmount)
+  cbAmount?: number; // Montant payé via CB (le reste)
 }
 
 export interface PaymentNotification {
@@ -112,6 +115,10 @@ export interface Charges {
   paymentProcessorPercent: number; // Default 4%
   taxPercent: number; // Default 20% (TVA)
   
+  // Klarna fees
+  klarnaPercent: number; // Default 8% (applied only to Klarna portion)
+  klarnaMaxAmount: number; // Default 1500€ (max amount for Klarna)
+  
   // Closers list
   closers: Closer[];
   
@@ -161,6 +168,7 @@ export interface KPIData {
   totalRegistrations: number;
   totalWebinarAttendees: number;
   paymentProcessorCost: number;
+  klarnaCost: number; // Frais Klarna
   closersCost: number;
   agencyCost: number;
   upcomingPaymentsThisMonth: number;
@@ -182,6 +190,8 @@ export const defaultCharges: Charges = {
   agencyThreshold: 130000,
   paymentProcessorPercent: 4,
   taxPercent: 20,
+  klarnaPercent: 8,
+  klarnaMaxAmount: 1500,
   closers: [],
   installmentPlans: defaultInstallmentPlans,
   offers: [],
@@ -205,6 +215,8 @@ export const tunnelTypeLabels: Record<TunnelType, string> = {
 export const paymentMethodLabels: Record<PaymentMethod, string> = {
   cb: 'CB',
   virement: 'Virement',
+  klarna: 'Klarna',
+  cb_klarna: 'CB + Klarna',
 };
 
 // Helper to generate notifications from sales
