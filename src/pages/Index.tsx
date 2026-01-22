@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Header } from '@/components/layout/Header';
+import { MonthSelector } from '@/components/layout/MonthSelector';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { TunnelsList } from '@/components/tunnels/TunnelsList';
 import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
@@ -189,6 +189,7 @@ const Index = () => {
             coachingExpenses={coachingExpenses}
             allTunnels={tunnels}
             selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
           />
         );
       case 'tunnels':
@@ -197,6 +198,7 @@ const Index = () => {
           <TunnelsList
             tunnels={tunnels}
             selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
             onAdd={addTunnel}
             onUpdate={updateTunnel}
             onDelete={deleteTunnel}
@@ -237,6 +239,7 @@ const Index = () => {
             onUpdateSalary={updateSalary}
             onDeleteSalary={deleteSalary}
             selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
             coachingExpenses={filteredCoachingExpenses}
             onAddCoachingExpense={addCoachingExpense}
             onUpdateCoachingExpense={updateCoachingExpense}
@@ -252,6 +255,7 @@ const Index = () => {
             coachingExpenses={filteredCoachingExpenses}
             tunnels={tunnels}
             selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
           />
         );
       default:
@@ -264,6 +268,7 @@ const Index = () => {
             coachingExpenses={coachingExpenses}
             allTunnels={tunnels}
             selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
           />
         );
     }
@@ -293,13 +298,7 @@ const Index = () => {
       />
       
       <div className="pl-20">
-        <Header 
-          selectedMonth={selectedMonth} 
-          onMonthChange={setSelectedMonth}
-          activeTab={activeTab}
-        />
-        
-        <main className="p-6">
+        <main className="p-6 pt-4">
           <div className="mx-auto max-w-7xl animate-fade-in">
             {renderContent()}
           </div>

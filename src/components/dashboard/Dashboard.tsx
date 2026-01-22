@@ -19,6 +19,7 @@ import { KPIData, Tunnel, Charges, Salary, CoachingExpense } from '@/types/busin
 import { useMemo, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { MonthSelector } from '@/components/layout/MonthSelector';
 
 interface DashboardProps {
   kpis: KPIData;
@@ -28,9 +29,10 @@ interface DashboardProps {
   coachingExpenses: CoachingExpense[];
   allTunnels?: Tunnel[]; // All tunnels for comparison
   selectedMonth: string;
+  onMonthChange: (month: string) => void;
 }
 
-export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, allTunnels = [], selectedMonth }: DashboardProps) {
+export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, allTunnels = [], selectedMonth, onMonthChange }: DashboardProps) {
   const [showComparison, setShowComparison] = useState(false);
   
   // Calculate previous month KPIs
@@ -180,20 +182,28 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
 
   return (
     <div className="space-y-6">
-      {/* Comparison Toggle */}
-      <div className="flex items-center justify-end gap-3">
-        <Label htmlFor="comparison" className="text-sm text-muted-foreground">
-          Comparer au mois précédent
-        </Label>
-        <Switch 
-          id="comparison" 
-          checked={showComparison} 
-          onCheckedChange={setShowComparison}
-          disabled={!previousMonthKpis}
-        />
-        {!previousMonthKpis && showComparison === false && (
-          <span className="text-xs text-muted-foreground italic">Aucune donnée mois précédent</span>
-        )}
+      {/* Header with Month Selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h2 className="font-display text-xl font-semibold text-foreground">
+            Tableau de bord
+          </h2>
+          <MonthSelector selectedMonth={selectedMonth} onMonthChange={onMonthChange} />
+        </div>
+        <div className="flex items-center gap-3">
+          <Label htmlFor="comparison" className="text-sm text-muted-foreground">
+            Comparer au mois précédent
+          </Label>
+          <Switch 
+            id="comparison" 
+            checked={showComparison} 
+            onCheckedChange={setShowComparison}
+            disabled={!previousMonthKpis}
+          />
+          {!previousMonthKpis && showComparison === false && (
+            <span className="text-xs text-muted-foreground italic">Aucune donnée mois précédent</span>
+          )}
+        </div>
       </div>
       
       {/* Main KPIs */}
