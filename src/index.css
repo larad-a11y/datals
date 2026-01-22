@@ -78,9 +78,74 @@
     --sidebar-ring: 24 95% 55%;
   }
 
-  .dark {
-    --background: 225 30% 7%;
-    --foreground: 210 20% 95%;
+  /* Light mode theme */
+  .light {
+    --background: 220 20% 97%;
+    --foreground: 225 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 225 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 225 30% 12%;
+
+    --primary: 24 95% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 225 30% 20%;
+
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 220 15% 90%;
+    --accent-foreground: 225 30% 12%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 95%;
+    --ring: 24 95% 50%;
+
+    /* Custom colors for business KPIs - light mode */
+    --profitable: 145 65% 38%;
+    --profitable-foreground: 145 65% 25%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 38 92% 25%;
+    --danger: 0 72% 50%;
+    --danger-foreground: 0 72% 30%;
+    
+    /* Chart colors - light mode */
+    --chart-orange: 24 95% 50%;
+    --chart-yellow: 45 95% 50%;
+    --chart-teal: 175 65% 40%;
+    --chart-blue: 210 75% 50%;
+    --chart-red: 0 70% 50%;
+    --chart-green: 145 65% 38%;
+
+    /* Gradients - light mode */
+    --gradient-profitable: linear-gradient(135deg, hsl(145 65% 38%), hsl(145 65% 32%));
+    --gradient-warning: linear-gradient(135deg, hsl(38 92% 45%), hsl(38 92% 38%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 72% 50%), hsl(0 72% 42%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 20% 98%));
+    --gradient-hero: linear-gradient(180deg, hsl(220 20% 98%), hsl(220 20% 96%));
+    --gradient-primary: linear-gradient(135deg, hsl(24 95% 50%), hsl(24 95% 42%));
+
+    /* Shadows - light mode */
+    --shadow-sm: 0 1px 2px 0 hsl(220 15% 50% / 0.08);
+    --shadow-md: 0 4px 6px -1px hsl(220 15% 50% / 0.1), 0 2px 4px -2px hsl(220 15% 50% / 0.08);
+    --shadow-lg: 0 10px 15px -3px hsl(220 15% 50% / 0.12), 0 4px 6px -4px hsl(220 15% 50% / 0.1);
+    --shadow-glow: 0 0 30px hsl(24 95% 50% / 0.1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 225 30% 25%;
+    --sidebar-primary: 24 95% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 225 30% 12%;
+    --sidebar-border: 220 15% 90%;
+    --sidebar-ring: 24 95% 50%;
   }
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { LogOut, Key } from 'lucide-react';
+import { LogOut, Key, Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 export function UserProfile() {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { theme, toggleTheme, isDark } = useTheme();
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -111,6 +113,19 @@ export function UserProfile() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+            {isDark ? (
+              <>
+                <Sun className="mr-2 h-4 w-4" />
+                <span>Mode clair</span>
+              </>
+            ) : (
+              <>
+                <Moon className="mr-2 h-4 w-4" />
+                <span>Mode sombre</span>
+              </>
+            )}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowPasswordDialog(true)} className="cursor-pointer">
             <Key className="mr-2 h-4 w-4" />
             <span>Changer le mot de passe</span>
