@@ -2,6 +2,13 @@ export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
 export type PaymentMethod = 'cb' | 'virement' | 'klarna' | 'cb_klarna';
 
+export type TrafficSource = 'ads' | 'organic';
+
+export const trafficSourceLabels: Record<TrafficSource, string> = {
+  ads: 'Publicité',
+  organic: 'Organique',
+};
+
 export interface PaymentRecord {
   id: string;
   amount: number;
@@ -43,6 +50,7 @@ export interface Sale {
   saleDate: string; // Date de la vente
   offerId?: string; // Reference to an offer
   paymentMethod: PaymentMethod;
+  trafficSource: TrafficSource; // Source du trafic (ads ou organique)
   basePrice: number; // Prix de base (prix cash)
   totalPrice: number; // Prix final contracté (peut inclure majoration pour paiement échelonné)
   numberOfPayments: number; // 1 = full, 2 = 2x, 3 = 3x, etc.
@@ -175,6 +183,9 @@ export interface KPIData {
   upcomingPaymentsThisMonth: number;
   upcomingPaymentsTotal: number;
   defaultedAmount: number; // Montant total en impayé
+  // Organic stats
+  organicSalesCount: number; // Nombre de ventes organiques
+  organicCollectedAmount: number; // Montant encaissé en organique
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [

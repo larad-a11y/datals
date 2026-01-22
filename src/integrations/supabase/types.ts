@@ -163,6 +163,7 @@ export type Database = {
           payment_method: string
           sale_date: string
           total_price: number
+          traffic_source: string
           tunnel_id: string | null
           updated_at: string | null
           user_id: string
@@ -186,6 +187,7 @@ export type Database = {
           payment_method: string
           sale_date: string
           total_price: number
+          traffic_source?: string
           tunnel_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -209,6 +211,7 @@ export type Database = {
           payment_method?: string
           sale_date?: string
           total_price?: number
+          traffic_source?: string
           tunnel_id?: string | null
           updated_at?: string | null
           user_id?: string

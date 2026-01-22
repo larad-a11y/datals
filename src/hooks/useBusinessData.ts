@@ -193,6 +193,11 @@ export function useBusinessData() {
     // Coût par présent webinaire
     const costPerWebinarAttendee = roundCurrency(totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0);
 
+    // Organic stats
+    const organicSales = filteredTunnels.flatMap(t => t.sales.filter(s => s.trafficSource === 'organic'));
+    const organicSalesCount = organicSales.length;
+    const organicCollectedAmount = roundCurrency(organicSales.reduce((sum, s) => sum + s.amountCollected, 0));
+
     return {
       contractedRevenue: totalContracted,
       collectedRevenue: totalCollectedTTC,
@@ -220,6 +225,8 @@ export function useBusinessData() {
       upcomingPaymentsThisMonth,
       upcomingPaymentsTotal,
       defaultedAmount,
+      organicSalesCount,
+      organicCollectedAmount,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 

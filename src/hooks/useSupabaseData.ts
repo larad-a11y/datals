@@ -136,6 +136,7 @@ function dbSaleToSale(dbSale: DbSale): Sale {
     saleDate: dbSale.sale_date,
     offerId: dbSale.offer_id || undefined,
     paymentMethod: dbSale.payment_method as PaymentMethod,
+    trafficSource: ((dbSale as any).traffic_source as 'ads' | 'organic') || 'ads',
     basePrice: Number(dbSale.base_price),
     totalPrice: Number(dbSale.total_price),
     numberOfPayments: dbSale.number_of_payments || 1,
@@ -445,6 +446,7 @@ export function useSupabaseData() {
         sale_date: sale.saleDate,
         offer_id: sale.offerId || null,
         payment_method: sale.paymentMethod,
+        traffic_source: sale.trafficSource || 'ads',
         base_price: sale.basePrice,
         total_price: sale.totalPrice,
         number_of_payments: sale.numberOfPayments,
@@ -483,6 +485,7 @@ export function useSupabaseData() {
       if (updates.saleDate !== undefined) dbUpdates.sale_date = updates.saleDate;
       if (updates.offerId !== undefined) dbUpdates.offer_id = updates.offerId || null;
       if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod;
+      if (updates.trafficSource !== undefined) dbUpdates.traffic_source = updates.trafficSource;
       if (updates.basePrice !== undefined) dbUpdates.base_price = updates.basePrice;
       if (updates.totalPrice !== undefined) dbUpdates.total_price = updates.totalPrice;
       if (updates.numberOfPayments !== undefined) dbUpdates.number_of_payments = updates.numberOfPayments;
