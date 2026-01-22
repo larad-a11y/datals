@@ -11,7 +11,8 @@ import {
   MousePointerClick,
   ArrowUpRight,
   ArrowDownRight,
-  Minus
+  Minus,
+  Leaf
 } from 'lucide-react';
 import { KPICard } from './KPICard';
 import { TunnelCard } from './TunnelCard';
@@ -323,6 +324,36 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
           />
         )}
       </div>
+
+      {/* Organic Stats */}
+      {(kpis.organicSalesCount > 0 || kpis.organicCollectedAmount > 0) && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
+                <Leaf className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Ventes organiques</p>
+                <p className="text-2xl font-bold text-foreground">{kpis.organicSalesCount}</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/20">
+                <Receipt className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">CA organique encaissé</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {kpis.organicCollectedAmount.toLocaleString('fr-FR')} €
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tunnels Overview */}
       <div className="space-y-4">
