@@ -81,11 +81,34 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   
   const trend = roasCollected >= 3 ? 'profitable' : roasCollected >= 2 ? 'warning' : 'danger';
   
-  const formattedDate = tunnel.date ? new Date(tunnel.date).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  }) : '';
+  // Format date range for challenges, single date for others
+  const formatDateDisplay = () => {
+    if (!tunnel.date) return '';
+    
+    const startDate = new Date(tunnel.date);
+    const formattedStart = startDate.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short'
+    });
+    
+    if (tunnel.type === 'challenge' && tunnel.endDate) {
+      const endDate = new Date(tunnel.endDate);
+      const formattedEnd = endDate.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short'
+      });
+      return `${formattedStart} → ${formattedEnd}`;
+    }
+    
+    // Add year for non-challenge tunnels
+    return startDate.toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+  
+  const formattedDate = formatDateDisplay();
   
   // Type-specific metrics
   const showUpRate = tunnel.type === 'webinar' && tunnel.registrations && tunnel.attendees
