@@ -88,13 +88,25 @@ export function useBusinessData() {
     }, 0);
     // Convertir TTC en HT pour les ventes avec closer
     const salesWithCloserHTAmount = roundCurrency(salesWithCloserHT * (1 / (1 + taxRate)));
-    const closersCost = roundCurrency(salesWithCloserHTAmount * (charges.closersPercent / 100));
+    
+    // Calculer le montant Klarna des ventes avec closer (pour déduire les frais Klarna de la base)
+    const klarnaAmountWithCloser = filteredTunnels.reduce((sum, t) => {
+      return sum + t.sales
+        .filter(sale => sale.closerId && sale.klarnaAmount)
+        .reduce((s, sale) => s + (sale.klarnaAmount || 0), 0);
+    }, 0);
+    const klarnaFeeWithCloser = roundCurrency(klarnaAmountWithCloser * (charges.klarnaPercent / 100));
+    
+    // Base closers = HT - frais Klarna (les frais Klarna ne doivent pas être inclus dans la base de commission)
+    const closerBaseAmount = roundCurrency(salesWithCloserHTAmount - klarnaFeeWithCloser);
+    const closersCost = roundCurrency(closerBaseAmount * (charges.closersPercent / 100));
     
     // 5. Agence : uniquement sur l'excédent au-delà du seuil HT
-    // Calculé sur le CA HT GLOBAL, pas sur le restant après déductions
+    // Base agence = CA HT - frais Klarna total (les frais Klarna ne doivent pas être inclus dans la base de commission)
+    const agencyBaseHT = roundCurrency(totalCollectedHT - klarnaCost);
     let agencyCost = 0;
-    if (totalCollectedHT > charges.agencyThreshold) {
-      const excessHT = totalCollectedHT - charges.agencyThreshold;
+    if (agencyBaseHT > charges.agencyThreshold) {
+      const excessHT = agencyBaseHT - charges.agencyThreshold;
       agencyCost = roundCurrency(excessHT * (charges.agencyPercent / 100));
     }
     
