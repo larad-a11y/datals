@@ -119,12 +119,22 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
   }, [basePriceNum, formData.numberOfPayments, formData.useMarkup, currentMarkupPercent, formData.paymentMethod, formData.klarnaAmount, formData.cbAmount]);
 
   // Auto-calculate amountCollected when totalPrice or numberOfPayments changes
+  // Pour CB + Klarna : Klarna est encaissé en totalité immédiatement, les échéances ne concernent que la partie CB
   useEffect(() => {
     if (totalPriceNum > 0 && !sale) {
-      const firstPayment = roundCurrency(totalPriceNum / formData.numberOfPayments);
-      setFormData(prev => ({ ...prev, amountCollected: firstPayment }));
+      if (formData.paymentMethod === 'cb_klarna') {
+        const klarnaVal = parseFloat(String(formData.klarnaAmount).replace(',', '.')) || 0;
+        const cbVal = parseFloat(String(formData.cbAmount).replace(',', '.')) || 0;
+        // Klarna est encaissé immédiatement + première échéance CB
+        const firstCbPayment = roundCurrency(cbVal / formData.numberOfPayments);
+        const firstPayment = roundCurrency(klarnaVal + firstCbPayment);
+        setFormData(prev => ({ ...prev, amountCollected: firstPayment }));
+      } else {
+        const firstPayment = roundCurrency(totalPriceNum / formData.numberOfPayments);
+        setFormData(prev => ({ ...prev, amountCollected: firstPayment }));
+      }
     }
-  }, [totalPriceNum, formData.numberOfPayments, sale]);
+  }, [totalPriceNum, formData.numberOfPayments, sale, formData.paymentMethod, formData.klarnaAmount, formData.cbAmount]);
 
   // Calculate next payment date (1 month from sale date for new sales)
   const calculateNextPaymentDate = () => {
@@ -408,15 +418,25 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
             const cbVal = parseFloat(String(formData.cbAmount).replace(',', '.')) || 0;
             const total = klarnaVal + cbVal;
             if (total > 0) {
+              const cbPerPayment = formData.numberOfPayments > 1 ? roundCurrency(cbVal / formData.numberOfPayments) : cbVal;
+              const firstPayment = klarnaVal + cbPerPayment;
               return (
-                <div className="rounded-lg bg-primary/10 p-3 border border-primary/30">
+                <div className="rounded-lg bg-primary/10 p-3 border border-primary/30 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-foreground">Total encaissé</span>
+                    <span className="text-sm font-medium text-foreground">Total vente</span>
                     <span className="text-lg font-bold text-primary">{total.toLocaleString('fr-FR')} €</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Klarna: {klarnaVal.toLocaleString('fr-FR')} € + CB: {cbVal.toLocaleString('fr-FR')} €
-                  </p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>Klarna: {klarnaVal.toLocaleString('fr-FR')} € (encaissé immédiatement)</p>
+                    <p>CB: {cbVal.toLocaleString('fr-FR')} € {formData.numberOfPayments > 1 ? `en ${formData.numberOfPayments}x (${cbPerPayment.toLocaleString('fr-FR')} €/mois)` : '(en 1 fois)'}</p>
+                  </div>
+                  {formData.numberOfPayments > 1 && (
+                    <div className="pt-2 border-t border-border/50">
+                      <p className="text-xs text-profitable font-medium">
+                        ✓ 1er encaissement : {firstPayment.toLocaleString('fr-FR')} € (Klarna + 1ère mensualité CB)
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             }
