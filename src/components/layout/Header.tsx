@@ -55,28 +55,30 @@ export function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/50 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div>
-        <h1 className="font-display text-xl font-semibold text-foreground">
-          {currentTabInfo.title}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {currentTabInfo.subtitle}
-        </p>
-      </div>
+    <header className="sticky top-0 z-30 flex h-16 items-center border-b border-border/50 bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-4">
+        <div>
+          <h1 className="font-display text-xl font-semibold text-foreground">
+            {currentTabInfo.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {currentTabInfo.subtitle}
+          </p>
+        </div>
 
-      <div className="flex items-center gap-2">
+        {/* Month selector - inline with title */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
+              size="sm"
               className="flex items-center gap-2 bg-secondary/50"
             >
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
               <span className="capitalize">{formatMonthLabel(selectedMonth)}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-4 bg-card border-border" align="end">
+          <PopoverContent className="w-auto p-4 bg-card border-border" align="start">
             <div className="space-y-4">
               {/* Year selector */}
               <div className="flex items-center justify-between">
