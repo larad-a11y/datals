@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      data_backups: {
+        Row: {
+          backup_date: string | null
+          backup_type: string
+          charges_snapshot: Json
+          coaching_expenses_snapshot: Json
+          created_at: string | null
+          id: string
+          month: string
+          salaries_snapshot: Json
+          sales_snapshot: Json
+          tunnels_snapshot: Json
+          user_id: string
+        }
+        Insert: {
+          backup_date?: string | null
+          backup_type?: string
+          charges_snapshot?: Json
+          coaching_expenses_snapshot?: Json
+          created_at?: string | null
+          id?: string
+          month: string
+          salaries_snapshot?: Json
+          sales_snapshot?: Json
+          tunnels_snapshot?: Json
+          user_id: string
+        }
+        Update: {
+          backup_date?: string | null
+          backup_type?: string
+          charges_snapshot?: Json
+          coaching_expenses_snapshot?: Json
+          created_at?: string | null
+          id?: string
+          month?: string
+          salaries_snapshot?: Json
+          sales_snapshot?: Json
+          tunnels_snapshot?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null

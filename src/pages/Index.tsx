@@ -1,15 +1,15 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { MonthSelector } from '@/components/layout/MonthSelector';
 import { Dashboard } from '@/components/dashboard/Dashboard';
 import { TunnelsList } from '@/components/tunnels/TunnelsList';
 import { SalesCRMPanel } from '@/components/sales/SalesCRMPanel';
 import { ChargesPanel } from '@/components/charges/ChargesPanel';
 import { KPIPanel } from '@/components/kpi/KPIPanel';
-import { useBusinessData } from '@/hooks/useBusinessData';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useBusinessCalculations } from '@/hooks/useBusinessCalculations';
 import { useAuth } from '@/hooks/useAuth';
-import { defaultCharges, Sale, PaymentNotification, generatePaymentNotifications, PaymentRecord } from '@/types/business';
+import { defaultCharges, Sale, generatePaymentNotifications, PaymentRecord } from '@/types/business';
 import { Loader2 } from 'lucide-react';
 
 const Index = () => {
@@ -25,55 +25,51 @@ const Index = () => {
     }
   }, [authLoading, user, navigate]);
   
+  // Data persistence layer
   const {
-    selectedMonth,
-    setSelectedMonth,
     tunnels,
-    filteredTunnels,
     charges,
-    setCharges,
     salaries,
-    kpis,
+    coachingExpenses,
+    isLoading: dataLoading,
     addTunnel,
     updateTunnel,
     deleteTunnel,
+    addSale,
+    updateSale,
+    deleteSale,
+    setCharges,
     addSalary,
     updateSalary,
     deleteSalary,
     getAllSales,
-    coachingExpenses,
-    filteredCoachingExpenses,
     addCoachingExpense,
     updateCoachingExpense,
     deleteCoachingExpense,
-  } = useBusinessData();
+    createManualBackup,
+  } = useSupabaseData();
 
-  // Sale operations from CRM
+  // Business calculations layer
+  const {
+    selectedMonth,
+    setSelectedMonth,
+    filteredTunnels,
+    filteredCoachingExpenses,
+    kpis,
+  } = useBusinessCalculations({
+    tunnels,
+    charges,
+    salaries,
+    coachingExpenses,
+  });
+
+  // Sale operations from CRM - now using direct sale mutations
   const handleUpdateSale = (tunnelId: string, saleId: string, updates: Partial<Sale>) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.map(s => s.id === saleId ? { ...s, ...updates } : s);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    updateTunnel(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-    });
+    updateSale(saleId, updates);
   };
 
   const handleDeleteSale = (tunnelId: string, saleId: string) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    const updatedSales = tunnel.sales.filter(s => s.id !== saleId);
-    const totalCollected = updatedSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    
-    updateTunnel(tunnelId, { 
-      sales: updatedSales,
-      collectedAmount: totalCollected,
-      callsClosed: updatedSales.length,
-    });
+    deleteSale(saleId);
   };
 
   const handleNavigateToSales = (tunnelId?: string) => {
@@ -81,6 +77,11 @@ const Index = () => {
       setSalesTunnelFilter(tunnelId);
     }
     setActiveTab('sales');
+  };
+
+  // Add sale to tunnel - now using direct sale mutation
+  const handleAddSaleToTunnel = (tunnelId: string, sale: Omit<Sale, 'id' | 'createdAt'>) => {
+    addSale(tunnelId, sale);
   };
 
   // Record a payment for a sale
@@ -110,7 +111,7 @@ const Index = () => {
       nextPaymentDate = nextDate.toISOString().split('T')[0];
     }
     
-    handleUpdateSale(tunnelId, saleId, {
+    updateSale(saleId, {
       amountCollected: newAmountCollected,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate,
@@ -136,7 +137,7 @@ const Index = () => {
       verifiedAt: new Date().toISOString(),
     };
     
-    handleUpdateSale(tunnelId, saleId, {
+    updateSale(saleId, {
       amountCollected: sale.totalPrice,
       paymentHistory: [...(sale.paymentHistory || []), newPayment],
       nextPaymentDate: undefined,
@@ -145,10 +146,7 @@ const Index = () => {
 
   // Toggle sale defaulted status
   const handleToggleDefaulted = (saleId: string, tunnelId: string, isDefaulted: boolean) => {
-    const tunnel = tunnels.find(t => t.id === tunnelId);
-    if (!tunnel) return;
-    
-    handleUpdateSale(tunnelId, saleId, {
+    updateSale(saleId, {
       isDefaulted,
       defaultedAt: isDefaulted ? new Date().toISOString() : undefined,
     });
@@ -274,10 +272,14 @@ const Index = () => {
     }
   };
 
-  if (authLoading) {
+  // Show loading state
+  if (authLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground text-sm">
+          {authLoading ? 'Vérification de la session...' : 'Chargement de vos données...'}
+        </p>
       </div>
     );
   }
@@ -295,6 +297,7 @@ const Index = () => {
         onNavigateToSale={handleNavigateToSale}
         onDismissNotification={handleDismissNotification}
         onDismissAllNotifications={handleDismissAllNotifications}
+        onCreateBackup={createManualBackup}
       />
       
       <div className="pl-20">
