@@ -105,12 +105,14 @@ export type Database = {
         Row: {
           amount_collected: number | null
           base_price: number
+          cb_amount: number | null
           client_name: string | null
           closer_id: string | null
           created_at: string | null
           defaulted_at: string | null
           id: string
           is_defaulted: boolean | null
+          klarna_amount: number | null
           last_payment_update: string | null
           next_payment_date: string | null
           number_of_payments: number | null
@@ -126,12 +128,14 @@ export type Database = {
         Insert: {
           amount_collected?: number | null
           base_price: number
+          cb_amount?: number | null
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
           defaulted_at?: string | null
           id?: string
           is_defaulted?: boolean | null
+          klarna_amount?: number | null
           last_payment_update?: string | null
           next_payment_date?: string | null
           number_of_payments?: number | null
@@ -147,12 +151,14 @@ export type Database = {
         Update: {
           amount_collected?: number | null
           base_price?: number
+          cb_amount?: number | null
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
           defaulted_at?: string | null
           id?: string
           is_defaulted?: boolean | null
+          klarna_amount?: number | null
           last_payment_update?: string | null
           next_payment_date?: string | null
           number_of_payments?: number | null
@@ -252,6 +258,8 @@ export type Database = {
           created_at: string | null
           id: string
           installment_plans: Json | null
+          klarna_max_amount: number | null
+          klarna_percent: number | null
           marketing: number | null
           offers: Json | null
           other_costs: number | null
@@ -271,6 +279,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           installment_plans?: Json | null
+          klarna_max_amount?: number | null
+          klarna_percent?: number | null
           marketing?: number | null
           offers?: Json | null
           other_costs?: number | null
@@ -290,6 +300,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           installment_plans?: Json | null
+          klarna_max_amount?: number | null
+          klarna_percent?: number | null
           marketing?: number | null
           offers?: Json | null
           other_costs?: number | null

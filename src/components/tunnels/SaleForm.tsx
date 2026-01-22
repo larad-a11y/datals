@@ -31,7 +31,13 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     totalPrice: sale?.totalPrice || '',
     amountCollected: sale?.amountCollected || '',
     useMarkup: !sale, // Par défaut on utilise la majoration pour les nouvelles ventes
+    // Klarna mixed payment
+    klarnaAmount: sale?.klarnaAmount || '',
+    cbAmount: sale?.cbAmount || '',
   });
+
+  // Klarna max amount (1500€ by default, could be passed from charges)
+  const KLARNA_MAX = 1500;
 
   // Get the selected offer
   const selectedOffer = useMemo(() => {
@@ -133,6 +139,21 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
       }];
     }
     
+    // Calculate Klarna/CB amounts based on payment method
+    let klarnaAmount: number | undefined;
+    let cbAmount: number | undefined;
+    
+    if (formData.paymentMethod === 'klarna') {
+      klarnaAmount = totalPriceNum;
+      cbAmount = 0;
+    } else if (formData.paymentMethod === 'cb_klarna') {
+      const klarnaVal = typeof formData.klarnaAmount === 'string' 
+        ? parseFloat(formData.klarnaAmount) || 0 
+        : formData.klarnaAmount;
+      klarnaAmount = Math.min(klarnaVal, KLARNA_MAX, totalPriceNum);
+      cbAmount = totalPriceNum - klarnaAmount;
+    }
+    
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
@@ -148,6 +169,8 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
       nextPaymentDate: formData.numberOfPayments > 1 && amountCollectedNum < totalPriceNum
         ? calculateNextPaymentDate()
         : undefined,
+      klarnaAmount,
+      cbAmount,
     });
     
     // Reset form for inline mode
@@ -163,6 +186,8 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         totalPrice: '',
         amountCollected: '',
         useMarkup: true,
+        klarnaAmount: '',
+        cbAmount: '',
       });
     }
   };
@@ -279,13 +304,80 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         </label>
         <select
           value={formData.paymentMethod}
-          onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as PaymentMethod }))}
+          onChange={(e) => {
+            const method = e.target.value as PaymentMethod;
+            setFormData(prev => ({ 
+              ...prev, 
+              paymentMethod: method,
+              // Reset klarna amounts when changing method
+              klarnaAmount: method === 'cb_klarna' ? prev.klarnaAmount : '',
+              cbAmount: '',
+            }));
+          }}
           className="input-field w-full"
         >
           <option value="cb">{paymentMethodLabels.cb}</option>
           <option value="virement">{paymentMethodLabels.virement}</option>
+          <option value="klarna">{paymentMethodLabels.klarna}</option>
+          <option value="cb_klarna">{paymentMethodLabels.cb_klarna}</option>
         </select>
+        {formData.paymentMethod === 'klarna' && (
+          <p className="mt-1 text-xs text-warning">
+            ⚠️ Klarna limité à {KLARNA_MAX.toLocaleString('fr-FR')} € maximum
+          </p>
+        )}
       </div>
+
+      {/* Klarna mixed payment amounts */}
+      {formData.paymentMethod === 'cb_klarna' && (
+        <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            🔄 Répartition CB + Klarna
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Montant Klarna (max {KLARNA_MAX.toLocaleString('fr-FR')} €)
+              </label>
+              <input
+                type="number"
+                value={formData.klarnaAmount}
+                onChange={(e) => {
+                  const klarnaVal = Math.min(
+                    parseFloat(e.target.value) || 0,
+                    KLARNA_MAX,
+                    totalPriceNum
+                  );
+                  setFormData(prev => ({
+                    ...prev,
+                    klarnaAmount: klarnaVal,
+                    cbAmount: Math.max(0, totalPriceNum - klarnaVal),
+                  }));
+                }}
+                className="input-field w-full"
+                min="0"
+                max={Math.min(KLARNA_MAX, totalPriceNum)}
+                step="0.01"
+                placeholder={KLARNA_MAX.toString()}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-muted-foreground">
+                Montant CB (calculé automatiquement)
+              </label>
+              <input
+                type="number"
+                value={formData.cbAmount || (totalPriceNum - (parseFloat(String(formData.klarnaAmount)) || 0))}
+                className="input-field w-full bg-secondary/30"
+                disabled
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Frais Klarna appliqués uniquement sur la portion Klarna
+          </p>
+        </div>
+      )}
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">

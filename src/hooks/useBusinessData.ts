@@ -65,7 +65,17 @@ export function useBusinessData() {
     // 2. Frais processeur de paiement (sur TTC)
     const paymentProcessorCost = totalCollectedTTC * (charges.paymentProcessorPercent / 100);
     
-    // 3. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
+    // 3. Frais Klarna (sur le montant Klarna uniquement)
+    const klarnaCost = filteredTunnels.reduce((sum, t) => {
+      return sum + t.sales.reduce((s, sale) => {
+        if (sale.klarnaAmount && sale.klarnaAmount > 0) {
+          return s + (sale.klarnaAmount * (charges.klarnaPercent / 100));
+        }
+        return s;
+      }, 0);
+    }, 0);
+    
+    // 4. Closers (calculé sur le HT uniquement pour les ventes avec un closer assigné)
     // On doit calculer le HT des ventes qui ont un closer
     const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
       const tunnelSalesWithCloser = t.sales
@@ -77,7 +87,7 @@ export function useBusinessData() {
     const salesWithCloserHTAmount = salesWithCloserHT * (1 / (1 + taxRate));
     const closersCost = salesWithCloserHTAmount * (charges.closersPercent / 100);
     
-    // 4. Agence : uniquement sur l'excédent au-delà du seuil HT
+    // 5. Agence : uniquement sur l'excédent au-delà du seuil HT
     // Calculé sur le CA HT GLOBAL, pas sur le restant après déductions
     let agencyCost = 0;
     if (totalCollectedHT > charges.agencyThreshold) {
@@ -85,17 +95,18 @@ export function useBusinessData() {
       agencyCost = excessHT * (charges.agencyPercent / 100);
     }
     
-    // 5. Charges fixes
+    // 6. Charges fixes
     const fixedCharges = charges.advertising + charges.marketing + 
                          charges.software + charges.otherCosts;
     
-    // 6. Coaching / Mentorat (filtré par mois)
+    // 7. Coaching / Mentorat (filtré par mois)
     const totalCoachingExpenses = filteredCoachingExpenses.reduce((sum, e) => sum + e.amount, 0);
     
-    // 7. Bénéfice Net = AVANT associé et salaires
-    // CA HT - Processeur - Closers - Agence - Budget Pub - Charges fixes - Coaching
+    // 8. Bénéfice Net = AVANT associé et salaires
+    // CA HT - Processeur - Klarna - Closers - Agence - Budget Pub - Charges fixes - Coaching
     const netProfit = totalCollectedHT 
       - paymentProcessorCost 
+      - klarnaCost
       - closersCost 
       - agencyCost 
       - totalAdBudget
@@ -187,6 +198,7 @@ export function useBusinessData() {
       totalRegistrations,
       totalWebinarAttendees,
       paymentProcessorCost,
+      klarnaCost,
       closersCost,
       agencyCost,
       upcomingPaymentsThisMonth,

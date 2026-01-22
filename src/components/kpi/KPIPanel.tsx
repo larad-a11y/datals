@@ -271,6 +271,18 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             </span>
           </div>
 
+          {/* Klarna fees (on Klarna portion only) */}
+          {kpis.klarnaCost > 0 && (
+            <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
+              <span className="text-foreground">
+                - Frais Klarna ({charges.klarnaPercent}% sur portion Klarna)
+              </span>
+              <span className="font-medium text-danger">
+                -{kpis.klarnaCost.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+              </span>
+            </div>
+          )}
+
           {/* Closers (on HT) */}
           <div className="flex items-center justify-between rounded-lg bg-danger/10 p-4">
             <span className="text-foreground">
