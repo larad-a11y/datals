@@ -41,6 +41,14 @@ export interface Closer {
   lastName: string;
 }
 
+// Tracking des calls par closer au niveau tunnel
+export interface CloserTunnelStats {
+  closerId: string;
+  callsReceived: number;    // Nombre de calls reçus
+  callsAnswered: number;    // Nombre de calls répondus
+  noShows: number;          // Nombre de no-shows
+}
+
 export interface Sale {
   id: string;
   tunnelId: string;
@@ -104,6 +112,8 @@ export interface Tunnel {
   attendees?: number; // Nombre de présents (webinar only)
   challengeDays?: ChallengeDay[]; // Présents par jour (challenge only)
   callsBooked?: number; // Calls réservés (VSL only)
+  // Tracking closers par tunnel
+  closerStats?: CloserTunnelStats[];
 }
 
 export type CoachingExpenseType = 'group' | 'private';

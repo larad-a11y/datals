@@ -283,6 +283,7 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
         <TunnelForm
           tunnel={editingTunnel || undefined}
           selectedMonth={selectedMonth}
+          closers={closers}
           onSave={handleSave}
           onCancel={() => {
             setShowForm(false);
