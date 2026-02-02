@@ -1,61 +1,88 @@
 
-# Plan : Correction du calcul du Coût par Présent pour les Challenges
+# Plan : Correction des calculs CPL, CAC et Coût/Présent dans TunnelCard
 
 ## Probleme identifie
 
-Le calcul actuel du "Cout/Present Moy" pour les challenges divise le budget publicitaire par la **moyenne** des presents sur tous les jours, ce qui donne un resultat incorrect.
+Les metriques de performance publicitaire dans `TunnelCard.tsx` utilisent le total (Ads + Organic) au lieu des donnees Ads uniquement :
 
-Avec tes donnees :
-- Budget pub : 30 000 euros
-- 1800 presents le jour 1 (29% de show-up)
-- Si les autres jours ont moins de monde, la moyenne baisse
-
-Resultat actuel : 30 000 / moyenne ≈ 67 euros (faux)
-Resultat attendu : 30 000 / 1800 = 16,67 euros
+| Metrique | Calcul actuel (incorrect) | Calcul attendu |
+|----------|---------------------------|----------------|
+| CAC | Budget / Total ventes | Budget / Ventes Ads |
+| CPL | Budget / Total inscriptions | Budget / Inscriptions Ads |
+| Cout/Present | Budget / Total presents | Budget / Presents Ads (estimes) |
 
 ## Solution proposee
 
-Modifier la logique pour calculer le cout par present sur **le jour avec le plus de presents** (le peak). Cela represente le cout reel pour avoir une personne en live, car c'est le meme groupe de personnes qui revient chaque jour.
-
-**Formule corrigee** : Budget Pub / MAX(presents par jour)
-
-## Changements techniques
-
 ### Fichier : src/components/dashboard/TunnelCard.tsx
 
-Modifier les lignes 65-70 pour utiliser le maximum au lieu de la moyenne :
+**1. CAC - Calculer sur les ventes Ads uniquement (lignes 51-54)**
 
 ```typescript
-// AVANT (moyenne)
-const avgAttendees = tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length;
+// AVANT
+const actualSalesCount = tunnel.sales.length;
+const cac = actualSalesCount > 0 
+  ? tunnel.adBudget / actualSalesCount 
+  : 0;
 
-// APRES (maximum)
-const maxAttendees = Math.max(...tunnel.challengeDays.map(d => d.attendees));
-if (maxAttendees > 0) {
-  costPerAttendee = tunnel.adBudget / maxAttendees;
+// APRES
+const salesFromAds = tunnel.sales.filter(s => s.trafficSource === 'ads').length;
+const cac = salesFromAds > 0 
+  ? tunnel.adBudget / salesFromAds 
+  : 0;
+```
+
+**2. CPL - Utiliser registrationsAds (lignes 56-59)**
+
+```typescript
+// AVANT
+const cpl = tunnel.registrations && tunnel.registrations > 0 
+  ? tunnel.adBudget / tunnel.registrations 
+  : 0;
+
+// APRES
+const cpl = tunnel.registrationsAds && tunnel.registrationsAds > 0 
+  ? tunnel.adBudget / tunnel.registrationsAds 
+  : 0;
+```
+
+**3. Cout par Present - Estimer les presents Ads (lignes 61-71)**
+
+```typescript
+// APRES - Calculer le ratio Ads pour estimer les presents Ads
+const totalRegistrations = (tunnel.registrationsAds || 0) + (tunnel.registrationsOrganic || 0);
+const adsRatio = totalRegistrations > 0 
+  ? (tunnel.registrationsAds || 0) / totalRegistrations 
+  : 1;
+
+let costPerAttendee = 0;
+if (tunnel.type === 'webinar' && tunnel.attendees && tunnel.attendees > 0) {
+  const attendeesAds = Math.round(tunnel.attendees * adsRatio);
+  if (attendeesAds > 0) {
+    costPerAttendee = tunnel.adBudget / attendeesAds;
+  }
+} else if (tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0) {
+  const maxAttendees = Math.max(...tunnel.challengeDays.map(d => d.attendees));
+  const maxAttendeesAds = Math.round(maxAttendees * adsRatio);
+  if (maxAttendeesAds > 0) {
+    costPerAttendee = tunnel.adBudget / maxAttendeesAds;
+  }
 }
 ```
 
-### Fichier : src/hooks/useBusinessCalculations.ts
+## Resume des modifications
 
-Modifier le calcul global du `costPerWebinarAttendee` pour inclure les challenges de la meme maniere (lignes 69-72 et 201-202) :
-
-```typescript
-// Calculer les presents max pour les challenges
-const totalChallengeMaxAttendees = filteredTunnels
-  .filter(t => t.type === 'challenge' && t.challengeDays && t.challengeDays.length > 0)
-  .reduce((sum, t) => sum + Math.max(...t.challengeDays!.map(d => d.attendees)), 0);
-
-// Combiner avec les webinars
-const totalAttendees = totalWebinarAttendees + totalChallengeMaxAttendees;
-const costPerAttendee = totalAttendees > 0 ? totalAdBudget / totalAttendees : 0;
-```
+| Ligne | Modification |
+|-------|-------------|
+| 46 | Ajouter `salesFromAds` filtre sur trafficSource |
+| 52-54 | CAC utilise `salesFromAds` |
+| 57-59 | CPL utilise `registrationsAds` |
+| 61-71 | Cout/Present avec ratio Ads applique |
 
 ## Resultat attendu
 
-Avec 30 000 euros de budget et 1800 presents au peak :
-- Cout par present = 30 000 / 1800 = **16,67 euros**
+Avec les donnees actuelles (30 000€ budget, 6250 inscrits Ads, 1800 presents peak) :
+- CPL = 30 000 / 6 250 = **4.8€**
+- Cout/Present = 30 000 / 1 800 = **16.67€** (si 100% Ads)
+- CAC = 30 000 / (nombre de ventes Ads uniquement)
 
-## Alternative
-
-Si tu preferes un autre comportement (par exemple le total cumule des presents sur tous les jours), dis-le moi et j'adapterai le calcul.
+Ces calculs refletent maintenant le cout reel d'acquisition via la publicite, sans etre dilues par les leads organiques.
