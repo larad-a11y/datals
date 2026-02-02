@@ -69,6 +69,13 @@ export function useBusinessCalculations({
     const totalWebinarAttendees = filteredTunnels
       .filter(t => t.type === 'webinar')
       .reduce((sum, t) => sum + (t.attendees || 0), 0);
+    
+    // For challenges, use peak day attendees (max per day) since same people return daily
+    const totalChallengeMaxAttendees = filteredTunnels
+      .filter(t => t.type === 'challenge' && t.challengeDays && t.challengeDays.length > 0)
+      .reduce((sum, t) => sum + Math.max(...t.challengeDays!.map(d => d.attendees)), 0);
+    
+    const totalAttendees = totalWebinarAttendees + totalChallengeMaxAttendees;
 
     // === ORDRE DE CALCUL ===
     
@@ -198,8 +205,8 @@ export function useBusinessCalculations({
     // CPL (basé sur les inscriptions Ads uniquement)
     const cpl = roundCurrency(totalRegistrationsAds > 0 ? totalAdBudget / totalRegistrationsAds : 0);
 
-    // Coût par présent webinaire (basé sur le budget pub et les présents)
-    const costPerWebinarAttendee = roundCurrency(totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0);
+    // Coût par présent (webinars + challenges avec peak day)
+    const costPerWebinarAttendee = roundCurrency(totalAttendees > 0 ? totalAdBudget / totalAttendees : 0);
 
     // Organic stats
     const organicSales = filteredTunnels.flatMap(t => t.sales.filter(s => s.trafficSource === 'organic'));

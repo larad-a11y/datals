@@ -63,9 +63,10 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
   if (tunnel.type === 'webinar' && tunnel.attendees && tunnel.attendees > 0) {
     costPerAttendee = tunnel.adBudget / tunnel.attendees;
   } else if (tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0) {
-    const avgAttendees = tunnel.challengeDays.reduce((sum, d) => sum + d.attendees, 0) / tunnel.challengeDays.length;
-    if (avgAttendees > 0) {
-      costPerAttendee = tunnel.adBudget / avgAttendees;
+    // Use maximum attendees (peak day) for cost calculation - same people come each day
+    const maxAttendees = Math.max(...tunnel.challengeDays.map(d => d.attendees));
+    if (maxAttendees > 0) {
+      costPerAttendee = tunnel.adBudget / maxAttendees;
     }
   }
   
@@ -260,7 +261,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
               />
               {costPerAttendee > 0 && (
                 <MetricCard 
-                  label="Coût/Présent Moy" 
+                  label="Coût/Présent" 
                   value={`${costPerAttendee.toFixed(0)} €`}
                 />
               )}
