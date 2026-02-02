@@ -109,8 +109,8 @@ export function TunnelForm({ tunnel, selectedMonth, closers = [], onSave, onCanc
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-xl border border-border/50 bg-card p-6 shadow-lg animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl border border-border/50 bg-card p-6 shadow-lg animate-slide-up">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold text-foreground">
             {tunnel ? 'Modifier le tunnel' : 'Nouveau tunnel'}
