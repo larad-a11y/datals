@@ -1,88 +1,74 @@
 
-# Plan : Correction des calculs CPL, CAC et Coût/Présent dans TunnelCard
+# Plan : Correction de l'affichage du CPL dans le KPI Panel
 
 ## Probleme identifie
 
-Les metriques de performance publicitaire dans `TunnelCard.tsx` utilisent le total (Ads + Organic) au lieu des donnees Ads uniquement :
-
-| Metrique | Calcul actuel (incorrect) | Calcul attendu |
-|----------|---------------------------|----------------|
-| CAC | Budget / Total ventes | Budget / Ventes Ads |
-| CPL | Budget / Total inscriptions | Budget / Inscriptions Ads |
-| Cout/Present | Budget / Total presents | Budget / Presents Ads (estimes) |
-
-## Solution proposee
-
-### Fichier : src/components/dashboard/TunnelCard.tsx
-
-**1. CAC - Calculer sur les ventes Ads uniquement (lignes 51-54)**
-
+Le **calcul** du CPL est correct dans `useBusinessCalculations.ts` (ligne 216) :
 ```typescript
-// AVANT
-const actualSalesCount = tunnel.sales.length;
-const cac = actualSalesCount > 0 
-  ? tunnel.adBudget / actualSalesCount 
-  : 0;
-
-// APRES
-const salesFromAds = tunnel.sales.filter(s => s.trafficSource === 'ads').length;
-const cac = salesFromAds > 0 
-  ? tunnel.adBudget / salesFromAds 
-  : 0;
+const cpl = totalRegistrationsAds > 0 ? totalAdBudget / totalRegistrationsAds : 0;
+// 30 000 / 5 614 = 5,34€ ✓
 ```
 
-**2. CPL - Utiliser registrationsAds (lignes 56-59)**
-
+Mais le **subtitle** dans `KPIPanel.tsx` affiche le mauvais chiffre (ligne 208) :
 ```typescript
-// AVANT
-const cpl = tunnel.registrations && tunnel.registrations > 0 
-  ? tunnel.adBudget / tunnel.registrations 
-  : 0;
-
-// APRES
-const cpl = tunnel.registrationsAds && tunnel.registrationsAds > 0 
-  ? tunnel.adBudget / tunnel.registrationsAds 
-  : 0;
+{kpis.totalRegistrations} inscrits total
+// Affiche 6172 (Ads + Organic) au lieu de 5614 (Ads uniquement)
 ```
 
-**3. Cout par Present - Estimer les presents Ads (lignes 61-71)**
+Cela donne l'impression que le CPL est 30 000 / 6172 = 4,86€ alors qu'il est bien calculé sur les inscrits Ads.
 
+## Solution
+
+### 1. Ajouter `totalRegistrationsAds` aux KPIs retournes
+
+**Fichier** : `src/hooks/useBusinessCalculations.ts`
+
+Ajouter la propriete dans le return (vers ligne 290) :
 ```typescript
-// APRES - Calculer le ratio Ads pour estimer les presents Ads
-const totalRegistrations = (tunnel.registrationsAds || 0) + (tunnel.registrationsOrganic || 0);
-const adsRatio = totalRegistrations > 0 
-  ? (tunnel.registrationsAds || 0) / totalRegistrations 
-  : 1;
+return {
+  // ... existing properties
+  totalRegistrations,
+  totalRegistrationsAds, // AJOUTER
+  totalWebinarAttendees,
+  // ...
+};
+```
 
-let costPerAttendee = 0;
-if (tunnel.type === 'webinar' && tunnel.attendees && tunnel.attendees > 0) {
-  const attendeesAds = Math.round(tunnel.attendees * adsRatio);
-  if (attendeesAds > 0) {
-    costPerAttendee = tunnel.adBudget / attendeesAds;
-  }
-} else if (tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0) {
-  const maxAttendees = Math.max(...tunnel.challengeDays.map(d => d.attendees));
-  const maxAttendeesAds = Math.round(maxAttendees * adsRatio);
-  if (maxAttendeesAds > 0) {
-    costPerAttendee = tunnel.adBudget / maxAttendeesAds;
-  }
+### 2. Mettre a jour le type KPIData
+
+**Fichier** : `src/types/business.ts`
+
+Ajouter la propriete dans l'interface KPIData :
+```typescript
+export interface KPIData {
+  // ... existing properties
+  totalRegistrations: number;
+  totalRegistrationsAds: number; // AJOUTER
+  totalWebinarAttendees: number;
+  // ...
 }
 ```
 
-## Resume des modifications
+### 3. Corriger l'affichage dans KPIPanel
 
-| Ligne | Modification |
-|-------|-------------|
-| 46 | Ajouter `salesFromAds` filtre sur trafficSource |
-| 52-54 | CAC utilise `salesFromAds` |
-| 57-59 | CPL utilise `registrationsAds` |
-| 61-71 | Cout/Present avec ratio Ads applique |
+**Fichier** : `src/components/kpi/KPIPanel.tsx`
+
+Modifier la ligne 208 :
+```typescript
+// AVANT
+<p className="text-xs text-muted-foreground mt-1">
+  {kpis.totalRegistrations} inscrits total
+</p>
+
+// APRES
+<p className="text-xs text-muted-foreground mt-1">
+  {kpis.totalRegistrationsAds} inscrits ads
+</p>
+```
 
 ## Resultat attendu
 
-Avec les donnees actuelles (30 000€ budget, 6250 inscrits Ads, 1800 presents peak) :
-- CPL = 30 000 / 6 250 = **4.8€**
-- Cout/Present = 30 000 / 1 800 = **16.67€** (si 100% Ads)
-- CAC = 30 000 / (nombre de ventes Ads uniquement)
+- CPL affiche : **5,34 €**
+- Subtitle affiche : **5614 inscrits ads**
 
-Ces calculs refletent maintenant le cout reel d'acquisition via la publicite, sans etre dilues par les leads organiques.
+Cela clarifie que le CPL est calcule uniquement sur les leads Ads, coherent avec la logique metier de mesure de l'efficacite publicitaire.
