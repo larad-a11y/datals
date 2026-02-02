@@ -1,5 +1,6 @@
-import { User, TrendingUp, Wallet, Target, Phone, PhoneCall, Percent } from 'lucide-react';
-import { Tunnel, Charges } from '@/types/business';
+import { useState } from 'react';
+import { User, TrendingUp, Wallet, Target, Phone, PhoneCall, Percent, UserX, Filter } from 'lucide-react';
+import { Tunnel, Charges, CloserTunnelStats } from '@/types/business';
 import { 
   BarChart, 
   Bar, 
@@ -13,6 +14,13 @@ import {
   Cell,
   Legend
 } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface CloserStats {
   closerId: string;
@@ -25,6 +33,12 @@ interface CloserStats {
   callsGenerated: number;
   commission: number;
   averagePrice: number;
+  // New tracking stats
+  callsReceived: number;
+  callsAnswered: number;
+  noShows: number;
+  answerRate: number;
+  noShowRate: number;
 }
 
 interface CloserStatsSectionProps {
@@ -35,7 +49,12 @@ interface CloserStatsSectionProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps) {
-  const taxRate = charges.taxPercent / 100;
+  const [tunnelFilter, setTunnelFilter] = useState<string>('all');
+  
+  // Filter tunnels
+  const filteredTunnels = tunnelFilter === 'all' 
+    ? tunnels 
+    : tunnels.filter(t => t.id === tunnelFilter);
   
   // Calculate stats per closer
   const closerStatsMap = new Map<string, CloserStats>();
@@ -53,7 +72,27 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
       callsGenerated: 0,
       commission: 0,
       averagePrice: 0,
+      // New tracking stats
+      callsReceived: 0,
+      callsAnswered: 0,
+      noShows: 0,
+      answerRate: 0,
+      noShowRate: 0,
     });
+  });
+  
+  // Aggregate closer tracking stats from tunnels
+  filteredTunnels.forEach(tunnel => {
+    if (tunnel.closerStats) {
+      tunnel.closerStats.forEach(stat => {
+        const closerStats = closerStatsMap.get(stat.closerId);
+        if (closerStats) {
+          closerStats.callsReceived += stat.callsReceived;
+          closerStats.callsAnswered += stat.callsAnswered;
+          closerStats.noShows += stat.noShows;
+        }
+      });
+    }
   });
   
   // Track calls generated per closer (based on tunnel data)
@@ -61,7 +100,7 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
   const closerTunnelsMap = new Map<string, Set<string>>();
   
   // Aggregate sales data per closer
-  tunnels.forEach(tunnel => {
+  filteredTunnels.forEach(tunnel => {
     tunnel.sales.forEach(sale => {
       if (sale.closerId) {
         const stats = closerStatsMap.get(sale.closerId);
@@ -109,6 +148,7 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
   });
   
   // Calculate derived metrics for each closer
+  const taxRate = charges.taxPercent / 100;
   closerStatsMap.forEach((stats) => {
     // Calculate commission (on HT amount)
     const collectedHT = stats.totalCollected * (1 / (1 + taxRate));
@@ -120,6 +160,14 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
     // Calculate closing rate (calls closed / calls generated)
     stats.closingRate = stats.callsGenerated > 0 
       ? (stats.callsClosed / stats.callsGenerated) * 100 
+      : 0;
+    
+    // Calculate answer and no-show rates from tracking data
+    stats.answerRate = stats.callsReceived > 0 
+      ? (stats.callsAnswered / stats.callsReceived) * 100 
+      : 0;
+    stats.noShowRate = stats.callsReceived > 0 
+      ? (stats.noShows / stats.callsReceived) * 100 
       : 0;
   });
   
@@ -191,10 +239,30 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
 
   return (
     <div className="rounded-xl border border-border/50 bg-card p-6">
-      <h3 className="mb-6 font-display text-lg font-semibold text-foreground flex items-center gap-2">
-        <User className="h-5 w-5 text-primary" />
-        Statistiques par Closer
-      </h3>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+          <User className="h-5 w-5 text-primary" />
+          Statistiques par Closer
+        </h3>
+        
+        {/* Tunnel Filter */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={tunnelFilter} onValueChange={setTunnelFilter}>
+            <SelectTrigger className="w-[200px] bg-secondary/30">
+              <SelectValue placeholder="Filtrer par tunnel" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les tunnels</SelectItem>
+              {tunnels.map(tunnel => (
+                <SelectItem key={tunnel.id} value={tunnel.id}>
+                  {tunnel.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {/* Charts Section */}
       {closerStats.length > 0 && totals.totalCollected > 0 && (
@@ -291,7 +359,32 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
               </div>
               
               <div className="space-y-3">
-                {/* Closing Rate - New */}
+                {/* Tracking Stats - Calls Received/Answered/NoShows */}
+                {stats.callsReceived > 0 && (
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-2 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Tracking Appels</p>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Reçus</p>
+                        <p className="font-bold text-foreground">{stats.callsReceived}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Répondus</p>
+                        <p className="font-bold text-profitable">{stats.callsAnswered}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">No-shows</p>
+                        <p className="font-bold text-warning">{stats.noShows}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-profitable">Réponse: {stats.answerRate.toFixed(1)}%</span>
+                      <span className="text-warning">No-show: {stats.noShowRate.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Closing Rate */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <Percent className="h-3.5 w-3.5" />
@@ -302,11 +395,11 @@ export function CloserStatsSection({ tunnels, charges }: CloserStatsSectionProps
                   </span>
                 </div>
                 
-                {/* Calls Info */}
+                {/* Calls Info (from sales, not tracking) */}
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <PhoneCall className="h-3.5 w-3.5" />
-                    Appels
+                    Closés / Générés
                   </span>
                   <span className="font-medium text-foreground">
                     {stats.callsClosed} / {Math.round(stats.callsGenerated) || '–'}

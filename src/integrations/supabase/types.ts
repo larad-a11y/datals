@@ -235,6 +235,7 @@ export type Database = {
           calls_closed: number | null
           calls_generated: number | null
           challenge_days: Json | null
+          closer_stats: Json | null
           collected_amount: number | null
           created_at: string | null
           date: string | null
@@ -258,6 +259,7 @@ export type Database = {
           calls_closed?: number | null
           calls_generated?: number | null
           challenge_days?: Json | null
+          closer_stats?: Json | null
           collected_amount?: number | null
           created_at?: string | null
           date?: string | null
@@ -281,6 +283,7 @@ export type Database = {
           calls_closed?: number | null
           calls_generated?: number | null
           challenge_days?: Json | null
+          closer_stats?: Json | null
           collected_amount?: number | null
           created_at?: string | null
           date?: string | null
