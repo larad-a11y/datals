@@ -48,25 +48,36 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses }: Tunn
     ? (actualSalesCount / tunnel.callsGenerated) * 100 
     : 0;
   
-  // CAC (use actual sales count)
-  const cac = actualSalesCount > 0 
-    ? tunnel.adBudget / actualSalesCount 
+  // CAC - Calculate on Ads sales only
+  const salesFromAds = tunnel.sales.filter(s => s.trafficSource === 'ads').length;
+  const cac = salesFromAds > 0 
+    ? tunnel.adBudget / salesFromAds 
     : 0;
   
-  // CPL (Cost per Lead/Registration)
-  const cpl = tunnel.registrations && tunnel.registrations > 0 
-    ? tunnel.adBudget / tunnel.registrations 
+  // CPL (Cost per Lead/Registration) - Use registrationsAds only
+  const cpl = tunnel.registrationsAds && tunnel.registrationsAds > 0 
+    ? tunnel.adBudget / tunnel.registrationsAds 
     : 0;
   
-  // Coût par présent (webinar/challenge)
+  // Calculate Ads ratio for estimating Ads-sourced attendees
+  const totalRegistrations = (tunnel.registrationsAds || 0) + (tunnel.registrationsOrganic || 0);
+  const adsRatio = totalRegistrations > 0 
+    ? (tunnel.registrationsAds || 0) / totalRegistrations 
+    : 1;
+  
+  // Coût par présent (webinar/challenge) - Estimate Ads attendees
   let costPerAttendee = 0;
   if (tunnel.type === 'webinar' && tunnel.attendees && tunnel.attendees > 0) {
-    costPerAttendee = tunnel.adBudget / tunnel.attendees;
+    const attendeesAds = Math.round(tunnel.attendees * adsRatio);
+    if (attendeesAds > 0) {
+      costPerAttendee = tunnel.adBudget / attendeesAds;
+    }
   } else if (tunnel.type === 'challenge' && tunnel.challengeDays && tunnel.challengeDays.length > 0) {
     // Use maximum attendees (peak day) for cost calculation - same people come each day
     const maxAttendees = Math.max(...tunnel.challengeDays.map(d => d.attendees));
-    if (maxAttendees > 0) {
-      costPerAttendee = tunnel.adBudget / maxAttendees;
+    const maxAttendeesAds = Math.round(maxAttendees * adsRatio);
+    if (maxAttendeesAds > 0) {
+      costPerAttendee = tunnel.adBudget / maxAttendeesAds;
     }
   }
   
