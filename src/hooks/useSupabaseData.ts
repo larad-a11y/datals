@@ -36,6 +36,8 @@ interface DbTunnel {
   average_price: number | null;
   collected_amount: number | null;
   registrations: number | null;
+  registrations_ads: number | null;
+  registrations_organic: number | null;
   attendees: number | null;
   challenge_days: unknown;
   calls_booked: number | null;
@@ -105,6 +107,8 @@ interface DbCoachingExpense {
 
 // Transform DB tunnel to app Tunnel
 function dbTunnelToTunnel(dbTunnel: DbTunnel, sales: Sale[]): Tunnel {
+  const registrationsAds = dbTunnel.registrations_ads || 0;
+  const registrationsOrganic = dbTunnel.registrations_organic || 0;
   return {
     id: dbTunnel.id,
     name: dbTunnel.name,
@@ -118,7 +122,9 @@ function dbTunnelToTunnel(dbTunnel: DbTunnel, sales: Sale[]): Tunnel {
     callsClosed: dbTunnel.calls_closed || 0,
     averagePrice: Number(dbTunnel.average_price) || 0,
     collectedAmount: Number(dbTunnel.collected_amount) || 0,
-    registrations: dbTunnel.registrations || undefined,
+    registrations: registrationsAds + registrationsOrganic,
+    registrationsAds: registrationsAds || undefined,
+    registrationsOrganic: registrationsOrganic || undefined,
     attendees: dbTunnel.attendees || undefined,
     challengeDays: (dbTunnel.challenge_days as ChallengeDay[]) || undefined,
     callsBooked: dbTunnel.calls_booked || undefined,
@@ -350,6 +356,8 @@ export function useSupabaseData() {
         average_price: tunnel.averagePrice,
         collected_amount: tunnel.collectedAmount,
         registrations: tunnel.registrations || null,
+        registrations_ads: tunnel.registrationsAds || null,
+        registrations_organic: tunnel.registrationsOrganic || null,
         attendees: tunnel.attendees || null,
         challenge_days: (tunnel.challengeDays || []) as unknown as Json,
         calls_booked: tunnel.callsBooked || null,
@@ -388,6 +396,8 @@ export function useSupabaseData() {
       if (updates.averagePrice !== undefined) dbUpdates.average_price = updates.averagePrice;
       if (updates.collectedAmount !== undefined) dbUpdates.collected_amount = updates.collectedAmount;
       if (updates.registrations !== undefined) dbUpdates.registrations = updates.registrations;
+      if (updates.registrationsAds !== undefined) dbUpdates.registrations_ads = updates.registrationsAds;
+      if (updates.registrationsOrganic !== undefined) dbUpdates.registrations_organic = updates.registrationsOrganic;
       if (updates.attendees !== undefined) dbUpdates.attendees = updates.attendees;
       if (updates.challengeDays !== undefined) dbUpdates.challenge_days = updates.challengeDays;
       if (updates.callsBooked !== undefined) dbUpdates.calls_booked = updates.callsBooked;

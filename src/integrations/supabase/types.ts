@@ -244,6 +244,8 @@ export type Database = {
           month: string
           name: string
           registrations: number | null
+          registrations_ads: number | null
+          registrations_organic: number | null
           type: string
           updated_at: string | null
           user_id: string
@@ -265,6 +267,8 @@ export type Database = {
           month: string
           name: string
           registrations?: number | null
+          registrations_ads?: number | null
+          registrations_organic?: number | null
           type: string
           updated_at?: string | null
           user_id: string
@@ -286,6 +290,8 @@ export type Database = {
           month?: string
           name?: string
           registrations?: number | null
+          registrations_ads?: number | null
+          registrations_organic?: number | null
           type?: string
           updated_at?: string | null
           user_id?: string
