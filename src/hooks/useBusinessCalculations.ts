@@ -59,8 +59,12 @@ export function useBusinessCalculations({
     const totalClosedCalls = filteredTunnels.reduce(
       (sum, t) => sum + t.sales.length, 0
     );
+    // Inscriptions Ads uniquement (pour le calcul du CPL)
+    const totalRegistrationsAds = filteredTunnels.reduce(
+      (sum, t) => sum + (t.registrationsAds || 0), 0
+    );
     const totalRegistrations = filteredTunnels.reduce(
-      (sum, t) => sum + (t.registrations || 0), 0
+      (sum, t) => sum + (t.registrationsAds || 0) + (t.registrationsOrganic || 0), 0
     );
     const totalWebinarAttendees = filteredTunnels
       .filter(t => t.type === 'webinar')
@@ -191,10 +195,10 @@ export function useBusinessCalculations({
     // CAC
     const cac = roundCurrency(totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0);
 
-    // CPL
-    const cpl = roundCurrency(totalRegistrations > 0 ? totalAdBudget / totalRegistrations : 0);
+    // CPL (basé sur les inscriptions Ads uniquement)
+    const cpl = roundCurrency(totalRegistrationsAds > 0 ? totalAdBudget / totalRegistrationsAds : 0);
 
-    // Coût par présent webinaire
+    // Coût par présent webinaire (basé sur le budget pub et les présents)
     const costPerWebinarAttendee = roundCurrency(totalWebinarAttendees > 0 ? totalAdBudget / totalWebinarAttendees : 0);
 
     // Organic stats

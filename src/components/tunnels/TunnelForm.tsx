@@ -32,8 +32,9 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     averagePrice: tunnel?.averagePrice || '',
     collectedAmount: tunnel?.collectedAmount || '',
     sales: tunnel?.sales || [],
-    // New traffic metrics
-    registrations: tunnel?.registrations || '',
+    // New traffic metrics (Ads vs Organic)
+    registrationsAds: tunnel?.registrationsAds || '',
+    registrationsOrganic: tunnel?.registrationsOrganic || '',
     attendees: tunnel?.attendees || '',
     challengeDays: tunnel?.challengeDays || [] as ChallengeDay[],
     callsBooked: tunnel?.callsBooked || '',
@@ -61,6 +62,8 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const registrationsAds = parseInt(String(formData.registrationsAds)) || 0;
+    const registrationsOrganic = parseInt(String(formData.registrationsOrganic)) || 0;
     onSave({
       ...formData,
       adBudget: parseFloat(String(formData.adBudget)) || 0,
@@ -68,7 +71,9 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
       callsClosed: tunnel?.callsClosed || 0, // Calculated from sales
       averagePrice: 0, // Calculated from sales
       collectedAmount: tunnel?.collectedAmount || 0, // Calculated from sales
-      registrations: parseInt(String(formData.registrations)) || 0,
+      registrations: registrationsAds + registrationsOrganic, // Total auto-calculé
+      registrationsAds,
+      registrationsOrganic,
       attendees: formData.type === 'webinar' ? parseInt(String(formData.attendees)) || 0 : undefined,
       challengeDays: formData.type === 'challenge' ? formData.challengeDays : undefined,
       callsBooked: formData.type === 'vsl' ? parseInt(String(formData.callsBooked)) || 0 : undefined,
@@ -293,20 +298,40 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
               </div>
             </div>
 
-            {/* Registrations - common to all types */}
-            <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium text-foreground">
-                📝 Nombre d'inscrits
-              </label>
-              <input
-                type="number"
-                value={formData.registrations}
-                onChange={(e) => setFormData(prev => ({ ...prev, registrations: e.target.value }))}
-                className="input-field w-full"
-                min="0"
-                placeholder={formData.type === 'webinar' ? "Ex: 500" : formData.type === 'challenge' ? "Ex: 1000" : "Ex: 200"}
-              />
+            {/* Registrations - Ads vs Organic */}
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  📢 Inscrits Ads
+                </label>
+                <input
+                  type="number"
+                  value={formData.registrationsAds}
+                  onChange={(e) => setFormData(prev => ({ ...prev, registrationsAds: e.target.value }))}
+                  className="input-field w-full"
+                  min="0"
+                  placeholder={formData.type === 'webinar' ? "Ex: 450" : formData.type === 'challenge' ? "Ex: 900" : "Ex: 180"}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  🌱 Inscrits Organic
+                </label>
+                <input
+                  type="number"
+                  value={formData.registrationsOrganic}
+                  onChange={(e) => setFormData(prev => ({ ...prev, registrationsOrganic: e.target.value }))}
+                  className="input-field w-full"
+                  min="0"
+                  placeholder={formData.type === 'webinar' ? "Ex: 50" : formData.type === 'challenge' ? "Ex: 100" : "Ex: 20"}
+                />
+              </div>
             </div>
+            {(formData.registrationsAds || formData.registrationsOrganic) && (
+              <p className="mt-2 text-xs text-primary">
+                Total inscrits: {(parseInt(String(formData.registrationsAds)) || 0) + (parseInt(String(formData.registrationsOrganic)) || 0)}
+              </p>
+            )}
 
             {/* Webinar specific: attendees */}
             {formData.type === 'webinar' && (
@@ -322,11 +347,14 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                   min="0"
                   placeholder="Ex: 150"
                 />
-                {formData.registrations && formData.attendees && (
-                  <p className="mt-1 text-xs text-primary">
-                    Show-up rate: {((parseInt(String(formData.attendees)) / parseInt(String(formData.registrations))) * 100).toFixed(1)}%
-                  </p>
-                )}
+                {(formData.registrationsAds || formData.registrationsOrganic) && formData.attendees && (() => {
+                  const totalReg = (parseInt(String(formData.registrationsAds)) || 0) + (parseInt(String(formData.registrationsOrganic)) || 0);
+                  return totalReg > 0 ? (
+                    <p className="mt-1 text-xs text-primary">
+                      Show-up rate: {((parseInt(String(formData.attendees)) / totalReg) * 100).toFixed(1)}%
+                    </p>
+                  ) : null;
+                })()}
               </div>
             )}
 
@@ -349,9 +377,10 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
                 </div>
                 {formData.challengeDays.length > 0 ? (
                   <div className="space-y-2">
-                    {formData.challengeDays.map((day, index) => {
-                      const showUpRate = formData.registrations 
-                        ? ((day.attendees / parseInt(String(formData.registrations))) * 100).toFixed(1)
+                {formData.challengeDays.map((day, index) => {
+                      const totalRegistrations = (parseInt(String(formData.registrationsAds)) || 0) + (parseInt(String(formData.registrationsOrganic)) || 0);
+                      const showUpRate = totalRegistrations > 0
+                        ? ((day.attendees / totalRegistrations) * 100).toFixed(1)
                         : '0';
                       return (
                         <div key={day.day} className="flex items-center gap-3 rounded-lg bg-secondary/30 p-2">
