@@ -205,7 +205,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             {kpis.cpl.toFixed(2)} €
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {kpis.totalRegistrations} inscrits total
+            {kpis.totalRegistrationsAds} inscrits ads
           </p>
         </div>
 

@@ -176,6 +176,7 @@ export interface KPIData {
   totalClosedCalls: number;
   totalAdBudget: number;
   totalRegistrations: number;
+  totalRegistrationsAds: number;
   totalWebinarAttendees: number;
   paymentProcessorCost: number;
   klarnaCost: number; // Frais Klarna (8% sur portion Klarna uniquement)
