@@ -55,9 +55,13 @@ export function useBusinessCalculations({
     const totalCalls = filteredTunnels.reduce(
       (sum, t) => sum + t.callsGenerated, 0
     );
-    // Use actual sales count instead of manual callsClosed field
+    // Total sales count (all sources)
     const totalClosedCalls = filteredTunnels.reduce(
       (sum, t) => sum + t.sales.length, 0
+    );
+    // Sales from Ads only (for CAC calculation)
+    const totalClosedCallsAds = filteredTunnels.reduce(
+      (sum, t) => sum + t.sales.filter(s => s.trafficSource === 'ads').length, 0
     );
     // Inscriptions Ads uniquement (pour le calcul du CPL)
     const totalRegistrationsAds = filteredTunnels.reduce(
@@ -66,6 +70,10 @@ export function useBusinessCalculations({
     const totalRegistrations = filteredTunnels.reduce(
       (sum, t) => sum + (t.registrationsAds || 0) + (t.registrationsOrganic || 0), 0
     );
+    
+    // Ratio of ads registrations (to estimate ads-only attendees)
+    const adsRatio = totalRegistrations > 0 ? totalRegistrationsAds / totalRegistrations : 1;
+    
     const totalWebinarAttendees = filteredTunnels
       .filter(t => t.type === 'webinar')
       .reduce((sum, t) => sum + (t.attendees || 0), 0);
@@ -76,6 +84,8 @@ export function useBusinessCalculations({
       .reduce((sum, t) => sum + Math.max(...t.challengeDays!.map(d => d.attendees)), 0);
     
     const totalAttendees = totalWebinarAttendees + totalChallengeMaxAttendees;
+    // Estimate attendees from Ads only (based on registration ratio)
+    const totalAttendeesAds = Math.round(totalAttendees * adsRatio);
 
     // === ORDRE DE CALCUL ===
     
@@ -196,17 +206,17 @@ export function useBusinessCalculations({
     // Cost per call
     const costPerCall = roundCurrency(totalCalls > 0 ? totalAdBudget / totalCalls : 0);
 
-    // Closing rate
+    // Closing rate (all sources)
     const closingRate = roundCurrency(totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0);
 
-    // CAC
-    const cac = roundCurrency(totalClosedCalls > 0 ? totalAdBudget / totalClosedCalls : 0);
+    // CAC (basé sur les ventes Ads uniquement)
+    const cac = roundCurrency(totalClosedCallsAds > 0 ? totalAdBudget / totalClosedCallsAds : 0);
 
     // CPL (basé sur les inscriptions Ads uniquement)
     const cpl = roundCurrency(totalRegistrationsAds > 0 ? totalAdBudget / totalRegistrationsAds : 0);
 
-    // Coût par présent (webinars + challenges avec peak day)
-    const costPerWebinarAttendee = roundCurrency(totalAttendees > 0 ? totalAdBudget / totalAttendees : 0);
+    // Coût par présent (basé sur les présents Ads estimés)
+    const costPerWebinarAttendee = roundCurrency(totalAttendeesAds > 0 ? totalAdBudget / totalAttendeesAds : 0);
 
     // Organic stats
     const organicSales = filteredTunnels.flatMap(t => t.sales.filter(s => s.trafficSource === 'organic'));
