@@ -17,6 +17,7 @@ import {
   Closer,
   Offer,
   InstallmentPlan,
+  CloserTunnelStats,
 } from '@/types/business';
 import { toast } from 'sonner';
 
@@ -41,6 +42,7 @@ interface DbTunnel {
   attendees: number | null;
   challenge_days: unknown;
   calls_booked: number | null;
+  closer_stats: unknown;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -128,6 +130,7 @@ function dbTunnelToTunnel(dbTunnel: DbTunnel, sales: Sale[]): Tunnel {
     attendees: dbTunnel.attendees || undefined,
     challengeDays: (dbTunnel.challenge_days as ChallengeDay[]) || undefined,
     callsBooked: dbTunnel.calls_booked || undefined,
+    closerStats: (dbTunnel.closer_stats as CloserTunnelStats[]) || undefined,
     sales,
   };
 }
@@ -361,6 +364,7 @@ export function useSupabaseData() {
         attendees: tunnel.attendees || null,
         challenge_days: (tunnel.challengeDays || []) as unknown as Json,
         calls_booked: tunnel.callsBooked || null,
+        closer_stats: (tunnel.closerStats || []) as unknown as Json,
       };
       
       const { data, error } = await supabase
@@ -401,6 +405,7 @@ export function useSupabaseData() {
       if (updates.attendees !== undefined) dbUpdates.attendees = updates.attendees;
       if (updates.challengeDays !== undefined) dbUpdates.challenge_days = updates.challengeDays;
       if (updates.callsBooked !== undefined) dbUpdates.calls_booked = updates.callsBooked;
+      if (updates.closerStats !== undefined) dbUpdates.closer_stats = updates.closerStats;
 
       const { error } = await supabase
         .from('tunnels')
