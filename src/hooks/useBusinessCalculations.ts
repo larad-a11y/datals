@@ -288,6 +288,7 @@ export function useBusinessCalculations({
       totalClosedCalls,
       totalAdBudget,
       totalRegistrations,
+      totalRegistrationsAds,
       totalWebinarAttendees,
       paymentProcessorCost,
       klarnaCost,

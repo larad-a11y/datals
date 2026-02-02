@@ -52,6 +52,9 @@ export function useBusinessData() {
     const totalRegistrations = filteredTunnels.reduce(
       (sum, t) => sum + (t.registrations || 0), 0
     );
+    const totalRegistrationsAds = filteredTunnels.reduce(
+      (sum, t) => sum + (t.registrationsAds || 0), 0
+    );
     const totalWebinarAttendees = filteredTunnels
       .filter(t => t.type === 'webinar')
       .reduce((sum, t) => sum + (t.attendees || 0), 0);
@@ -221,6 +224,7 @@ export function useBusinessData() {
       totalClosedCalls,
       totalAdBudget,
       totalRegistrations,
+      totalRegistrationsAds,
       totalWebinarAttendees,
       paymentProcessorCost,
       klarnaCost,
