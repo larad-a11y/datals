@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { X, CalendarDays, Plus, Trash2 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Tunnel, TunnelType, tunnelTypeLabels, ChallengeDay } from '@/types/business';
+import { Tunnel, TunnelType, tunnelTypeLabels, ChallengeDay, Closer, CloserTunnelStats } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -10,15 +10,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { CloserTrackingSection } from './CloserTrackingSection';
 
 interface TunnelFormProps {
   tunnel?: Tunnel;
   selectedMonth: string;
+  closers?: Closer[];
   onSave: (tunnel: Omit<Tunnel, 'id'>) => void;
   onCancel: () => void;
 }
 
-export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFormProps) {
+export function TunnelForm({ tunnel, selectedMonth, closers = [], onSave, onCancel }: TunnelFormProps) {
   const [formData, setFormData] = useState({
     name: tunnel?.name || '',
     type: tunnel?.type || 'webinar' as TunnelType,
@@ -38,6 +40,8 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
     attendees: tunnel?.attendees || '',
     challengeDays: tunnel?.challengeDays || [] as ChallengeDay[],
     callsBooked: tunnel?.callsBooked || '',
+    // Closer tracking
+    closerStats: tunnel?.closerStats || [] as CloserTunnelStats[],
   });
 
   const [dateOpen, setDateOpen] = useState(false);
@@ -77,6 +81,7 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
       attendees: formData.type === 'webinar' ? parseInt(String(formData.attendees)) || 0 : undefined,
       challengeDays: formData.type === 'challenge' ? formData.challengeDays : undefined,
       callsBooked: formData.type === 'vsl' ? parseInt(String(formData.callsBooked)) || 0 : undefined,
+      closerStats: formData.closerStats,
     });
   };
 
@@ -411,6 +416,20 @@ export function TunnelForm({ tunnel, selectedMonth, onSave, onCancel }: TunnelFo
             )}
 
           </div>
+
+          {/* Closer Tracking Section */}
+          {closers.length > 0 && (
+            <div className="border-t border-border/50 pt-5">
+              <h3 className="mb-4 text-sm font-semibold text-muted-foreground">
+                📞 Tracking Closers
+              </h3>
+              <CloserTrackingSection
+                closerStats={formData.closerStats}
+                closers={closers}
+                onChange={(stats) => setFormData(prev => ({ ...prev, closerStats: stats }))}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
