@@ -98,7 +98,9 @@ export interface Tunnel {
   collectedAmount: number; // Kept for backward compatibility, will be calculated from sales
   sales: Sale[];
   // Traffic metrics by type
-  registrations?: number; // Nombre d'inscrits (all types)
+  registrations?: number; // Nombre d'inscrits TOTAL (calculé automatiquement)
+  registrationsAds?: number; // Nombre d'inscrits via Publicité
+  registrationsOrganic?: number; // Nombre d'inscrits via Organique
   attendees?: number; // Nombre de présents (webinar only)
   challengeDays?: ChallengeDay[]; // Présents par jour (challenge only)
   callsBooked?: number; // Calls réservés (VSL only)
