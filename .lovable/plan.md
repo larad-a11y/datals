@@ -1,74 +1,60 @@
 
-# Plan : Correction de l'affichage du CPL dans le KPI Panel
+# Plan : Correction du calcul "Reste à encaisser ce mois"
 
-## Probleme identifie
+## Problème identifié
 
-Le **calcul** du CPL est correct dans `useBusinessCalculations.ts` (ligne 216) :
-```typescript
-const cpl = totalRegistrationsAds > 0 ? totalAdBudget / totalRegistrationsAds : 0;
-// 30 000 / 5 614 = 5,34€ ✓
-```
+Le calcul actuel de `remainingToCollectThisMonth` (lignes 254-271 de `useBusinessCalculations.ts`) ne fonctionne que si `nextPaymentDate` correspond exactement au mois sélectionné.
 
-Mais le **subtitle** dans `KPIPanel.tsx` affiche le mauvais chiffre (ligne 208) :
-```typescript
-{kpis.totalRegistrations} inscrits total
-// Affiche 6172 (Ads + Organic) au lieu de 5614 (Ads uniquement)
-```
-
-Cela donne l'impression que le CPL est 30 000 / 6172 = 4,86€ alors qu'il est bien calculé sur les inscrits Ads.
+**Problème** : `nextPaymentDate` représente uniquement la prochaine échéance immédiate. Pour un paiement en 4x :
+- Mars : paiement 1 ✓ (affiché car `nextPaymentDate` = avril)
+- Avril : Si on regarde avril, `nextPaymentDate` pointe sur mai après le paiement d'avril
+- Mai/Juin : Le calcul ne trouve rien car `nextPaymentDate` n'est pas encore à ces mois
 
 ## Solution
 
-### 1. Ajouter `totalRegistrationsAds` aux KPIs retournes
+Recalculer dynamiquement toutes les dates d'échéance à partir de :
+1. `saleDate` (date de la vente)
+2. `numberOfPayments` (nombre total de paiements)
+3. `paymentHistory.length` (paiements déjà effectués)
 
-**Fichier** : `src/hooks/useBusinessCalculations.ts`
+Pour chaque vente avec paiement échelonné, générer toutes les dates d'échéance futures et vérifier si l'une tombe dans le mois sélectionné.
 
-Ajouter la propriete dans le return (vers ligne 290) :
+## Modifications
+
+### Fichier : `src/hooks/useBusinessCalculations.ts`
+
+Remplacer le calcul de `remainingToCollectThisMonth` (lignes 253-271) par une logique qui :
+
+1. Pour chaque vente avec `numberOfPayments > 1` :
+   - Calcule toutes les dates d'échéance futures (saleDate + N mois)
+   - Vérifie si une échéance tombe dans le mois sélectionné
+   - Exclut les échéances déjà payées (vérifiées dans paymentHistory)
+
+2. Logique de calcul des dates :
 ```typescript
-return {
-  // ... existing properties
-  totalRegistrations,
-  totalRegistrationsAds, // AJOUTER
-  totalWebinarAttendees,
-  // ...
-};
-```
-
-### 2. Mettre a jour le type KPIData
-
-**Fichier** : `src/types/business.ts`
-
-Ajouter la propriete dans l'interface KPIData :
-```typescript
-export interface KPIData {
-  // ... existing properties
-  totalRegistrations: number;
-  totalRegistrationsAds: number; // AJOUTER
-  totalWebinarAttendees: number;
-  // ...
+// Pour une vente du 15 mars en 4x
+// Échéances : 15 mars (1), 15 avril (2), 15 mai (3), 15 juin (4)
+const saleDate = new Date(sale.saleDate);
+for (let i = 1; i <= sale.numberOfPayments; i++) {
+  const paymentDate = new Date(saleDate);
+  paymentDate.setMonth(saleDate.getMonth() + (i - 1));
+  const paymentMonth = format(paymentDate, 'yyyy-MM');
+  
+  // Si cette échéance est dans le mois sélectionné ET pas encore payée
+  if (paymentMonth === selectedMonth) {
+    const isPaid = (sale.paymentHistory || []).some(p => 
+      p.date.substring(0, 7) === paymentMonth && p.verified
+    );
+    if (!isPaid) {
+      // Ajouter le montant de l'échéance
+    }
+  }
 }
 ```
 
-### 3. Corriger l'affichage dans KPIPanel
+## Résultat attendu
 
-**Fichier** : `src/components/kpi/KPIPanel.tsx`
-
-Modifier la ligne 208 :
-```typescript
-// AVANT
-<p className="text-xs text-muted-foreground mt-1">
-  {kpis.totalRegistrations} inscrits total
-</p>
-
-// APRES
-<p className="text-xs text-muted-foreground mt-1">
-  {kpis.totalRegistrationsAds} inscrits ads
-</p>
-```
-
-## Resultat attendu
-
-- CPL affiche : **5,34 €**
-- Subtitle affiche : **5614 inscrits ads**
-
-Cela clarifie que le CPL est calcule uniquement sur les leads Ads, coherent avec la logique metier de mesure de l'efficacite publicitaire.
+- Mars : affiche la 1ère échéance des ventes de mars
+- Avril : affiche la 2ème échéance des ventes de mars + 1ère échéance des ventes d'avril
+- Mai : affiche la 3ème échéance des ventes de mars + 2ème des ventes d'avril + etc.
+- Fonctionne pour n'importe quel mois futur
