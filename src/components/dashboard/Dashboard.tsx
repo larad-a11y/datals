@@ -320,6 +320,18 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
         </div>
       </div>
 
+      {/* Total à encaisser - toutes échéances */}
+      {kpis.upcomingPaymentsTotal > 0 && (
+        <div className="flex justify-end -mt-2">
+          <p className="text-sm text-muted-foreground">
+            💰 Total à encaisser (toutes ventes) : 
+            <span className="font-semibold text-foreground ml-1">
+              {kpis.upcomingPaymentsTotal.toLocaleString('fr-FR')} €
+            </span>
+          </p>
+        </div>
+      )}
+
       {/* Performance KPIs */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <KPICard
