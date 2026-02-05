@@ -251,20 +251,34 @@ export function useBusinessCalculations({
       }, 0));
 
     // Reste à encaisser ce mois = paiements attendus ce mois mais pas encore vérifiés
+    // Projette TOUTES les échéances futures basées sur saleDate + numberOfPayments
     const remainingToCollectThisMonth = roundCurrency(tunnels
       .flatMap(t => t.sales)
-      .filter(sale => !sale.isDefaulted && sale.nextPaymentDate)
+      .filter(sale => !sale.isDefaulted && sale.numberOfPayments > 1 && sale.saleDate)
       .reduce((sum, sale) => {
-        const nextPaymentMonth = sale.nextPaymentDate!.substring(0, 7);
-        if (nextPaymentMonth === selectedMonth) {
-          // Calculer le montant de la prochaine échéance
-          const klarnaAmount = sale.klarnaAmount || 0;
-          const cbAmount = sale.cbAmount || (sale.totalPrice - klarnaAmount);
-          const installmentAmount = sale.numberOfPayments > 1 ? cbAmount / sale.numberOfPayments : 0;
-          // Ne compter que si pas encore payé
-          const remaining = sale.totalPrice - sale.amountCollected;
-          if (remaining > 0) {
-            return sum + Math.min(installmentAmount, remaining);
+        const klarnaAmount = sale.klarnaAmount || 0;
+        const cbAmount = sale.cbAmount || (sale.totalPrice - klarnaAmount);
+        const installmentAmount = cbAmount / sale.numberOfPayments;
+        
+        const saleDate = new Date(sale.saleDate);
+        
+        // Parcourir toutes les échéances futures (à partir de la 2ème car la 1ère est déjà collectée)
+        for (let i = 2; i <= sale.numberOfPayments; i++) {
+          const paymentDate = new Date(saleDate);
+          paymentDate.setMonth(saleDate.getMonth() + (i - 1));
+          const paymentMonth = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
+          
+          // Si cette échéance est dans le mois sélectionné
+          if (paymentMonth === selectedMonth) {
+            // Vérifier si cette échéance a déjà été payée
+            const isPaid = (sale.paymentHistory || []).some(p => {
+              const pMonth = p.date.substring(0, 7);
+              return pMonth === paymentMonth && p.verified;
+            });
+            
+            if (!isPaid) {
+              return sum + installmentAmount;
+            }
           }
         }
         return sum;
