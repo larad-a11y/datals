@@ -15,7 +15,8 @@ import {
   Leaf,
   Calendar,
   CreditCard,
-  Clock
+  Clock,
+  RotateCcw
 } from 'lucide-react';
 import { KPICard } from './KPICard';
 import { TunnelCard } from './TunnelCard';
@@ -393,6 +394,26 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
           />
         )}
       </div>
+
+      {/* Refund Stats */}
+      {kpis.totalRefundedAmount > 0 && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/20">
+                <RotateCcw className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Remboursements</p>
+                <p className="text-2xl font-bold text-destructive">
+                  {kpis.totalRefundedAmount.toLocaleString('fr-FR')} €
+                </p>
+                <p className="text-xs text-muted-foreground">{kpis.refundedSalesCount} vente{kpis.refundedSalesCount > 1 ? 's' : ''}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Organic Stats */}
       {(kpis.organicSalesCount > 0 || kpis.organicCollectedAmount > 0) && (

@@ -154,6 +154,7 @@ export type Database = {
           defaulted_at: string | null
           id: string
           is_defaulted: boolean | null
+          is_fully_refunded: boolean
           klarna_amount: number | null
           last_payment_update: string | null
           next_payment_date: string | null
@@ -161,6 +162,8 @@ export type Database = {
           offer_id: string | null
           payment_history: Json | null
           payment_method: string
+          refund_history: Json
+          refunded_amount: number
           sale_date: string
           total_price: number
           traffic_source: string
@@ -178,6 +181,7 @@ export type Database = {
           defaulted_at?: string | null
           id?: string
           is_defaulted?: boolean | null
+          is_fully_refunded?: boolean
           klarna_amount?: number | null
           last_payment_update?: string | null
           next_payment_date?: string | null
@@ -185,6 +189,8 @@ export type Database = {
           offer_id?: string | null
           payment_history?: Json | null
           payment_method: string
+          refund_history?: Json
+          refunded_amount?: number
           sale_date: string
           total_price: number
           traffic_source?: string
@@ -202,6 +208,7 @@ export type Database = {
           defaulted_at?: string | null
           id?: string
           is_defaulted?: boolean | null
+          is_fully_refunded?: boolean
           klarna_amount?: number | null
           last_payment_update?: string | null
           next_payment_date?: string | null
@@ -209,6 +216,8 @@ export type Database = {
           offer_id?: string | null
           payment_history?: Json | null
           payment_method?: string
+          refund_history?: Json
+          refunded_amount?: number
           sale_date?: string
           total_price?: number
           traffic_source?: string

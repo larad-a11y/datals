@@ -22,6 +22,7 @@ interface SalesCRMPanelProps {
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
+  onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
   installmentPlans?: InstallmentPlan[];
   offers?: Offer[];
   closers?: Closer[];
@@ -39,6 +40,7 @@ export function SalesCRMPanel({
   onRecordPayment,
   onFullyPaid,
   onToggleDefaulted,
+  onRecordRefund,
   installmentPlans = defaultInstallmentPlans,
   offers = [],
   closers = [],
@@ -284,6 +286,7 @@ export function SalesCRMPanel({
         onRecordPayment={onRecordPayment}
         onFullyPaid={onFullyPaid}
         onToggleDefaulted={onToggleDefaulted}
+        onRecordRefund={onRecordRefund}
         closers={closers}
       />
 

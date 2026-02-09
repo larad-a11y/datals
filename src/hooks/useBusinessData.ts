@@ -239,6 +239,8 @@ export function useBusinessData() {
       directCollectedThisMonth,
       installmentCollectedThisMonth,
       remainingToCollectThisMonth,
+      totalRefundedAmount: 0,
+      refundedSalesCount: 0,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses]);
 

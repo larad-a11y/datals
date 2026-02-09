@@ -37,15 +37,19 @@ export function useBusinessCalculations({
 
   // Calculate KPIs
   const kpis = useMemo((): KPIData => {
+    // Refund metrics
+    const allFilteredSales = filteredTunnels.flatMap(t => t.sales);
+    const totalRefundedAmount = roundCurrency(allFilteredSales.reduce((sum, sale) => sum + (sale.refundedAmount || 0), 0));
+    const refundedSalesCount = allFilteredSales.filter(s => (s.refundedAmount || 0) > 0).length;
+
     const totalContracted = filteredTunnels.reduce((sum, t) => {
-      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
-      // Use actual sales count for fallback calculation
+      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice - (sale.refundedAmount || 0), 0);
       return sum + (salesContracted > 0 ? salesContracted : t.sales.length * t.averagePrice);
     }, 0);
     
-    // CA Collecté TTC
+    // CA Collecté TTC (soustrait les remboursements)
     const totalCollectedTTC = filteredTunnels.reduce((sum, t) => {
-      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected - (sale.refundedAmount || 0), 0);
       return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
     }, 0);
     
@@ -317,6 +321,8 @@ export function useBusinessCalculations({
       directCollectedThisMonth,
       installmentCollectedThisMonth,
       remainingToCollectThisMonth,
+      totalRefundedAmount,
+      refundedSalesCount,
     };
   }, [filteredTunnels, charges, salaries, filteredCoachingExpenses, tunnels, selectedMonth]);
 
