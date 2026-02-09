@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Sale, TunnelType, tunnelTypeLabels, Closer } from '@/types/business';
+import { RefundActions } from './RefundActions';
 import {
   Table,
   TableBody,
@@ -28,13 +29,14 @@ interface SalesTableProps {
   onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
+  onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
   closers?: Closer[];
 }
 
 type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, closers = [] }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, closers = [] }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
@@ -187,8 +189,10 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
             <TableHead className="text-right">Reste</TableHead>
+            <TableHead className="text-right">Remboursé</TableHead>
             <TableHead className="w-[120px]">Progression</TableHead>
             <TableHead className="w-[120px]">Paiement</TableHead>
+            <TableHead className="w-[120px]">Remb.</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -286,6 +290,20 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 <TableCell className={`text-right font-medium ${isPaid ? 'text-profitable' : 'text-warning'}`}>
                   {remaining.toLocaleString('fr-FR')} €
                 </TableCell>
+                <TableCell className="text-right">
+                  {(sale.refundedAmount || 0) > 0 ? (
+                    <div className="flex flex-col items-end">
+                      <span className="font-medium text-destructive">
+                        {(sale.refundedAmount || 0).toLocaleString('fr-FR')} €
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {sale.isFullyRefunded ? '(total)' : '(partiel)'}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">-</span>
+                  )}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Progress 
@@ -309,6 +327,18 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className={`text-xs ${isPaid ? 'text-profitable' : 'text-muted-foreground'}`}>
                       {isPaid ? 'Soldé' : `${sale.numberOfPayments}x`}
                     </span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {onRecordRefund && !sale.isFullyRefunded ? (
+                    <RefundActions
+                      sale={sale}
+                      onRecordRefund={onRecordRefund}
+                    />
+                  ) : sale.isFullyRefunded ? (
+                    <Badge variant="destructive" className="text-xs">Remboursée</Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
                 <TableCell>

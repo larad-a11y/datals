@@ -12,6 +12,7 @@ import {
   TunnelType, 
   PaymentMethod,
   PaymentRecord,
+  RefundRecord,
   ChallengeDay,
   defaultCharges,
   Closer,
@@ -68,6 +69,9 @@ interface DbSale {
   klarna_amount: number | null;
   cb_amount: number | null;
   created_at: string | null;
+  refunded_amount: number | null;
+  refund_history: unknown;
+  is_fully_refunded: boolean | null;
 }
 
 interface DbUserCharges {
@@ -158,6 +162,9 @@ function dbSaleToSale(dbSale: DbSale): Sale {
     lastPaymentUpdate: dbSale.last_payment_update || undefined,
     klarnaAmount: dbSale.klarna_amount ? Number(dbSale.klarna_amount) : undefined,
     cbAmount: dbSale.cb_amount ? Number(dbSale.cb_amount) : undefined,
+    refundedAmount: Number(dbSale.refunded_amount) || 0,
+    refundHistory: (dbSale.refund_history as RefundRecord[]) || [],
+    isFullyRefunded: dbSale.is_fully_refunded || false,
   };
 }
 
@@ -511,6 +518,9 @@ export function useSupabaseData() {
       if (updates.defaultedAt !== undefined) dbUpdates.defaulted_at = updates.defaultedAt || null;
       if (updates.klarnaAmount !== undefined) dbUpdates.klarna_amount = updates.klarnaAmount || null;
       if (updates.cbAmount !== undefined) dbUpdates.cb_amount = updates.cbAmount || null;
+      if (updates.refundedAmount !== undefined) dbUpdates.refunded_amount = updates.refundedAmount;
+      if (updates.refundHistory !== undefined) dbUpdates.refund_history = updates.refundHistory;
+      if (updates.isFullyRefunded !== undefined) dbUpdates.is_fully_refunded = updates.isFullyRefunded;
 
       const { error } = await supabase
         .from('sales')

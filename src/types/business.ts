@@ -17,6 +17,13 @@ export interface PaymentRecord {
   verifiedAt?: string;
 }
 
+export interface RefundRecord {
+  id: string;
+  amount: number;
+  date: string;
+  reason?: string;
+}
+
 export interface InstallmentPlan {
   id: string;
   numberOfPayments: number;
@@ -72,6 +79,9 @@ export interface Sale {
   // Klarna mixed payment support
   klarnaAmount?: number; // Montant payé via Klarna (max klarnaMaxAmount)
   cbAmount?: number; // Montant payé via CB (le reste)
+  refundedAmount?: number; // Montant total remboursé
+  refundHistory?: RefundRecord[]; // Historique des remboursements
+  isFullyRefunded?: boolean; // Vente totalement remboursée
 }
 
 export interface PaymentNotification {
@@ -203,6 +213,8 @@ export interface KPIData {
   directCollectedThisMonth: number; // Encaissé direct (1ère échéance des ventes du mois)
   installmentCollectedThisMonth: number; // Encaissé depuis paiements échelonnés (échéances suivantes)
   remainingToCollectThisMonth: number; // Reste à encaisser ce mois-ci
+  totalRefundedAmount: number; // Total remboursé ce mois
+  refundedSalesCount: number; // Nombre de ventes remboursées
 }
 
 export const defaultInstallmentPlans: InstallmentPlan[] = [

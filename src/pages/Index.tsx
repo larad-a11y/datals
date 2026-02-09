@@ -9,7 +9,7 @@ import { KPIPanel } from '@/components/kpi/KPIPanel';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { useBusinessCalculations } from '@/hooks/useBusinessCalculations';
 import { useAuth } from '@/hooks/useAuth';
-import { defaultCharges, Sale, generatePaymentNotifications, PaymentRecord } from '@/types/business';
+import { defaultCharges, Sale, generatePaymentNotifications, PaymentRecord, RefundRecord } from '@/types/business';
 import { Loader2 } from 'lucide-react';
 
 const Index = () => {
@@ -152,6 +152,31 @@ const Index = () => {
     });
   };
 
+  // Record a refund for a sale
+  const handleRecordRefund = (saleId: string, tunnelId: string, amount: number, isFull: boolean) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+    
+    const sale = tunnel.sales.find(s => s.id === saleId);
+    if (!sale) return;
+    
+    const newRefund: RefundRecord = {
+      id: `refund-${Date.now()}`,
+      amount,
+      date: new Date().toISOString(),
+    };
+    
+    const newRefundedAmount = (sale.refundedAmount || 0) + amount;
+    const maxRefundable = sale.amountCollected;
+    const isFullyRefunded = isFull || newRefundedAmount >= maxRefundable;
+    
+    updateSale(saleId, {
+      refundedAmount: newRefundedAmount,
+      refundHistory: [...(sale.refundHistory || []), newRefund],
+      isFullyRefunded,
+    });
+  };
+
   // Generate notifications from all sales
   const notifications = useMemo(() => {
     const allSales = getAllSales();
@@ -221,6 +246,7 @@ const Index = () => {
             onRecordPayment={handleRecordPayment}
             onFullyPaid={handleFullyPaid}
             onToggleDefaulted={handleToggleDefaulted}
+            onRecordRefund={handleRecordRefund}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
             closers={charges.closers}
