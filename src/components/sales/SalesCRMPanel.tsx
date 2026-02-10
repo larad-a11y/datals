@@ -1,11 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Receipt, TrendingUp, Clock, CheckCircle, PieChart as PieChartIcon } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Receipt, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface EnrichedSale extends Sale {
   tunnelName?: string;
@@ -151,22 +149,6 @@ export function SalesCRMPanel({
     };
   }, [allSales]);
 
-  // Offer distribution for pie chart
-  const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981', '#f97316', '#6366f1', '#ec4899'];
-  
-  const offerDistribution = useMemo(() => {
-    const counts: Record<string, { name: string; count: number; revenue: number }> = {};
-    allSales.forEach(sale => {
-      const offer = offers.find(o => o.id === sale.offerId);
-      const key = sale.offerId || 'none';
-      const name = offer?.name || 'Sans offre';
-      if (!counts[key]) counts[key] = { name, count: 0, revenue: 0 };
-      counts[key].count++;
-      counts[key].revenue += sale.totalPrice;
-    });
-    return Object.values(counts);
-  }, [allSales, offers]);
-
   const handleEditSale = (sale: EnrichedSale) => {
     setEditingSale(sale);
   };
@@ -253,46 +235,6 @@ export function SalesCRMPanel({
           </div>
         </div>
       </div>
-
-      {/* Offer Distribution Pie Chart */}
-      {offerDistribution.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary" />
-              Répartition par offre
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={offerDistribution}
-                    dataKey="count"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, count }) => `${name} (${count})`}
-                  >
-                    {offerDistribution.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string, props: any) => [
-                      `${value} vente${value > 1 ? 's' : ''} — ${props.payload.revenue.toLocaleString('fr-FR')} €`,
-                      name
-                    ]}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Filters */}
       <SalesFilters
