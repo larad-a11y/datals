@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
-import { Sale, TunnelType, tunnelTypeLabels, Closer } from '@/types/business';
+import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer } from '@/types/business';
 import { RefundActions } from './RefundActions';
 import {
   Table,
@@ -31,12 +31,13 @@ interface SalesTableProps {
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
   closers?: Closer[];
+  offers?: Offer[];
 }
 
-type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName';
+type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, closers = [] }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, closers = [], offers = [] }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
@@ -94,6 +95,12 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
       case 'tunnelName':
         comparison = (a.tunnelName || '').localeCompare(b.tunnelName || '');
         break;
+      case 'offerName': {
+        const offerNameA = offers.find(o => o.id === a.offerId)?.name || '';
+        const offerNameB = offers.find(o => o.id === b.offerId)?.name || '';
+        comparison = offerNameA.localeCompare(offerNameB);
+        break;
+      }
     }
     return sortDirection === 'asc' ? comparison : -comparison;
   });
@@ -180,6 +187,9 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             </TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Closer</TableHead>
+            <TableHead>
+              <SortHeader label="Offre" sortKeyName="offerName" />
+            </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
@@ -243,6 +253,15 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground italic">Aucun</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {sale.offerId ? (
+                    <Badge variant="outline" className="text-xs">
+                      {offers.find(o => o.id === sale.offerId)?.name || '-'}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">-</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium">
