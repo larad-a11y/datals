@@ -281,6 +281,8 @@ const Index = () => {
             tunnels={tunnels}
             selectedMonth={selectedMonth}
             onMonthChange={setSelectedMonth}
+            allSales={getAllSales()}
+            offers={charges.offers}
           />
         );
       default:
