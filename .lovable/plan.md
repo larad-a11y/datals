@@ -1,150 +1,76 @@
 
-# Fonctionnalité de Remboursement des Ventes
 
-## Résumé
+# Colonne "Offre" triable + Camembert de repartition des offres
 
-Ajouter un bouton de remboursement sur chaque ligne de vente dans le CRM, permettant de :
-1. Rembourser totalement la vente en un clic
-2. Rembourser un montant personnalisé (partiel)
-3. Tracker le montant total remboursé par tunnel et par mois
-4. Soustraire automatiquement les remboursements du CA Collecté et CA Contracté
+## Modifications
 
----
+### 1. `src/components/sales/SalesTable.tsx`
 
-## Modifications à effectuer
+- Ajouter `offers` dans les props (type `Offer[]`)
+- Ajouter `'offerName'` comme nouvelle valeur dans le type `SortKey`
+- Ajouter une colonne "Offre" dans le header (triable via `SortHeader`)
+- Ajouter le cas `'offerName'` dans la logique de tri (resolution du nom d'offre via `offerId`)
+- Afficher le nom de l'offre dans chaque ligne, ou "-" si aucune offre associee
 
-### 1. Mise à jour du type Sale (`src/types/business.ts`)
+### 2. `src/components/sales/SalesCRMPanel.tsx`
 
-Ajouter les nouveaux champs pour les remboursements :
+- Ajouter `offers` dans les props du composant (deja present via `offers?: Offer[]`)
+- Passer `offers` au composant `SalesTable`
+- Ajouter un camembert (PieChart de recharts) dans la section des stats globales, affichant la repartition des ventes par offre :
+  - Calcul : grouper `allSales` par `offerId`, compter le nombre de ventes par offre
+  - Les ventes sans offre seront regroupees sous "Sans offre"
+  - Utiliser `recharts` (deja installe) avec `PieChart`, `Pie`, `Cell`, `Tooltip`, `Legend`
+  - Le camembert sera place dans une carte dediee sous les KPI globaux
 
-```typescript
-export interface RefundRecord {
-  id: string;
-  amount: number;
-  date: string;
-  reason?: string;
-}
+### 3. `src/components/sales/SalesFilters.tsx`
 
-export interface Sale {
-  // ... champs existants ...
-  refundedAmount?: number;        // Montant total remboursé
-  refundHistory?: RefundRecord[]; // Historique des remboursements
-  isFullyRefunded?: boolean;      // Vente totalement remboursée
-}
-```
+- Ajouter un filtre dropdown par offre (similaire au filtre closer)
+- Props supplementaires : `offers`, `selectedOfferId`, `onOfferChange`
 
-### 2. Mise à jour du KPIData (`src/types/business.ts`)
+### 4. Filtrage dans `SalesCRMPanel.tsx`
 
-Ajouter les métriques de remboursement :
-
-```typescript
-export interface KPIData {
-  // ... champs existants ...
-  totalRefundedAmount: number;    // Total remboursé ce mois
-  refundedSalesCount: number;     // Nombre de ventes remboursées
-}
-```
-
-### 3. Migration base de données
-
-Ajouter les colonnes dans la table `sales` :
-- `refunded_amount` (numeric, default 0)
-- `refund_history` (jsonb, default '[]')
-- `is_fully_refunded` (boolean, default false)
-
-### 4. Nouveau composant RefundActions (`src/components/sales/RefundActions.tsx`)
-
-Similaire à PaymentActions, avec :
-- Dropdown pour choisir l'action
-- Option "Remboursement total" (1 clic)
-- Option "Remboursement partiel" (montant personnalisé)
-- Dialogue d'historique des remboursements
-
-### 5. Mise à jour de SalesTable (`src/components/sales/SalesTable.tsx`)
-
-- Ajouter une colonne "Remboursé" après "Reste"
-- Intégrer le composant RefundActions dans les actions de chaque ligne
-- Badge visuel pour les ventes partiellement/totalement remboursées
-
-### 6. Mise à jour des calculs KPI (`src/hooks/useBusinessCalculations.ts`)
-
-Modifier les calculs pour soustraire les remboursements :
-- `contractedRevenue` : soustrait `refundedAmount` de chaque vente
-- `collectedRevenue` : soustrait `refundedAmount` de chaque vente
-- Nouvelle métrique `totalRefundedAmount` pour le mois
-
-### 7. Mise à jour de useSupabaseData (`src/hooks/useSupabaseData.ts`)
-
-- Mapper les nouveaux champs de la DB vers le type Sale
-- Ajouter une fonction `onRecordRefund` pour enregistrer les remboursements
-
-### 8. Mise à jour du Dashboard (`src/components/dashboard/Dashboard.tsx`)
-
-Afficher une nouvelle carte KPI optionnelle "Remboursements" si le montant > 0.
+- Ajouter l'etat `selectedOfferId` et le filtre correspondant dans `filteredSales`
 
 ---
 
-## Interface utilisateur
+## Details techniques
 
-```text
-┌────────────────────────────────────────────────────────────────────────────────┐
-│ Date    │ Client │ Prix    │ Encaissé │ Reste  │ Remboursé │ Actions          │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ 15/03   │ Jean   │ 2000 €  │ 2000 €   │ 0 €    │ 500 €     │ [💰] [↩️] [✏️] [🗑️] │
-│         │        │         │          │        │ (partiel) │                  │
-├────────────────────────────────────────────────────────────────────────────────┤
-│ 12/03   │ Marie  │ 1500 €  │ 1500 €   │ 0 €    │ 1500 €    │ [---] [---]      │
-│         │        │         │          │        │ (total)   │ Remboursée       │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
-
-Dropdown du bouton Remboursement :
-```text
-┌─────────────────────────────────┐
-│ ↩️ Remboursement total          │
-│    1 500 €                      │
-├─────────────────────────────────┤
-│ ✏️ Remboursement partiel        │
-│    Saisir un montant            │
-├─────────────────────────────────┤
-│ 📋 Historique des remboursements│
-└─────────────────────────────────┘
-```
-
----
-
-## Détails techniques
-
-### Calcul du CA ajusté
+### Tri par offre
 
 ```typescript
-// CA Contracté ajusté = sum(totalPrice) - sum(refundedAmount)
-const contractedRevenue = sales.reduce((sum, sale) => 
-  sum + sale.totalPrice - (sale.refundedAmount || 0), 0
-);
+type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName';
 
-// CA Collecté ajusté = sum(amountCollected) - sum(refundedAmount)
-const collectedRevenue = sales.reduce((sum, sale) => 
-  sum + sale.amountCollected - (sale.refundedAmount || 0), 0
-);
+// Dans la logique de tri :
+case 'offerName':
+  const offerNameA = offers.find(o => o.id === a.offerId)?.name || '';
+  const offerNameB = offers.find(o => o.id === b.offerId)?.name || '';
+  comparison = offerNameA.localeCompare(offerNameB);
+  break;
 ```
 
-### Logique du remboursement
+### Camembert des offres
 
-- Le remboursement ne peut pas dépasser le montant collecté (`amountCollected`)
-- Un remboursement total marque la vente comme `isFullyRefunded = true`
-- Les ventes totalement remboursées sont exclues des statistiques de paiement
-- L'historique des remboursements conserve la date et le montant de chaque opération
+```typescript
+// Calcul de la repartition
+const offerDistribution = useMemo(() => {
+  const counts: Record<string, { name: string; count: number; revenue: number }> = {};
+  allSales.forEach(sale => {
+    const offer = offers.find(o => o.id === sale.offerId);
+    const key = sale.offerId || 'none';
+    const name = offer?.name || 'Sans offre';
+    if (!counts[key]) counts[key] = { name, count: 0, revenue: 0 };
+    counts[key].count++;
+    counts[key].revenue += sale.totalPrice;
+  });
+  return Object.values(counts);
+}, [allSales, offers]);
+```
 
-### Fichiers à créer/modifier
+### Fichiers modifies
 
 | Fichier | Action |
 |---------|--------|
-| `src/types/business.ts` | Modifier (ajouter types RefundRecord, champs Sale) |
-| `src/components/sales/RefundActions.tsx` | Créer |
-| `src/components/sales/SalesTable.tsx` | Modifier (ajouter colonne + bouton) |
-| `src/hooks/useBusinessCalculations.ts` | Modifier (ajuster calculs) |
-| `src/hooks/useSupabaseData.ts` | Modifier (mapper nouveaux champs) |
-| `src/components/dashboard/Dashboard.tsx` | Modifier (optionnel: carte KPI) |
-| Migration SQL | Créer (nouvelles colonnes) |
+| `src/components/sales/SalesTable.tsx` | Ajouter colonne Offre + tri |
+| `src/components/sales/SalesCRMPanel.tsx` | Passer offers a SalesTable + camembert |
+| `src/components/sales/SalesFilters.tsx` | Ajouter filtre par offre |
 
