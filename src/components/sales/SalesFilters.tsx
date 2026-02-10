@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search, X, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Tunnel, Closer } from '@/types/business';
+import { Tunnel, Closer, Offer } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -34,6 +34,9 @@ interface SalesFiltersProps {
   onCloserChange: (closerId: string) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
+  offers?: Offer[];
+  selectedOfferId?: string;
+  onOfferChange?: (offerId: string) => void;
 }
 
 export function SalesFilters({
@@ -51,6 +54,9 @@ export function SalesFilters({
   onCloserChange,
   dateRange,
   onDateRangeChange,
+  offers = [],
+  selectedOfferId = '',
+  onOfferChange,
 }: SalesFiltersProps) {
   const [dateOpen, setDateOpen] = useState(false);
   const statusOptions: { value: PaymentStatus; label: string }[] = [
@@ -61,7 +67,7 @@ export function SalesFilters({
     { value: 'defaulted', label: 'Impayés' },
   ];
 
-  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
+  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedOfferId !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
 
   const resetFilters = () => {
     onTunnelChange('');
@@ -69,6 +75,7 @@ export function SalesFilters({
     onSearchChange('');
     onMonthChange('');
     onCloserChange('');
+    onOfferChange?.('');
     onDateRangeChange({ from: undefined, to: undefined });
   };
 
@@ -136,6 +143,23 @@ export function SalesFilters({
           </option>
         ))}
       </select>
+
+      {/* Offer filter */}
+      {offers.length > 0 && onOfferChange && (
+        <select
+          value={selectedOfferId}
+          onChange={(e) => onOfferChange(e.target.value)}
+          className="input-field min-w-[150px]"
+        >
+          <option value="">Toutes les offres</option>
+          <option value="none">Sans offre</option>
+          {offers.map((offer) => (
+            <option key={offer.id} value={offer.id}>
+              {offer.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Date range picker */}
       <Popover open={dateOpen} onOpenChange={setDateOpen}>
