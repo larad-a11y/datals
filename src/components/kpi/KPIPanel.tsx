@@ -110,10 +110,13 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
-            CA Contracté
+            CA Contracté HT
           </div>
           <p className="stat-value mt-2 text-foreground">
-            {kpis.contractedRevenue.toLocaleString('fr-FR')} €
+            {(kpis.contractedRevenue / (1 + charges.taxPercent / 100)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            TTC: {kpis.contractedRevenue.toLocaleString('fr-FR')} € | TVA: {(kpis.contractedRevenue - kpis.contractedRevenue / (1 + charges.taxPercent / 100)).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
 
