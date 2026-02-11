@@ -37,6 +37,8 @@ interface SalesFiltersProps {
   offers?: Offer[];
   selectedOfferId?: string;
   onOfferChange?: (offerId: string) => void;
+  selectedPaymentMethod?: string;
+  onPaymentMethodChange?: (method: string) => void;
 }
 
 export function SalesFilters({
@@ -57,6 +59,8 @@ export function SalesFilters({
   offers = [],
   selectedOfferId = '',
   onOfferChange,
+  selectedPaymentMethod = '',
+  onPaymentMethodChange,
 }: SalesFiltersProps) {
   const [dateOpen, setDateOpen] = useState(false);
   const statusOptions: { value: PaymentStatus; label: string }[] = [
@@ -67,7 +71,7 @@ export function SalesFilters({
     { value: 'defaulted', label: 'Impayés' },
   ];
 
-  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedOfferId !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
+  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedOfferId !== '' || selectedPaymentMethod !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
 
   const resetFilters = () => {
     onTunnelChange('');
@@ -76,6 +80,7 @@ export function SalesFilters({
     onMonthChange('');
     onCloserChange('');
     onOfferChange?.('');
+    onPaymentMethodChange?.('');
     onDateRangeChange({ from: undefined, to: undefined });
   };
 
@@ -158,6 +163,19 @@ export function SalesFilters({
               {offer.name}
             </option>
           ))}
+        </select>
+      )}
+
+      {/* Payment method filter */}
+      {onPaymentMethodChange && (
+        <select
+          value={selectedPaymentMethod}
+          onChange={(e) => onPaymentMethodChange(e.target.value)}
+          className="input-field min-w-[150px]"
+        >
+          <option value="">Tous les moyens</option>
+          <option value="cb">CB</option>
+          <option value="virement">Virement</option>
         </select>
       )}
 

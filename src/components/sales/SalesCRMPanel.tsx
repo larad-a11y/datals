@@ -51,6 +51,7 @@ export function SalesCRMPanel({
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedCloserId, setSelectedCloserId] = useState('');
   const [selectedOfferId, setSelectedOfferId] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [currentPage, setCurrentPage] = useState(1);
   const [editingSale, setEditingSale] = useState<EnrichedSale | null>(null);
@@ -74,6 +75,9 @@ export function SalesCRMPanel({
         if (selectedOfferId === 'none' && sale.offerId) return false;
         if (selectedOfferId !== 'none' && sale.offerId !== selectedOfferId) return false;
       }
+
+      // Payment method filter
+      if (selectedPaymentMethod && sale.paymentMethod !== selectedPaymentMethod) return false;
 
       // Date range filter - parse dates as local dates to avoid timezone issues
       if (dateRange.from || dateRange.to) {
@@ -118,7 +122,7 @@ export function SalesCRMPanel({
 
       return true;
     });
-  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, dateRange, searchQuery, selectedStatus]);
+  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, selectedPaymentMethod, dateRange, searchQuery, selectedStatus]);
 
   // Pagination
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -269,6 +273,11 @@ export function SalesCRMPanel({
         selectedOfferId={selectedOfferId}
         onOfferChange={(id) => {
           setSelectedOfferId(id);
+          handleFilterChange();
+        }}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onPaymentMethodChange={(method) => {
+          setSelectedPaymentMethod(method);
           handleFilterChange();
         }}
         dateRange={dateRange}
