@@ -168,12 +168,12 @@ export function useBusinessCalculations({
     // 10. Bénéfice Net Net = Bénéfice Net - Part Associé - Salaires
     const netNetProfit = roundCurrency(netProfit - associateCost - totalSalaries);
 
-    // ROAS Collecté = CA HT / Budget Pub (multiplicateur)
+    // ROAS Collecté = CA TTC / Budget Pub (multiplicateur)
     const roasCollected = totalAdBudget > 0 
-      ? roundCurrency(totalCollectedHT / totalAdBudget)
+      ? roundCurrency(totalCollectedTTC / totalAdBudget)
       : 0;
 
-    // ROAS Contracté = CA Contracté / Budget Pub (multiplicateur)
+    // ROAS Contracté = CA Contracté TTC / Budget Pub (multiplicateur)
     const roasContracted = totalAdBudget > 0 
       ? roundCurrency(totalContracted / totalAdBudget)
       : 0;

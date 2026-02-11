@@ -190,6 +190,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Offre" sortKeyName="offerName" />
             </TableHead>
+            <TableHead>Moyen</TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
@@ -263,6 +264,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   ) : (
                     <span className="text-xs text-muted-foreground italic">-</span>
                   )}
+                </TableCell>
+                <TableCell className="text-sm">
+                  <Badge variant="outline" className="text-xs">
+                    {sale.paymentMethod === 'virement' ? 'Virement' : 'CB'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   <div className="flex flex-col items-end">

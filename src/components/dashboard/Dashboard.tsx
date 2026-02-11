@@ -109,7 +109,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
     const netNetProfit = netProfit - associateCost;
     
     const roasCollected = totalAdBudget > 0 
-      ? totalCollectedHT / totalAdBudget
+      ? totalCollectedTTC / totalAdBudget
       : 0;
     const costPerCall = totalCalls > 0 ? totalAdBudget / totalCalls : 0;
     const closingRate = totalCalls > 0 ? (totalClosedCalls / totalCalls) * 100 : 0;
@@ -341,7 +341,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
           icon={TrendingUp}
           trend={roasTrend}
           suffix="x"
-          subtitle={`CA HT / Budget Pub`}
+          subtitle={`CA TTC / Budget Pub`}
         />
         <KPICard
           title="ROAS Contracté"
@@ -349,7 +349,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
           icon={TrendingUp}
           trend={kpis.roasContracted >= 3 ? 'profitable' : kpis.roasContracted >= 2 ? 'warning' : 'danger'}
           suffix="x"
-          subtitle={`CA Contracté / Budget Pub`}
+          subtitle={`CA Contracté TTC / Budget Pub`}
         />
         <KPICard
           title="Coût par Call"
