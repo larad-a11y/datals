@@ -173,7 +173,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
-            ROAS Collecté
+            ROAS Collecté (TTC)
           </div>
           <p className={`stat-value mt-2 ${kpis.roasCollected >= 3 ? 'text-profitable' : kpis.roasCollected >= 2 ? 'text-warning' : 'text-danger'}`}>
             {kpis.roasCollected.toFixed(2)}x
@@ -183,7 +183,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
         <div className="kpi-card">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
-            ROAS Contracté
+            ROAS Contracté (TTC)
           </div>
           <p className={`stat-value mt-2 ${kpis.roasContracted >= 3 ? 'text-profitable' : kpis.roasContracted >= 2 ? 'text-warning' : 'text-danger'}`}>
             {kpis.roasContracted.toFixed(2)}x
