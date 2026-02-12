@@ -19,6 +19,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel, Sale, Offer } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
 import { CloserStatsSection } from './CloserStatsSection';
+import { ForecastSection } from './ForecastSection';
 import { MonthSelector } from '@/components/layout/MonthSelector';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -457,9 +458,17 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             <span className={`font-display text-2xl font-bold ${kpis.netNetProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
               {kpis.netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
             </span>
-          </div>
         </div>
       </div>
+
+      {/* Forecast Section */}
+      <ForecastSection
+        tunnels={tunnels}
+        charges={charges}
+        salaries={salaries}
+        coachingExpenses={coachingExpenses}
+      />
+    </div>
     </div>
   );
 }
