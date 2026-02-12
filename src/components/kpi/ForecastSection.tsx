@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarRange, TrendingUp, Wallet, Receipt, AlertTriangle, Diamond } from 'lucide-react';
+import { CalendarRange, Wallet, Receipt, AlertTriangle, Diamond, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
@@ -35,7 +35,6 @@ interface MonthForecast {
 function getMonthOptions(): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = [];
   const now = new Date();
-  // From 6 months ago to 12 months in the future
   for (let i = -6; i <= 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -64,23 +63,7 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
   const [endMonth, setEndMonth] = useState(defaultEnd);
   const monthOptions = useMemo(() => getMonthOptions(), []);
 
-  // All sales across all tunnels
   const allSales = useMemo(() => tunnels.flatMap(t => t.sales), [tunnels]);
-
-  // Calculate average monthly fixed charges from recent data
-  const avgAdBudget = useMemo(() => {
-    const months = [...new Set(tunnels.map(t => t.month))];
-    if (months.length === 0) return 0;
-    const totalBudget = tunnels.reduce((s, t) => s + t.adBudget, 0);
-    return roundCurrency(totalBudget / months.length);
-  }, [tunnels]);
-
-  const avgCoaching = useMemo(() => {
-    const months = [...new Set(coachingExpenses.map(e => e.month))];
-    if (months.length === 0) return 0;
-    const total = coachingExpenses.reduce((s, e) => s + e.amount, 0);
-    return roundCurrency(total / months.length);
-  }, [coachingExpenses]);
 
   // Generate months in range
   const monthsInRange = useMemo(() => {
@@ -96,14 +79,13 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
     return result;
   }, [startMonth, endMonth]);
 
-  // Calculate forecast per month
+  // Calculate forecast per month — only REAL data, no projections for charges
   const forecasts = useMemo((): MonthForecast[] => {
     const taxRate = charges.taxPercent / 100;
     const totalSalaries = salaries.reduce((s, sal) => s + sal.monthlyAmount, 0);
-    const fixedChargesAmount = charges.advertising + charges.marketing + charges.software + charges.otherCosts;
 
     return monthsInRange.map(month => {
-      // Find all installment payments due in this month
+      // === REVENUE: project installment payments due this month from existing sales ===
       let revenueTTC = 0;
       let totalKlarna = 0;
       let salesWithCloserHT = 0;
@@ -111,26 +93,6 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
       let defaultedAmount = 0;
 
       allSales.forEach(sale => {
-        if (sale.isDefaulted) {
-          // Check if any installment falls in this month for defaulted tracking
-          const saleDate = new Date(sale.saleDate);
-          for (let i = 0; i < sale.numberOfPayments; i++) {
-            const payDate = new Date(saleDate);
-            payDate.setMonth(saleDate.getMonth() + i);
-            const payMonth = `${payDate.getFullYear()}-${String(payDate.getMonth() + 1).padStart(2, '0')}`;
-            if (payMonth === month) {
-              const klarnaAmt = sale.klarnaAmount || 0;
-              const cbAmt = sale.cbAmount || (sale.totalPrice - klarnaAmt);
-              if (i === 0) {
-                defaultedAmount += klarnaAmt + cbAmt / sale.numberOfPayments;
-              } else {
-                defaultedAmount += cbAmt / sale.numberOfPayments;
-              }
-            }
-          }
-          return;
-        }
-
         if (sale.isFullyRefunded) return;
 
         const saleDate = new Date(sale.saleDate);
@@ -143,28 +105,35 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
           payDate.setMonth(saleDate.getMonth() + i);
           const payMonth = `${payDate.getFullYear()}-${String(payDate.getMonth() + 1).padStart(2, '0')}`;
 
-          if (payMonth === month) {
-            // Check if already paid
-            const isPaid = i > 0 && (sale.paymentHistory || []).some(p => {
-              const pMonth = p.date.substring(0, 7);
-              return pMonth === month && p.verified;
-            });
+          if (payMonth !== month) continue;
 
+          if (sale.isDefaulted) {
             if (i === 0) {
-              // First payment: klarna + first CB installment
-              const paymentAmount = klarnaAmt + cbInstallment;
-              revenueTTC += paymentAmount;
-              totalKlarna += klarnaAmt;
-              if (sale.closerId) {
-                salesWithCloserHT += paymentAmount / (1 + taxRate);
-                klarnaWithCloser += klarnaAmt;
-              }
-            } else if (!isPaid) {
-              // Subsequent CB installments
-              revenueTTC += cbInstallment;
-              if (sale.closerId) {
-                salesWithCloserHT += cbInstallment / (1 + taxRate);
-              }
+              defaultedAmount += klarnaAmt + cbInstallment;
+            } else {
+              defaultedAmount += cbInstallment;
+            }
+            continue;
+          }
+
+          // Check if already paid
+          const isPaid = i > 0 && (sale.paymentHistory || []).some(p => {
+            const pMonth = p.date.substring(0, 7);
+            return pMonth === month && p.verified;
+          });
+
+          if (i === 0) {
+            const paymentAmount = klarnaAmt + cbInstallment;
+            revenueTTC += paymentAmount;
+            totalKlarna += klarnaAmt;
+            if (sale.closerId) {
+              salesWithCloserHT += paymentAmount / (1 + taxRate);
+              klarnaWithCloser += klarnaAmt;
+            }
+          } else if (!isPaid) {
+            revenueTTC += cbInstallment;
+            if (sale.closerId) {
+              salesWithCloserHT += cbInstallment / (1 + taxRate);
             }
           }
         }
@@ -174,40 +143,51 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
       const tva = roundCurrency(revenueTTC * taxRate / (1 + taxRate));
       const revenueHT = roundCurrency(revenueTTC - tva);
 
-      // Fees
+      // === CHARGES: only percentage-based deductions on projected revenue (always apply) ===
       const klarnaCost = roundCurrency(totalKlarna * (charges.klarnaPercent / 100));
       const cbTotal = roundCurrency(revenueTTC - totalKlarna);
       const processorCost = roundCurrency(cbTotal * (charges.paymentProcessorPercent / 100));
 
-      // Closers
       const klarnaFeeWithCloser = roundCurrency(klarnaWithCloser * (charges.klarnaPercent / 100));
       const closerBase = roundCurrency(salesWithCloserHT - klarnaFeeWithCloser);
       const closersCost = roundCurrency(closerBase * (charges.closersPercent / 100));
 
-      // Agency
       const agencyBase = roundCurrency(revenueHT - klarnaCost);
       let agencyCost = 0;
       if (agencyBase > charges.agencyThreshold) {
         agencyCost = roundCurrency((agencyBase - charges.agencyThreshold) * (charges.agencyPercent / 100));
       }
 
-      // Monthly coaching for this specific month or average
-      const monthCoaching = coachingExpenses
-        .filter(e => e.month === month)
-        .reduce((s, e) => s + e.amount, 0) || avgCoaching;
-
+      // === FIXED CHARGES: only from REAL data already entered for this month ===
+      // Tunnels for this month (ad budget)
       const adBudget = tunnels
         .filter(t => t.month === month)
-        .reduce((s, t) => s + t.adBudget, 0) || avgAdBudget;
+        .reduce((s, t) => s + t.adBudget, 0);
 
-      const totalCharges = roundCurrency(
-        processorCost + klarnaCost + closersCost + agencyCost +
-        fixedChargesAmount + monthCoaching + adBudget
+      // Coaching expenses actually entered for this month
+      const coachingCost = coachingExpenses
+        .filter(e => e.month === month)
+        .reduce((s, e) => s + e.amount, 0);
+
+      // Fixed charges (current values — they exist in the system)
+      // Only count them for months that have at least some activity (tunnels)
+      const hasTunnels = tunnels.some(t => t.month === month);
+      const fixedCharges = hasTunnels
+        ? (charges.advertising + charges.marketing + charges.software + charges.otherCosts)
+        : 0;
+
+      const salariesCost = totalSalaries;
+
+      const variableCharges = roundCurrency(
+        processorCost + klarnaCost + closersCost + agencyCost
       );
+      const realFixedCharges = roundCurrency(fixedCharges + coachingCost + adBudget);
 
-      const netProfit = roundCurrency(revenueHT - totalCharges);
+      const netProfit = roundCurrency(revenueHT - variableCharges - realFixedCharges);
       const associateCost = roundCurrency(netProfit > 0 ? netProfit * (charges.associatePercent / 100) : 0);
-      const netNetProfit = roundCurrency(netProfit - associateCost - totalSalaries);
+      const netNetProfit = roundCurrency(netProfit - associateCost - salariesCost);
+
+      const totalCharges = roundCurrency(variableCharges + realFixedCharges + associateCost + salariesCost);
 
       return {
         month,
@@ -219,17 +199,17 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
         klarnaCost,
         closersCost,
         agencyCost,
-        fixedCharges: fixedChargesAmount,
-        coachingCost: monthCoaching,
+        fixedCharges,
+        coachingCost,
         adBudget,
-        salariesCost: totalSalaries,
-        totalCharges: roundCurrency(totalCharges + associateCost + totalSalaries),
+        salariesCost,
+        totalCharges,
         netProfit,
         netNetProfit,
         defaultedAmount: roundCurrency(defaultedAmount),
       };
     });
-  }, [monthsInRange, allSales, charges, salaries, coachingExpenses, tunnels, avgAdBudget, avgCoaching]);
+  }, [monthsInRange, allSales, charges, salaries, coachingExpenses, tunnels]);
 
   // Totals
   const totals = useMemo(() => ({
@@ -249,8 +229,11 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
       <CardHeader className="pb-4">
         <CardTitle className="text-base flex items-center gap-2">
           <CalendarRange className="h-4 w-4 text-primary" />
-          Prévisionnel
+          Prévisionnel — Encaissements réels à venir
         </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Basé uniquement sur les échéances des ventes existantes. Les charges n'apparaissent que si elles sont déjà saisies.
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Date filters */}
@@ -284,7 +267,7 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
           <div className="kpi-card">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Receipt className="h-4 w-4" />
-              CA Prévisionnel HT
+              Encaissements Prévisionnels HT
             </div>
             <p className="stat-value mt-2 text-foreground">{fmt(totals.revenueHT)} €</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -312,19 +295,11 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
             </p>
           </div>
 
-          <div className="kpi-card">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <TrendingUp className="h-4 w-4" />
-              Total Charges Prévisionnelles
-            </div>
-            <p className="stat-value mt-2 text-foreground">{fmt(totals.totalCharges)} €</p>
-          </div>
-
           {totals.defaultedAmount > 0 && (
             <div className="kpi-card kpi-danger">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <AlertTriangle className="h-4 w-4" />
-                Impayés Potentiels
+                Impayés
               </div>
               <p className="stat-value mt-2 text-danger">{fmt(totals.defaultedAmount)} €</p>
             </div>
@@ -338,8 +313,8 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
               <thead>
                 <tr className="border-b border-border/50">
                   <th className="text-left py-2 px-3 text-muted-foreground font-medium">Mois</th>
-                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">CA TTC</th>
-                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">CA HT</th>
+                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">Encaissements TTC</th>
+                  <th className="text-right py-2 px-3 text-muted-foreground font-medium">Encaissements HT</th>
                   <th className="text-right py-2 px-3 text-muted-foreground font-medium">Charges</th>
                   <th className="text-right py-2 px-3 text-muted-foreground font-medium">Bén. Net</th>
                   <th className="text-right py-2 px-3 text-muted-foreground font-medium">Bén. Net Net</th>
@@ -351,16 +326,17 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
                     <td className="py-2 px-3 font-medium">{f.label}</td>
                     <td className="text-right py-2 px-3">{fmt(f.revenueTTC)} €</td>
                     <td className="text-right py-2 px-3">{fmt(f.revenueHT)} €</td>
-                    <td className="text-right py-2 px-3 text-danger">{fmt(f.totalCharges)} €</td>
-                    <td className={`text-right py-2 px-3 font-medium ${f.netProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
+                    <td className="text-right py-2 px-3 text-danger">
+                      {f.totalCharges > 0 ? `${fmt(f.totalCharges)} €` : '—'}
+                    </td>
+                    <td className={`text-right py-2 px-3 font-medium ${f.netProfit > 0 ? 'text-profitable' : f.netProfit < 0 ? 'text-danger' : ''}`}>
                       {fmt(f.netProfit)} €
                     </td>
-                    <td className={`text-right py-2 px-3 font-medium ${f.netNetProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
+                    <td className={`text-right py-2 px-3 font-medium ${f.netNetProfit > 0 ? 'text-profitable' : f.netNetProfit < 0 ? 'text-danger' : ''}`}>
                       {fmt(f.netNetProfit)} €
                     </td>
                   </tr>
                 ))}
-                {/* Totals row */}
                 <tr className="border-t-2 border-border font-semibold">
                   <td className="py-2 px-3">Total</td>
                   <td className="text-right py-2 px-3">{fmt(totals.revenueTTC)} €</td>
