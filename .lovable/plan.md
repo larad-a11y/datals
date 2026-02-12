@@ -1,76 +1,61 @@
 
+# Previsionnel Complet dans les KPI
 
-# Colonne "Offre" triable + Camembert de repartition des offres
+## Objectif
+Ajouter une section "Previsionnel" en bas de la page KPI, avec un filtre de dates (date de debut / date de fin), qui calcule automatiquement les projections financieres sur la periode selectionnee en se basant sur les donnees historiques.
 
-## Modifications
+## Fonctionnalites
 
-### 1. `src/components/sales/SalesTable.tsx`
+### Filtre de dates
+- Deux selecteurs de mois : "Du" (mois de debut) et "Au" (mois de fin)
+- Par defaut : mois actuel jusqu'a +3 mois dans le futur
+- Le previsionnel se recalcule automatiquement a chaque changement de dates
 
-- Ajouter `offers` dans les props (type `Offer[]`)
-- Ajouter `'offerName'` comme nouvelle valeur dans le type `SortKey`
-- Ajouter une colonne "Offre" dans le header (triable via `SortHeader`)
-- Ajouter le cas `'offerName'` dans la logique de tri (resolution du nom d'offre via `offerId`)
-- Afficher le nom de l'offre dans chaque ligne, ou "-" si aucune offre associee
+### Metriques previsionnelles calculees
+Le previsionnel agrege les donnees sur toute la periode selectionnee :
 
-### 2. `src/components/sales/SalesCRMPanel.tsx`
+1. **CA Previsionnel (TTC / HT / TVA)** -- base sur les echeances a venir de toutes les ventes existantes dont les paiements tombent dans la periode
+2. **Encaissements prevus** -- total des echeances projetees (saleDate + N mois) pour les ventes en cours de paiement echelonne
+3. **Charges previsionnelles** -- projection des charges fixes, salaires, coaching sur le nombre de mois de la periode
+4. **Benefice Net previsionnel** -- CA previsionnel HT moins toutes les charges projetees (processeur, closers, agence, pub, fixes, coaching)
+5. **Benefice Net Net previsionnel** -- apres part associe et salaires
+6. **Impayees potentiels** -- montant des echeances en retard ou en defaut sur la periode
 
-- Ajouter `offers` dans les props du composant (deja present via `offers?: Offer[]`)
-- Passer `offers` au composant `SalesTable`
-- Ajouter un camembert (PieChart de recharts) dans la section des stats globales, affichant la repartition des ventes par offre :
-  - Calcul : grouper `allSales` par `offerId`, compter le nombre de ventes par offre
-  - Les ventes sans offre seront regroupees sous "Sans offre"
-  - Utiliser `recharts` (deja installe) avec `PieChart`, `Pie`, `Cell`, `Tooltip`, `Legend`
-  - Le camembert sera place dans une carte dediee sous les KPI globaux
-
-### 3. `src/components/sales/SalesFilters.tsx`
-
-- Ajouter un filtre dropdown par offre (similaire au filtre closer)
-- Props supplementaires : `offers`, `selectedOfferId`, `onOfferChange`
-
-### 4. Filtrage dans `SalesCRMPanel.tsx`
-
-- Ajouter l'etat `selectedOfferId` et le filtre correspondant dans `filteredSales`
+### Presentation visuelle
+- Section dans une Card avec titre "Previsionnel" et icone
+- Filtres de dates en haut de la section
+- Grille de KPI cards similaire au style existant
+- Un mini-tableau recapitulatif mois par mois sur la periode selectionnee
 
 ---
 
 ## Details techniques
 
-### Tri par offre
+### Nouveau composant : `src/components/kpi/ForecastSection.tsx`
+- Composant autonome qui recoit `tunnels`, `charges`, `salaries`, `coachingExpenses` en props
+- Gere son propre state pour les dates de debut/fin
+- Calcule les projections en iterant sur chaque mois de la periode :
+  - Pour chaque mois, identifie les echeances de paiement attendues (basees sur `saleDate` + `numberOfPayments`)
+  - Projette les charges fixes mensuelles
+  - Applique les memes formules de calcul que `useBusinessCalculations` (TVA, frais processeur, closers, agence, etc.)
 
-```typescript
-type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName';
+### Modifications dans `src/components/kpi/KPIPanel.tsx`
+- Import et ajout du composant `ForecastSection` en bas de la page, apres le "Detail du calcul"
+- Passer les props necessaires (`tunnels`, `charges`, `salaries`, `coachingExpenses`)
 
-// Dans la logique de tri :
-case 'offerName':
-  const offerNameA = offers.find(o => o.id === a.offerId)?.name || '';
-  const offerNameB = offers.find(o => o.id === b.offerId)?.name || '';
-  comparison = offerNameA.localeCompare(offerNameB);
-  break;
+### Logique de projection
+```text
+Pour chaque mois M dans [debut..fin] :
+  1. Identifier toutes les ventes avec echeance dans M
+     (saleDate + i mois, pour i de 1 a numberOfPayments)
+  2. Sommer les montants attendus (hors impayes)
+  3. Appliquer les deductions : TVA, processeur, Klarna, closers, agence
+  4. Soustraire charges fixes + coaching + pub (budget moyen ou dernier mois connu)
+  5. Calculer benefice net et net net
 ```
 
-### Camembert des offres
+### Structure du tableau recapitulatif
+| Mois | CA Prevu TTC | CA Prevu HT | Charges | Benefice Net | Benefice Net Net |
+|------|-------------|-------------|---------|-------------|-----------------|
 
-```typescript
-// Calcul de la repartition
-const offerDistribution = useMemo(() => {
-  const counts: Record<string, { name: string; count: number; revenue: number }> = {};
-  allSales.forEach(sale => {
-    const offer = offers.find(o => o.id === sale.offerId);
-    const key = sale.offerId || 'none';
-    const name = offer?.name || 'Sans offre';
-    if (!counts[key]) counts[key] = { name, count: 0, revenue: 0 };
-    counts[key].count++;
-    counts[key].revenue += sale.totalPrice;
-  });
-  return Object.values(counts);
-}, [allSales, offers]);
-```
-
-### Fichiers modifies
-
-| Fichier | Action |
-|---------|--------|
-| `src/components/sales/SalesTable.tsx` | Ajouter colonne Offre + tri |
-| `src/components/sales/SalesCRMPanel.tsx` | Passer offers a SalesTable + camembert |
-| `src/components/sales/SalesFilters.tsx` | Ajouter filtre par offre |
-
+Aucune modification de base de donnees n'est necessaire -- tout est calcule cote client a partir des donnees existantes.
