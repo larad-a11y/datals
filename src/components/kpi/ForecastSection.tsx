@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { CalendarRange, Wallet, Receipt, AlertTriangle, Diamond, ArrowDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
 import { roundCurrency } from '@/lib/utils';
 
@@ -26,6 +27,7 @@ interface MonthForecast {
   coachingCost: number;
   adBudget: number;
   salariesCost: number;
+  associateCost: number;
   totalCharges: number;
   netProfit: number;
   netNetProfit: number;
@@ -49,6 +51,45 @@ function formatMonth(monthStr: string): string {
   const d = new Date(year, month - 1, 1);
   const label = d.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
   return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+interface ChargesBreakdownData {
+  processorCost: number;
+  klarnaCost: number;
+  closersCost: number;
+  agencyCost: number;
+  fixedCharges: number;
+  coachingCost: number;
+  adBudget: number;
+  associateCost: number;
+  salariesCost: number;
+}
+
+function ChargesBreakdown({ data, fmt }: { data: ChargesBreakdownData; fmt: (v: number) => string }) {
+  const items: { label: string; value: number }[] = [
+    { label: 'Frais processeur', value: data.processorCost },
+    { label: 'Frais Klarna', value: data.klarnaCost },
+    { label: 'Closers', value: data.closersCost },
+    { label: 'Agence', value: data.agencyCost },
+    { label: 'Charges fixes', value: data.fixedCharges },
+    { label: 'Coaching', value: data.coachingCost },
+    { label: 'Budget pub', value: data.adBudget },
+    { label: 'Part associé', value: data.associateCost },
+    { label: 'Salaires', value: data.salariesCost },
+  ].filter(i => i.value > 0);
+
+  if (items.length === 0) return <span>Aucune charge</span>;
+
+  return (
+    <div className="space-y-1 text-xs">
+      {items.map(i => (
+        <div key={i.label} className="flex justify-between gap-4">
+          <span className="text-muted-foreground">{i.label}</span>
+          <span className="font-medium">{fmt(i.value)} €</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }: ForecastSectionProps) {
@@ -203,6 +244,7 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
         coachingCost,
         adBudget,
         salariesCost,
+        associateCost,
         totalCharges,
         netProfit,
         netNetProfit,
@@ -309,6 +351,7 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
         {/* Monthly breakdown table */}
         {forecasts.length > 0 && (
           <div className="overflow-x-auto">
+          <TooltipProvider delayDuration={200}>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/50">
@@ -327,7 +370,16 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
                     <td className="text-right py-2 px-3">{fmt(f.revenueTTC)} €</td>
                     <td className="text-right py-2 px-3">{fmt(f.revenueHT)} €</td>
                     <td className="text-right py-2 px-3 text-danger">
-                      {f.totalCharges > 0 ? `${fmt(f.totalCharges)} €` : '—'}
+                      {f.totalCharges > 0 ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help underline decoration-dotted">{fmt(f.totalCharges)} €</span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <ChargesBreakdown data={f} fmt={fmt} />
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : '—'}
                     </td>
                     <td className={`text-right py-2 px-3 font-medium ${f.netProfit > 0 ? 'text-profitable' : f.netProfit < 0 ? 'text-danger' : ''}`}>
                       {fmt(f.netProfit)} €
@@ -341,7 +393,26 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
                   <td className="py-2 px-3">Total</td>
                   <td className="text-right py-2 px-3">{fmt(totals.revenueTTC)} €</td>
                   <td className="text-right py-2 px-3">{fmt(totals.revenueHT)} €</td>
-                  <td className="text-right py-2 px-3 text-danger">{fmt(totals.totalCharges)} €</td>
+                  <td className="text-right py-2 px-3 text-danger">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help underline decoration-dotted">{fmt(totals.totalCharges)} €</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <ChargesBreakdown data={{
+                          processorCost: roundCurrency(forecasts.reduce((s, f) => s + f.processorCost, 0)),
+                          klarnaCost: roundCurrency(forecasts.reduce((s, f) => s + f.klarnaCost, 0)),
+                          closersCost: roundCurrency(forecasts.reduce((s, f) => s + f.closersCost, 0)),
+                          agencyCost: roundCurrency(forecasts.reduce((s, f) => s + f.agencyCost, 0)),
+                          fixedCharges: roundCurrency(forecasts.reduce((s, f) => s + f.fixedCharges, 0)),
+                          coachingCost: roundCurrency(forecasts.reduce((s, f) => s + f.coachingCost, 0)),
+                          adBudget: roundCurrency(forecasts.reduce((s, f) => s + f.adBudget, 0)),
+                          associateCost: roundCurrency(forecasts.reduce((s, f) => s + f.associateCost, 0)),
+                          salariesCost: roundCurrency(forecasts.reduce((s, f) => s + f.salariesCost, 0)),
+                        }} fmt={fmt} />
+                      </TooltipContent>
+                    </Tooltip>
+                  </td>
                   <td className={`text-right py-2 px-3 ${totals.netProfit > 0 ? 'text-profitable' : 'text-danger'}`}>
                     {fmt(totals.netProfit)} €
                   </td>
@@ -351,6 +422,7 @@ export function ForecastSection({ tunnels, charges, salaries, coachingExpenses }
                 </tr>
               </tbody>
             </table>
+          </TooltipProvider>
           </div>
         )}
       </CardContent>
