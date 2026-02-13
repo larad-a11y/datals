@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   PieChart as PieChartIcon,
 } from 'lucide-react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { KPIData, Charges, Salary, CoachingExpense, Tunnel, Sale, Offer } from '@/types/business';
 import { KPITrendChart } from './KPITrendChart';
 import { CloserStatsSection } from './CloserStatsSection';
@@ -43,7 +43,6 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
   const fixedCharges = charges.advertising + charges.marketing + 
                        charges.software + charges.otherCosts;
 
-  const COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981', '#f97316', '#6366f1', '#ec4899'];
   
   const offerDistribution = useMemo(() => {
     const counts: Record<string, { name: string; count: number; revenue: number }> = {};
@@ -251,45 +250,38 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
       {/* Closer Stats Section */}
       <CloserStatsSection tunnels={tunnels} charges={charges} />
 
-      {/* Offer Distribution Pie Chart */}
-      {offerDistribution.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary" />
-              Répartition par offre
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={offerDistribution}
-                    dataKey="count"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={({ name, count }) => `${name} (${count})`}
-                  >
-                    {offerDistribution.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: number, name: string, props: any) => [
-                      `${value} vente${value > 1 ? 's' : ''} — ${props.payload.revenue.toLocaleString('fr-FR')} €`,
-                      name
-                    ]}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Offer Distribution Bar Chart */}
+      {offerDistribution.length > 0 && (() => {
+        const sortedData = [...offerDistribution].sort((a, b) => b.count - a.count);
+        const chartHeight = Math.max(200, sortedData.length * 40);
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <PieChartIcon className="h-4 w-4 text-primary" />
+                Répartition par offre
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ height: chartHeight }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={sortedData} margin={{ left: 20, right: 20, top: 5, bottom: 5 }}>
+                    <XAxis type="number" allowDecimals={false} />
+                    <YAxis dataKey="name" type="category" width={150} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value: number, _name: string, props: any) => [
+                        `${value} vente${value > 1 ? 's' : ''} — ${props.payload.revenue.toLocaleString('fr-FR')} €`,
+                        'Ventes'
+                      ]}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* KPI Trend Chart */}
       <KPITrendChart
