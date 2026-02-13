@@ -274,7 +274,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
                         'Ventes'
                       ]}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 12, fill: 'hsl(var(--foreground))' }} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
