@@ -1,45 +1,34 @@
 
 
-# Tooltip de detail des charges dans le previsionnel
+# Remplacer le camembert par un BarChart horizontal
 
-## Objectif
-Ajouter un tooltip au survol de la colonne "Charges" dans le tableau previsionnel, affichant le detail de chaque poste de charge pour le mois concerne.
+## Probleme
+Le PieChart "Repartition par offre" est illisible quand il y a beaucoup d'offres : les labels se chevauchent, les petites parts sont invisibles, et la legende est surchargee.
 
-## Comportement
-Quand l'utilisateur passe la souris sur le montant des charges d'une ligne du tableau, un tooltip apparait avec le detail :
-- Frais processeur
-- Frais Klarna
-- Commission closers
-- Commission agence
-- Charges fixes
-- Coaching
-- Budget pub
-- Part associe
-- Salaires
+## Solution
+Remplacer le PieChart par un **BarChart horizontal** trie par nombre de ventes decroissant. Chaque barre affiche le nom de l'offre a gauche et la valeur a droite, avec un tooltip detaille au survol.
 
-Seuls les postes dont le montant est superieur a 0 seront affiches.
+### Avantages
+- Lisible quel que soit le nombre d'offres
+- Comparaison directe entre offres facilitee
+- Labels toujours visibles sans chevauchement
+- Hauteur auto-adaptee au nombre d'offres
+
+## Presentation visuelle
+- Barres horizontales triees du plus grand au plus petit
+- Couleur primaire (orange/coral) pour les barres
+- Tooltip au survol : nombre de ventes + CA genere
+- Hauteur dynamique : 40px par offre (minimum 200px)
 
 ## Details techniques
 
-### Modification de `src/components/kpi/ForecastSection.tsx`
-- Importer `Tooltip`, `TooltipTrigger`, `TooltipContent`, `TooltipProvider` depuis `@/components/ui/tooltip`
-- Ajouter `associateCost` dans l'objet `MonthForecast` pour pouvoir l'afficher dans le tooltip
-- Envelopper le composant (ou la zone du tableau) dans un `TooltipProvider`
-- Remplacer la cellule "Charges" de chaque ligne par un `Tooltip` dont le `TooltipTrigger` est le montant, et le `TooltipContent` liste chaque charge non nulle avec son libelle et son montant
-- Faire de meme pour la ligne "Total" en sommant chaque poste sur toute la periode
-
-### Structure du tooltip
-```text
-Frais processeur : XXX €
-Frais Klarna : XXX €
-Closers : XXX €
-Agence : XXX €
-Charges fixes : XXX €
-Coaching : XXX €
-Budget pub : XXX €
-Part associe : XXX €
-Salaires : XXX €
-```
-
-Aucune nouvelle dependance ni modification de base de donnees requise.
+### Modification de `src/components/kpi/KPIPanel.tsx`
+- Remplacer le `PieChart` + `Pie` + `Cell` + `Legend` par un `BarChart` horizontal avec `layout="vertical"`
+- Trier `offerDistribution` par `count` decroissant avant affichage
+- Utiliser `YAxis` avec `dataKey="name"` pour les labels d'offres a gauche
+- `XAxis` pour l'echelle numerique
+- `Bar` avec `dataKey="count"` et couleur primaire
+- Hauteur dynamique : `Math.max(200, offerDistribution.length * 40)` px
+- Tooltip personnalise affichant ventes + CA
+- Supprimer les imports `Pie`, `Cell`, `Legend` devenus inutiles (si non utilises ailleurs)
 
