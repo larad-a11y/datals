@@ -206,6 +206,10 @@ export function useBusinessData() {
     const installmentCollectedThisMonth = 0;
     const remainingToCollectThisMonth = 0;
 
+    // Contracted profits (placeholder for legacy hook)
+    const contractedNetProfit = 0;
+    const contractedNetNetProfit = 0;
+
     return {
       contractedRevenue: totalContracted,
       collectedRevenue: totalCollectedTTC,
@@ -220,6 +224,8 @@ export function useBusinessData() {
       costPerWebinarAttendee,
       netProfit,
       netNetProfit,
+      contractedNetProfit,
+      contractedNetNetProfit,
       totalCalls,
       totalClosedCalls,
       totalAdBudget,
