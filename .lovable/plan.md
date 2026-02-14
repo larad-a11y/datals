@@ -1,34 +1,25 @@
 
 
-# Remplacer le camembert par un BarChart horizontal
+# Ajouter le CA Contracte total sous les benefices Net et Net Net
 
-## Probleme
-Le PieChart "Repartition par offre" est illisible quand il y a beaucoup d'offres : les labels se chevauchent, les petites parts sont invisibles, et la legende est surchargee.
+## Objectif
+Afficher en petit sous le montant du Benefice Net Net et du Benefice Net, le montant total du CA Contracte (en euros). Cela permet de voir d'un coup d'oeil le volume total contracte par rapport au profit genere.
 
-## Solution
-Remplacer le PieChart par un **BarChart horizontal** trie par nombre de ventes decroissant. Chaque barre affiche le nom de l'offre a gauche et la valeur a droite, avec un tooltip detaille au survol.
+## Modification
 
-### Avantages
-- Lisible quel que soit le nombre d'offres
-- Comparaison directe entre offres facilitee
-- Labels toujours visibles sans chevauchement
-- Hauteur auto-adaptee au nombre d'offres
+### Fichier : `src/components/kpi/KPIPanel.tsx`
 
-## Presentation visuelle
-- Barres horizontales triees du plus grand au plus petit
-- Couleur primaire (orange/coral) pour les barres
-- Tooltip au survol : nombre de ventes + CA genere
-- Hauteur dynamique : 40px par offre (minimum 200px)
+**Carte "Benefice Net Net"** (ligne 82-84) : ajouter apres le montant une ligne en petit :
+```
+CA Contracté : XXX XXX €
+```
 
-## Details techniques
+**Carte "Benefice Net"** (ligne 92-94) : meme ajout :
+```
+CA Contracté : XXX XXX €
+```
 
-### Modification de `src/components/kpi/KPIPanel.tsx`
-- Remplacer le `PieChart` + `Pie` + `Cell` + `Legend` par un `BarChart` horizontal avec `layout="vertical"`
-- Trier `offerDistribution` par `count` decroissant avant affichage
-- Utiliser `YAxis` avec `dataKey="name"` pour les labels d'offres a gauche
-- `XAxis` pour l'echelle numerique
-- `Bar` avec `dataKey="count"` et couleur primaire
-- Hauteur dynamique : `Math.max(200, offerDistribution.length * 40)` px
-- Tooltip personnalise affichant ventes + CA
-- Supprimer les imports `Pie`, `Cell`, `Legend` devenus inutiles (si non utilises ailleurs)
+Le montant affiche sera `kpis.contractedRevenue` formate en francais. Le style utilisera le pattern existant `text-xs text-muted-foreground mt-1`, identique aux sous-titres des cartes CA Collecte et CA Contracte juste a cote.
+
+Aucune nouvelle dependance ni modification de base de donnees requise.
 
