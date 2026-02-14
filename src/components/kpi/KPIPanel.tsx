@@ -83,7 +83,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             {kpis.netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            CA Contracté : {kpis.contractedRevenue.toLocaleString('fr-FR')} €
+            Contracté : {kpis.contractedNetNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
             {kpis.netProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            CA Contracté : {kpis.contractedRevenue.toLocaleString('fr-FR')} €
+            Contracté : {kpis.contractedNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
         </div>
 

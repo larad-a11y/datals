@@ -192,6 +192,8 @@ export interface KPIData {
   costPerWebinarAttendee: number; // Coût par présent webinaire
   netProfit: number;
   netNetProfit: number;
+  contractedNetProfit: number; // Bénéfice Net si tout le contracté est encaissé
+  contractedNetNetProfit: number; // Bénéfice Net Net si tout le contracté est encaissé
   totalCalls: number;
   totalClosedCalls: number;
   totalAdBudget: number;

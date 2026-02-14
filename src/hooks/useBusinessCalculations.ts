@@ -168,6 +168,31 @@ export function useBusinessCalculations({
     // 10. Bénéfice Net Net = Bénéfice Net - Part Associé - Salaires
     const netNetProfit = roundCurrency(netProfit - associateCost - totalSalaries);
 
+    // === BÉNÉFICES CONTRACTÉS (si tout le CA contracté est encaissé) ===
+    const contractedHT = roundCurrency(totalContracted / (1 + taxRate));
+    // Appliquer les mêmes proportions de coûts sur le contracté
+    const revenueRatio = totalCollectedTTC > 0 ? totalContracted / totalCollectedTTC : 0;
+    const contractedProcessorCost = roundCurrency(paymentProcessorCost * revenueRatio);
+    const contractedKlarnaCost = roundCurrency(klarnaCost * revenueRatio);
+    const contractedClosersCost = roundCurrency(closersCost * revenueRatio);
+    // Agence : recalculer sur contractedHT (seuil non-linéaire)
+    const contractedAgencyBaseHT = roundCurrency(contractedHT - contractedKlarnaCost);
+    let contractedAgencyCost = 0;
+    if (contractedAgencyBaseHT > charges.agencyThreshold) {
+      const excessHT = contractedAgencyBaseHT - charges.agencyThreshold;
+      contractedAgencyCost = roundCurrency(excessHT * (charges.agencyPercent / 100));
+    }
+    const contractedNetProfit = roundCurrency(contractedHT
+      - contractedProcessorCost
+      - contractedKlarnaCost
+      - contractedClosersCost
+      - contractedAgencyCost
+      - totalAdBudget
+      - fixedCharges
+      - totalCoachingExpenses);
+    const contractedAssociateCost = roundCurrency(contractedNetProfit > 0 ? contractedNetProfit * (charges.associatePercent / 100) : 0);
+    const contractedNetNetProfit = roundCurrency(contractedNetProfit - contractedAssociateCost - totalSalaries);
+
     // ROAS Collecté = CA TTC / Budget Pub (multiplicateur)
     const roasCollected = totalAdBudget > 0 
       ? roundCurrency(totalCollectedTTC / totalAdBudget)
@@ -302,6 +327,8 @@ export function useBusinessCalculations({
       costPerWebinarAttendee,
       netProfit,
       netNetProfit,
+      contractedNetProfit,
+      contractedNetNetProfit,
       totalCalls,
       totalClosedCalls,
       totalAdBudget,
