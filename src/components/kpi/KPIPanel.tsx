@@ -82,6 +82,9 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
           <p className={`stat-value mt-2 text-${getTrend(kpis.netNetProfit)}`}>
             {kpis.netNetProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
           </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            CA Contracté : {kpis.contractedRevenue.toLocaleString('fr-FR')} €
+          </p>
         </div>
 
         <div className={`kpi-card kpi-${getTrend(kpis.netProfit)}`}>
@@ -91,6 +94,9 @@ export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, s
           </div>
           <p className={`stat-value mt-2 text-${getTrend(kpis.netProfit)}`}>
             {kpis.netProfit.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            CA Contracté : {kpis.contractedRevenue.toLocaleString('fr-FR')} €
           </p>
         </div>
 
