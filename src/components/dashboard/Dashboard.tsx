@@ -463,6 +463,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
                   charges={charges}
                   salaries={salaries}
                   coachingExpenses={coachingExpenses.filter(e => e.month === selectedMonth)}
+                  totalCollectedTTC={kpis.collectedRevenue}
                 />
               </div>
             ))}
