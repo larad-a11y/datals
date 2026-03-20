@@ -315,6 +315,3 @@ export function useBusinessCalculations({
     kpis,
   };
 }
-```
-
----
