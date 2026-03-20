@@ -1,5 +1,3 @@
-
-```typescript
 import { useMemo, useState } from 'react';
 import { Tunnel, Charges, Salary, KPIData, CoachingExpense } from '@/types/business';
 import { roundCurrency } from '@/lib/utils';
