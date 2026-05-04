@@ -179,6 +179,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
+      clientEmail: formData.clientEmail || undefined,
       closerId: formData.closerId || undefined,
       saleDate: formData.saleDate,
       offerId: formData.offerId || undefined,
