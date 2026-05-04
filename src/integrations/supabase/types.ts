@@ -148,6 +148,7 @@ export type Database = {
           amount_collected: number | null
           base_price: number
           cb_amount: number | null
+          client_email: string | null
           client_name: string | null
           closer_id: string | null
           created_at: string | null
@@ -175,6 +176,7 @@ export type Database = {
           amount_collected?: number | null
           base_price: number
           cb_amount?: number | null
+          client_email?: string | null
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           amount_collected?: number | null
           base_price?: number
           cb_amount?: number | null
+          client_email?: string | null
           client_name?: string | null
           closer_id?: string | null
           created_at?: string | null
