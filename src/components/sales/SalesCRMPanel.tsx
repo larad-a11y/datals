@@ -242,6 +242,23 @@ export function SalesCRMPanel({
             </div>
           </div>
         </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/20">
+              <RotateCcw className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Remboursements</p>
+              <p className="font-display text-xl font-bold text-destructive">
+                {stats.totalRefunded.toLocaleString('fr-FR')} €
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {stats.refundedCount} vente{stats.refundedCount > 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
