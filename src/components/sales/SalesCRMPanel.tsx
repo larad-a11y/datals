@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Receipt, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw } from 'lucide-react';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
@@ -142,6 +142,8 @@ export function SalesCRMPanel({
     const totalCollected = filteredSales.reduce((sum, s) => sum + s.amountCollected, 0);
     const remaining = totalContracted - totalCollected;
     const paidCount = filteredSales.filter((s) => s.totalPrice - s.amountCollected <= 0).length;
+    const totalRefunded = filteredSales.reduce((sum, s) => sum + (s.refundedAmount || 0), 0);
+    const refundedCount = filteredSales.filter((s) => (s.refundedAmount || 0) > 0).length;
 
     return {
       totalContracted,
@@ -150,6 +152,8 @@ export function SalesCRMPanel({
       totalSales: filteredSales.length,
       paidCount,
       pendingCount: filteredSales.length - paidCount,
+      totalRefunded,
+      refundedCount,
     };
   }, [filteredSales]);
 
@@ -181,7 +185,7 @@ export function SalesCRMPanel({
       </div>
 
       {/* Global Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="kpi-card kpi-profitable">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-profitable/20">
