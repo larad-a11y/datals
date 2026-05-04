@@ -138,20 +138,20 @@ export function SalesCRMPanel({
 
   // Global stats
   const stats = useMemo(() => {
-    const totalContracted = allSales.reduce((sum, s) => sum + s.totalPrice, 0);
-    const totalCollected = allSales.reduce((sum, s) => sum + s.amountCollected, 0);
+    const totalContracted = filteredSales.reduce((sum, s) => sum + s.totalPrice, 0);
+    const totalCollected = filteredSales.reduce((sum, s) => sum + s.amountCollected, 0);
     const remaining = totalContracted - totalCollected;
-    const paidCount = allSales.filter((s) => s.totalPrice - s.amountCollected <= 0).length;
+    const paidCount = filteredSales.filter((s) => s.totalPrice - s.amountCollected <= 0).length;
 
     return {
       totalContracted,
       totalCollected,
       remaining,
-      totalSales: allSales.length,
+      totalSales: filteredSales.length,
       paidCount,
-      pendingCount: allSales.length - paidCount,
+      pendingCount: filteredSales.length - paidCount,
     };
-  }, [allSales]);
+  }, [filteredSales]);
 
   const handleEditSale = (sale: EnrichedSale) => {
     setEditingSale(sale);
