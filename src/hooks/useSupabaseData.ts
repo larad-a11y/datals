@@ -506,6 +506,7 @@ export function useSupabaseData() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Sale> }) => {
       const dbUpdates: Record<string, unknown> = {};
       if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName || null;
+      if (updates.clientEmail !== undefined) dbUpdates.client_email = updates.clientEmail || null;
       if (updates.closerId !== undefined) dbUpdates.closer_id = updates.closerId || null;
       if (updates.saleDate !== undefined) dbUpdates.sale_date = updates.saleDate;
       if (updates.offerId !== undefined) dbUpdates.offer_id = updates.offerId || null;
