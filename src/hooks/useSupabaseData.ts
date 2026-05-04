@@ -53,6 +53,7 @@ interface DbSale {
   user_id: string;
   tunnel_id: string | null;
   client_name: string | null;
+  client_email: string | null;
   closer_id: string | null;
   sale_date: string;
   offer_id: string | null;
