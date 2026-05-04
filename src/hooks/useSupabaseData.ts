@@ -146,6 +146,7 @@ function dbSaleToSale(dbSale: DbSale): Sale {
     id: dbSale.id,
     tunnelId: dbSale.tunnel_id || '',
     clientName: dbSale.client_name || undefined,
+    clientEmail: (dbSale as any).client_email || undefined,
     closerId: dbSale.closer_id || undefined,
     saleDate: dbSale.sale_date,
     offerId: dbSale.offer_id || undefined,
