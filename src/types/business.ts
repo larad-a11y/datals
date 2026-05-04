@@ -61,6 +61,7 @@ export interface Sale {
   tunnelId: string;
   tunnelName?: string;
   clientName?: string;
+  clientEmail?: string;
   closerId?: string; // Reference to a closer (optional - no closer = no commission)
   saleDate: string; // Date de la vente
   offerId?: string; // Reference to an offer
