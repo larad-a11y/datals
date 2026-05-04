@@ -139,37 +139,49 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses, totalC
       </div>
 
       {/* Revenus & Profits */}
-      <div className="mb-4">
-        <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">💰 Revenus & Profits</p>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
-          <MetricCard
-            label="CA Collecté HT"
-            value={`${collectedRevenueHT.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
-          />
-          <MetricCard
-            label="CA Contracté"
-            value={`${contractedRevenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
-          />
-          <MetricCard
-            label="Bénéfice Net"
-            value={`${netProfit.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
-            valueColor={netProfit > 0 ? "text-profitable" : "text-danger"}
-            subtitle="Avant part associé"
-          />
-          <MetricCard
-            label="Net Net (hors sal.)"
-            value={`${netNetProfitNoSalaries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
-            valueColor={netNetProfitNoSalaries > 0 ? "text-profitable" : "text-danger"}
-            subtitle="Sans salaires"
-          />
-          <MetricCard
-            label="Net Net (avec sal.)"
-            value={`${netNetProfit.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
-            valueColor={netNetProfit > 0 ? "text-profitable" : "text-danger"}
-            subtitle="Après salaires"
-          />
-        </div>
-      </div>
+      {(() => {
+        const tunnelRefunded = tunnel.sales.reduce((sum, s) => sum + (s.refundedAmount || 0), 0);
+        const tunnelRefundedCount = tunnel.sales.filter((s) => (s.refundedAmount || 0) > 0).length;
+        return (
+          <div className="mb-4">
+            <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">💰 Revenus & Profits</p>
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-2">
+              <MetricCard
+                label="CA Collecté HT"
+                value={`${collectedRevenueHT.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+              />
+              <MetricCard
+                label="CA Contracté"
+                value={`${contractedRevenue.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+              />
+              <MetricCard
+                label="Bénéfice Net"
+                value={`${netProfit.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+                valueColor={netProfit > 0 ? "text-profitable" : "text-danger"}
+                subtitle="Avant part associé"
+              />
+              <MetricCard
+                label="Net Net (hors sal.)"
+                value={`${netNetProfitNoSalaries.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+                valueColor={netNetProfitNoSalaries > 0 ? "text-profitable" : "text-danger"}
+                subtitle="Sans salaires"
+              />
+              <MetricCard
+                label="Net Net (avec sal.)"
+                value={`${netNetProfit.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+                valueColor={netNetProfit > 0 ? "text-profitable" : "text-danger"}
+                subtitle="Après salaires"
+              />
+              <MetricCard
+                label="Remboursements"
+                value={`${tunnelRefunded.toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`}
+                valueColor={tunnelRefunded > 0 ? "text-danger" : "text-foreground"}
+                subtitle={`${tunnelRefundedCount} vente${tunnelRefundedCount > 1 ? "s" : ""}`}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Performance Pub */}
       <div className="mb-4 pt-4 border-t border-border/30">
