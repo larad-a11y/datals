@@ -23,6 +23,7 @@ interface SaleFormProps {
 export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers, closers, charges }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
+    clientEmail: sale?.clientEmail || '',
     closerId: sale?.closerId || '',
     saleDate: sale?.saleDate || new Date().toISOString().split('T')[0],
     offerId: sale?.offerId || '',
