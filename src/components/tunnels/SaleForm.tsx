@@ -279,6 +279,19 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         />
       </div>
 
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          ✉️ Email du client
+        </label>
+        <input
+          type="email"
+          value={formData.clientEmail}
+          onChange={(e) => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
+          className="input-field w-full"
+          placeholder="Ex: jean.dupont@email.com"
+        />
+      </div>
+
       {/* Closer selection */}
       <div>
         <label className="mb-1.5 block text-sm font-medium text-foreground">
