@@ -200,6 +200,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     if (inline) {
       setFormData({
         clientName: '',
+        clientEmail: '',
         closerId: '',
         saleDate: new Date().toISOString().split('T')[0],
         offerId: '',
