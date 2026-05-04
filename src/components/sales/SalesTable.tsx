@@ -221,13 +221,18 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   {new Date(sale.createdAt).toLocaleDateString('fr-FR')}
                 </TableCell>
                 <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    {sale.clientName || <span className="text-muted-foreground italic">Sans nom</span>}
-                    {saleIsDefaulted && (
-                      <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        Impayé
-                      </Badge>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      {sale.clientName || <span className="text-muted-foreground italic">Sans nom</span>}
+                      {saleIsDefaulted && (
+                        <Badge variant="destructive" className="text-xs px-1.5 py-0.5">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Impayé
+                        </Badge>
+                      )}
+                    </div>
+                    {sale.clientEmail && (
+                      <span className="text-xs text-muted-foreground">{sale.clientEmail}</span>
                     )}
                   </div>
                 </TableCell>
