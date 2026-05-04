@@ -466,6 +466,7 @@ export function useSupabaseData() {
         user_id: user!.id,
         tunnel_id: tunnelId,
         client_name: sale.clientName || null,
+        client_email: sale.clientEmail || null,
         closer_id: sale.closerId || null,
         sale_date: sale.saleDate,
         offer_id: sale.offerId || null,
