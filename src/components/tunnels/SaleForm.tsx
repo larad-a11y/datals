@@ -23,6 +23,7 @@ interface SaleFormProps {
 export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false, installmentPlans, offers, closers, charges }: SaleFormProps) {
   const [formData, setFormData] = useState({
     clientName: sale?.clientName || '',
+    clientEmail: sale?.clientEmail || '',
     closerId: sale?.closerId || '',
     saleDate: sale?.saleDate || new Date().toISOString().split('T')[0],
     offerId: sale?.offerId || '',
@@ -178,6 +179,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     onSave({
       tunnelId: sale?.tunnelId || tunnelId,
       clientName: formData.clientName,
+      clientEmail: formData.clientEmail || undefined,
       closerId: formData.closerId || undefined,
       saleDate: formData.saleDate,
       offerId: formData.offerId || undefined,
@@ -199,6 +201,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     if (inline) {
       setFormData({
         clientName: '',
+        clientEmail: '',
         closerId: '',
         saleDate: new Date().toISOString().split('T')[0],
         offerId: '',
@@ -273,6 +276,19 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           className="input-field w-full"
           placeholder="Ex: Jean Dupont"
           required
+        />
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">
+          ✉️ Email du client
+        </label>
+        <input
+          type="email"
+          value={formData.clientEmail}
+          onChange={(e) => setFormData(prev => ({ ...prev, clientEmail: e.target.value }))}
+          className="input-field w-full"
+          placeholder="Ex: jean.dupont@email.com"
         />
       </div>
 

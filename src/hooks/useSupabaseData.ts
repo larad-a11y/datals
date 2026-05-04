@@ -53,6 +53,7 @@ interface DbSale {
   user_id: string;
   tunnel_id: string | null;
   client_name: string | null;
+  client_email: string | null;
   closer_id: string | null;
   sale_date: string;
   offer_id: string | null;
@@ -145,6 +146,7 @@ function dbSaleToSale(dbSale: DbSale): Sale {
     id: dbSale.id,
     tunnelId: dbSale.tunnel_id || '',
     clientName: dbSale.client_name || undefined,
+    clientEmail: (dbSale as any).client_email || undefined,
     closerId: dbSale.closer_id || undefined,
     saleDate: dbSale.sale_date,
     offerId: dbSale.offer_id || undefined,
@@ -464,6 +466,7 @@ export function useSupabaseData() {
         user_id: user!.id,
         tunnel_id: tunnelId,
         client_name: sale.clientName || null,
+        client_email: sale.clientEmail || null,
         closer_id: sale.closerId || null,
         sale_date: sale.saleDate,
         offer_id: sale.offerId || null,
@@ -503,6 +506,7 @@ export function useSupabaseData() {
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Sale> }) => {
       const dbUpdates: Record<string, unknown> = {};
       if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName || null;
+      if (updates.clientEmail !== undefined) dbUpdates.client_email = updates.clientEmail || null;
       if (updates.closerId !== undefined) dbUpdates.closer_id = updates.closerId || null;
       if (updates.saleDate !== undefined) dbUpdates.sale_date = updates.saleDate;
       if (updates.offerId !== undefined) dbUpdates.offer_id = updates.offerId || null;
