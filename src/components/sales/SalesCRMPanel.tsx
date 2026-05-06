@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw } from 'lucide-react';
+import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download } from 'lucide-react';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
