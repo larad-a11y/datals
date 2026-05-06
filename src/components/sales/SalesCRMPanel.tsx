@@ -172,6 +172,53 @@ export function SalesCRMPanel({
     onDeleteSale(tunnelId, saleId);
   };
 
+  const handleExportCSV = () => {
+    const headers = [
+      'Date vente', 'Client', 'Email', 'Tunnel', 'Type tunnel', 'Date tunnel', 'Mois',
+      'Closer', 'Offre', 'Méthode paiement', 'Prix de base', 'Prix total',
+      'Nb échéances', 'Encaissé', 'Reste', 'Remboursé', 'Statut',
+      'Montant CB', 'Montant Klarna', 'Prochaine échéance'
+    ];
+
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    const getStatus = (s: EnrichedSale) => {
+      if (s.isFullyRefunded) return 'Remboursée';
+      const remaining = s.totalPrice - s.amountCollected;
+      if (s.isDefaulted) return 'Impayé';
+      if (remaining <= 0) return 'Payée';
+      if (s.amountCollected > 0) return 'Partielle';
+      return 'En attente';
+    };
+
+    const closerName = (id?: string) => closers.find((c) => c.id === id)?.name || '';
+    const offerName = (id?: string) => offers.find((o) => o.id === id)?.name || '';
+
+    const rows = filteredSales.map((s) => [
+      s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
+      s.tunnelType || '', s.tunnelDate || '', s.tunnelMonth || '',
+      closerName(s.closerId), offerName(s.offerId), s.paymentMethod || '',
+      s.basePrice, s.totalPrice, s.numberOfPayments || 1,
+      s.amountCollected, s.totalPrice - s.amountCollected, s.refundedAmount || 0,
+      getStatus(s), s.cbAmount ?? '', s.klarnaAmount ?? '', s.nextPaymentDate || '',
+    ].map(escape).join(','));
+
+    const csv = '\uFEFF' + [headers.map(escape).join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `ventes_${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
