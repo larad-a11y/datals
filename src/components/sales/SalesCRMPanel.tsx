@@ -194,7 +194,10 @@ export function SalesCRMPanel({
       return 'En attente';
     };
 
-    const closerName = (id?: string) => closers.find((c) => c.id === id)?.name || '';
+    const closerName = (id?: string) => {
+      const c = closers.find((c) => c.id === id);
+      return c ? `${c.firstName} ${c.lastName}`.trim() : '';
+    };
     const offerName = (id?: string) => offers.find((o) => o.id === id)?.name || '';
 
     const rows = filteredSales.map((s) => [
