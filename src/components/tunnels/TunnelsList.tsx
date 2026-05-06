@@ -219,6 +219,14 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
                         </span>
                       </div>
                     )}
+                    {totalRefunded > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">↩️ Remboursements ({refundedCount})</span>
+                        <span className="text-sm font-medium text-danger">
+                          -{totalRefunded.toLocaleString('fr-FR')} €
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* ROAS */}
