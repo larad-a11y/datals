@@ -183,7 +183,11 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Ventes / Calls</span>
                     <span className="font-medium text-foreground">
-                      {actualSalesCount} / {tunnel.callsGenerated}
+                      {actualSalesCount}
+                      {refundedCount > 0 && (
+                        <span className="text-danger"> (-{refundedCount} remb.)</span>
+                      )}
+                      {' / '}{tunnel.callsGenerated}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
