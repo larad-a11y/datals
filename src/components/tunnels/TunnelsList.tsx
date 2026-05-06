@@ -104,16 +104,18 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTunnels.map((tunnel) => {
-            const salesContracted = tunnel.sales.reduce((sum, s) => sum + s.totalPrice, 0);
-            const salesCollected = tunnel.sales.reduce((sum, s) => sum + s.amountCollected, 0);
-            const contractedRevenue = salesContracted > 0 ? salesContracted : tunnel.callsClosed * tunnel.averagePrice;
-            const collectedAmount = salesCollected > 0 ? salesCollected : tunnel.collectedAmount;
+            const totalRefunded = tunnel.sales.reduce((sum, s) => sum + (s.refundedAmount || 0), 0);
+            const refundedCount = tunnel.sales.filter((s) => (s.refundedAmount || 0) > 0).length;
+            const salesContracted = tunnel.sales.reduce((sum, s) => sum + s.totalPrice - (s.refundedAmount || 0), 0);
+            const salesCollected = tunnel.sales.reduce((sum, s) => sum + s.amountCollected - (s.refundedAmount || 0), 0);
+            const contractedRevenue = tunnel.sales.length > 0 ? salesContracted : tunnel.callsClosed * tunnel.averagePrice;
+            const collectedAmount = tunnel.sales.length > 0 ? salesCollected : tunnel.collectedAmount;
             
             // ROAS = CA / Budget (multiplicateur)
             const roas = tunnel.adBudget > 0 
               ? collectedAmount / tunnel.adBudget 
               : 0;
-            // Use actual sales count instead of manual callsClosed
+            // Total ventes (incluant remboursées) pour visibilité
             const actualSalesCount = tunnel.sales.length;
             const closingRate = tunnel.callsGenerated > 0 
               ? (actualSalesCount / tunnel.callsGenerated) * 100 
@@ -181,7 +183,11 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Ventes / Calls</span>
                     <span className="font-medium text-foreground">
-                      {actualSalesCount} / {tunnel.callsGenerated}
+                      {actualSalesCount}
+                      {refundedCount > 0 && (
+                        <span className="text-danger"> (-{refundedCount} remb.)</span>
+                      )}
+                      {' / '}{tunnel.callsGenerated}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -210,6 +216,14 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
                         <span className="text-sm text-muted-foreground">Reste à encaisser</span>
                         <span className="text-sm font-medium text-warning">
                           {remainingAmount.toLocaleString('fr-FR')} €
+                        </span>
+                      </div>
+                    )}
+                    {totalRefunded > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">↩️ Remboursements ({refundedCount})</span>
+                        <span className="text-sm font-medium text-danger">
+                          -{totalRefunded.toLocaleString('fr-FR')} €
                         </span>
                       </div>
                     )}
