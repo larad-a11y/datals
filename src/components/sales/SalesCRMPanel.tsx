@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw } from 'lucide-react';
+import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download } from 'lucide-react';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
@@ -172,6 +172,56 @@ export function SalesCRMPanel({
     onDeleteSale(tunnelId, saleId);
   };
 
+  const handleExportCSV = () => {
+    const headers = [
+      'Date vente', 'Client', 'Email', 'Tunnel', 'Type tunnel', 'Date tunnel', 'Mois',
+      'Closer', 'Offre', 'Méthode paiement', 'Prix de base', 'Prix total',
+      'Nb échéances', 'Encaissé', 'Reste', 'Remboursé', 'Statut',
+      'Montant CB', 'Montant Klarna', 'Prochaine échéance'
+    ];
+
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+
+    const getStatus = (s: EnrichedSale) => {
+      if (s.isFullyRefunded) return 'Remboursée';
+      const remaining = s.totalPrice - s.amountCollected;
+      if (s.isDefaulted) return 'Impayé';
+      if (remaining <= 0) return 'Payée';
+      if (s.amountCollected > 0) return 'Partielle';
+      return 'En attente';
+    };
+
+    const closerName = (id?: string) => {
+      const c = closers.find((c) => c.id === id);
+      return c ? `${c.firstName} ${c.lastName}`.trim() : '';
+    };
+    const offerName = (id?: string) => offers.find((o) => o.id === id)?.name || '';
+
+    const rows = filteredSales.map((s) => [
+      s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
+      s.tunnelType || '', s.tunnelDate || '', s.tunnelMonth || '',
+      closerName(s.closerId), offerName(s.offerId), s.paymentMethod || '',
+      s.basePrice, s.totalPrice, s.numberOfPayments || 1,
+      s.amountCollected, s.totalPrice - s.amountCollected, s.refundedAmount || 0,
+      getStatus(s), s.cbAmount ?? '', s.klarnaAmount ?? '', s.nextPaymentDate || '',
+    ].map(escape).join(','));
+
+    const csv = '\uFEFF' + [headers.map(escape).join(','), ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `ventes_${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -313,11 +363,22 @@ export function SalesCRMPanel({
         <span>
           {filteredSales.length} vente{filteredSales.length !== 1 ? 's' : ''} trouvée{filteredSales.length !== 1 ? 's' : ''}
         </span>
-        {totalPages > 1 && (
-          <span>
-            Page {currentPage} sur {totalPages}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportCSV}
+            disabled={filteredSales.length === 0}
+            className="flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/30 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Exporter les ventes filtrées en CSV"
+          >
+            <Download className="h-4 w-4" />
+            Exporter CSV
+          </button>
+          {totalPages > 1 && (
+            <span>
+              Page {currentPage} sur {totalPages}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Sales Table */}
