@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { KPICard } from './KPICard';
 import { TunnelCard } from './TunnelCard';
+import { DashboardAIChat } from './DashboardAIChat';
 import { KPIData, Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
 import { useMemo, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
@@ -468,6 +469,15 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
           </div>
         )}
       </div>
+
+      <DashboardAIChat
+        kpis={kpis}
+        tunnels={tunnels}
+        charges={charges}
+        salaries={salaries}
+        coachingExpenses={coachingExpenses}
+        selectedMonth={selectedMonth}
+      />
     </div>
   );
 }
