@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 interface DashboardAIChatProps {
   kpis: KPIData;
   tunnels: Tunnel[];
+  allTunnels?: Tunnel[];
   charges: Charges;
   salaries: Salary[];
   coachingExpenses: CoachingExpense[];
@@ -18,13 +19,13 @@ interface DashboardAIChatProps {
 type Msg = { role: 'user' | 'assistant'; content: string };
 
 const SUGGESTIONS = [
-  "Quel tunnel est le plus rentable ce mois ?",
-  "Quelles sont mes charges principales ?",
-  "Comment améliorer mon ROAS ?",
-  "Combien de paiements en retard ?",
+  "Quel tunnel est le plus rentable globalement ?",
+  "Compare les 3 derniers mois",
+  "Quel est mon meilleur closer ?",
+  "Quels clients ont des paiements en retard ?",
 ];
 
-export function DashboardAIChat({ kpis, tunnels, charges, salaries, coachingExpenses, selectedMonth }: DashboardAIChatProps) {
+export function DashboardAIChat({ kpis, tunnels, allTunnels = [], charges, salaries, coachingExpenses, selectedMonth }: DashboardAIChatProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
