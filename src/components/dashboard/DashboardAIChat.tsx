@@ -36,40 +36,110 @@ export function DashboardAIChat({ kpis, tunnels, allTunnels = [], charges, salar
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
-  const buildContext = () => ({
-    selectedMonth,
-    kpis,
-    tunnelsCount: tunnels.length,
-    tunnels: tunnels.map(t => ({
+  const buildContext = () => {
+    const sourceTunnels = allTunnels.length > 0 ? allTunnels : tunnels;
+
+    // Aggregate per-month summary across ALL data
+    const monthMap = new Map<string, {
+      month: string;
+      tunnelsCount: number;
+      adBudget: number;
+      callsGenerated: number;
+      callsClosed: number;
+      salesCount: number;
+      contracted: number;
+      collected: number;
+      refunded: number;
+    }>();
+
+    for (const t of sourceTunnels) {
+      const m = monthMap.get(t.month) ?? {
+        month: t.month, tunnelsCount: 0, adBudget: 0, callsGenerated: 0, callsClosed: 0,
+        salesCount: 0, contracted: 0, collected: 0, refunded: 0,
+      };
+      m.tunnelsCount += 1;
+      m.adBudget += t.adBudget || 0;
+      m.callsGenerated += t.callsGenerated || 0;
+      m.callsClosed += t.callsClosed || 0;
+      m.salesCount += t.sales.length;
+      m.contracted += t.sales.reduce((s, x) => s + x.totalPrice - (x.refundedAmount || 0), 0);
+      m.collected += t.sales.reduce((s, x) => s + x.amountCollected - (x.refundedAmount || 0), 0);
+      m.refunded += t.sales.reduce((s, x) => s + (x.refundedAmount || 0), 0);
+      monthMap.set(t.month, m);
+    }
+
+    const monthlySummary = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+
+    // Detailed tunnels (all months) with sales
+    const allTunnelsDetail = sourceTunnels.map(t => ({
+      id: t.id,
       name: t.name,
       type: t.type,
+      month: t.month,
+      date: t.date,
+      endDate: t.endDate,
+      isActive: t.isActive,
       adBudget: t.adBudget,
       callsGenerated: t.callsGenerated,
       callsClosed: t.callsClosed,
       averagePrice: t.averagePrice,
+      registrations: t.registrations,
+      registrationsAds: t.registrationsAds,
+      registrationsOrganic: t.registrationsOrganic,
+      attendees: t.attendees,
+      callsBooked: t.callsBooked,
+      closerStats: t.closerStats,
       salesCount: t.sales.length,
       totalContracted: t.sales.reduce((s, x) => s + x.totalPrice - (x.refundedAmount || 0), 0),
       totalCollected: t.sales.reduce((s, x) => s + x.amountCollected - (x.refundedAmount || 0), 0),
       refundedAmount: t.sales.reduce((s, x) => s + (x.refundedAmount || 0), 0),
-    })),
-    charges: {
-      paymentProcessorPercent: charges.paymentProcessorPercent,
-      closersPercent: charges.closersPercent,
-      agencyPercent: charges.agencyPercent,
-      agencyThreshold: charges.agencyThreshold,
-      associatePercent: charges.associatePercent,
-      klarnaPercent: charges.klarnaPercent,
-      taxPercent: charges.taxPercent,
-      advertising: charges.advertising,
-      marketing: charges.marketing,
-      software: charges.software,
-      otherCosts: charges.otherCosts,
-    },
-    salaries: salaries.map(s => ({ name: s.name, monthlyAmount: s.monthlyAmount })),
-    totalSalaries: salaries.reduce((s, x) => s + x.monthlyAmount, 0),
-    coachingExpensesCount: coachingExpenses.length,
-    totalCoachingExpenses: coachingExpenses.reduce((s, x) => s + x.amount, 0),
-  });
+      sales: t.sales.map(s => ({
+        id: s.id,
+        clientName: s.clientName,
+        clientEmail: s.clientEmail,
+        closerId: s.closerId,
+        offerId: s.offerId,
+        saleDate: s.saleDate,
+        paymentMethod: s.paymentMethod,
+        trafficSource: s.trafficSource,
+        basePrice: s.basePrice,
+        totalPrice: s.totalPrice,
+        numberOfPayments: s.numberOfPayments,
+        amountCollected: s.amountCollected,
+        nextPaymentDate: s.nextPaymentDate,
+        isDefaulted: s.isDefaulted,
+        refundedAmount: s.refundedAmount || 0,
+        isFullyRefunded: s.isFullyRefunded,
+      })),
+    }));
+
+    return {
+      selectedMonth,
+      currentMonthKpis: kpis,
+      monthlySummaryAllTime: monthlySummary,
+      allTunnels: allTunnelsDetail,
+      charges: {
+        paymentProcessorPercent: charges.paymentProcessorPercent,
+        closersPercent: charges.closersPercent,
+        agencyPercent: charges.agencyPercent,
+        agencyThreshold: charges.agencyThreshold,
+        associatePercent: charges.associatePercent,
+        klarnaPercent: charges.klarnaPercent,
+        klarnaMaxAmount: charges.klarnaMaxAmount,
+        taxPercent: charges.taxPercent,
+        advertising: charges.advertising,
+        marketing: charges.marketing,
+        software: charges.software,
+        otherCosts: charges.otherCosts,
+        closers: charges.closers,
+        offers: charges.offers,
+      },
+      salaries: salaries.map(s => ({ name: s.name, monthlyAmount: s.monthlyAmount })),
+      totalSalaries: salaries.reduce((s, x) => s + x.monthlyAmount, 0),
+      coachingExpenses: coachingExpenses.map(e => ({ name: e.name, amount: e.amount, month: e.month, type: e.type })),
+      totalCoachingExpenses: coachingExpenses.reduce((s, x) => s + x.amount, 0),
+    };
+  };
 
   const send = async (text: string) => {
     if (!text.trim() || loading) return;
