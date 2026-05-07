@@ -473,6 +473,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
       <DashboardAIChat
         kpis={kpis}
         tunnels={tunnels}
+        allTunnels={allTunnels}
         charges={charges}
         salaries={salaries}
         coachingExpenses={coachingExpenses}
