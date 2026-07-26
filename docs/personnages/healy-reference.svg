@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 560" width="520" height="560" role="img" aria-label="El Profesor Healy - image de reference, Mode Profesor">
+  <defs>
+    <!-- Degrade orange (haut) -> creme (bas) : ne s'inverse jamais -->
+    <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8A25C"/>
+      <stop offset="55%" stop-color="#EDB477"/>
+      <stop offset="100%" stop-color="#F6E7CE"/>
+    </linearGradient>
+    <linearGradient id="tailGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F6E7CE"/>
+      <stop offset="45%" stop-color="#E8A25C"/>
+      <stop offset="100%" stop-color="#C97F3D"/>
+    </linearGradient>
+    <radialGradient id="ruffGrad" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#FBF3E4"/>
+      <stop offset="100%" stop-color="#F6E7CE"/>
+    </radialGradient>
+    <radialGradient id="eyeGrad" cx="42%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="#E0B25A"/>
+      <stop offset="70%" stop-color="#C98A2D"/>
+      <stop offset="100%" stop-color="#B0761F"/>
+    </radialGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FDF7EF"/>
+      <stop offset="100%" stop-color="#FAF3EA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fond pastel chaud -->
+  <rect x="0" y="0" width="520" height="560" fill="url(#bg)"/>
+
+  <!-- Ombre portee unique et douce -->
+  <ellipse cx="260" cy="512" rx="150" ry="26" fill="#6B4A2F" opacity="0.10"/>
+
+  <!-- ===== QUEUE : panache spectaculaire, presque aussi grosse que le corps ===== -->
+  <g stroke="#6B4A2F" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M372 430
+             C 470 420 486 320 452 260
+             C 430 220 470 176 436 150
+             C 404 128 372 168 388 214
+             C 400 250 392 300 356 336
+             C 336 356 340 410 372 430 Z"
+          fill="url(#tailGrad)"/>
+    <!-- rayures tabby discretes sur la queue -->
+    <path d="M441 168 q 22 14 14 40" fill="none" stroke="#C97F3D" stroke-width="8" opacity="0.7"/>
+    <path d="M456 232 q 18 20 4 48" fill="none" stroke="#C97F3D" stroke-width="8" opacity="0.7"/>
+    <path d="M446 300 q 6 24 -18 40" fill="none" stroke="#C97F3D" stroke-width="8" opacity="0.6"/>
+  </g>
+
+  <!-- ===== CORPS compact ===== -->
+  <path d="M170 470
+           C 150 380 176 320 260 320
+           C 344 320 370 380 350 470
+           C 340 500 180 500 170 470 Z"
+        fill="url(#headGrad)" stroke="#6B4A2F" stroke-width="7" stroke-linejoin="round"/>
+  <!-- poitrail creme -->
+  <path d="M214 470 C 206 396 226 348 260 348 C 294 348 314 396 306 470 Z"
+        fill="#F6E7CE" stroke="#6B4A2F" stroke-width="4" opacity="0.95"/>
+
+  <!-- pattes courtes et rondes -->
+  <ellipse cx="214" cy="474" rx="30" ry="22" fill="#F6E7CE" stroke="#6B4A2F" stroke-width="6"/>
+  <ellipse cx="306" cy="474" rx="30" ry="22" fill="#F6E7CE" stroke="#6B4A2F" stroke-width="6"/>
+
+  <!-- ===== PATTE LEVEE (air docte) ===== -->
+  <path d="M338 372 C 372 356 398 372 402 398 C 404 418 386 428 368 424 C 350 420 334 400 338 372 Z"
+        fill="#EDB477" stroke="#6B4A2F" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="398" cy="392" r="9" fill="#F2A9A9" opacity="0.85"/>
+
+  <!-- ===== COLLERETTE : nuage de fourrure creme tres volumineux (signature n1) ===== -->
+  <path d="M258 196
+           C 214 190 192 210 176 200
+           C 158 224 176 240 158 252
+           C 174 274 156 292 176 306
+           C 200 340 236 336 258 340
+           C 284 336 320 340 344 306
+           C 364 292 346 274 362 252
+           C 344 240 362 224 344 200
+           C 328 210 306 190 258 196 Z"
+        fill="url(#ruffGrad)" stroke="#6B4A2F" stroke-width="7" stroke-linejoin="round"/>
+  <!-- touffes internes -->
+  <g fill="none" stroke="#E6D3B0" stroke-width="4" stroke-linecap="round" opacity="0.8">
+    <path d="M206 236 q 12 16 6 34"/>
+    <path d="M310 236 q -12 16 -6 34"/>
+    <path d="M258 300 q 0 -10 0 -24"/>
+  </g>
+
+  <!-- ===== OREILLES triangulaires a plumets ===== -->
+  <g stroke="#6B4A2F" stroke-width="7" stroke-linejoin="round">
+    <path d="M182 128 L 168 58 L 232 108 Z" fill="#E8A25C"/>
+    <path d="M338 128 L 352 58 L 288 108 Z" fill="#E8A25C"/>
+  </g>
+  <path d="M192 118 L 184 82 L 216 108 Z" fill="#F2A9A9"/>
+  <path d="M328 118 L 336 82 L 304 108 Z" fill="#F2A9A9"/>
+  <!-- plumets Maine Coon -->
+  <g stroke="#F6E7CE" stroke-width="4" stroke-linecap="round">
+    <path d="M168 58 l -8 -18 M176 60 l -2 -20 M184 62 l 6 -16"/>
+    <path d="M352 58 l 8 -18 M344 60 l 2 -20 M336 62 l -6 -16"/>
+  </g>
+
+  <!-- ===== TETE ===== -->
+  <path d="M258 96
+           C 176 96 150 156 150 210
+           C 150 280 200 320 258 320
+           C 316 320 366 280 366 210
+           C 366 156 340 96 258 96 Z"
+        fill="url(#headGrad)" stroke="#6B4A2F" stroke-width="7"/>
+
+  <!-- rayures tabby discretes sur le front -->
+  <g fill="none" stroke="#C97F3D" stroke-width="6" stroke-linecap="round" opacity="0.85">
+    <path d="M258 108 l 0 34"/>
+    <path d="M232 116 q -6 18 -2 34"/>
+    <path d="M284 116 q 6 18 2 34"/>
+  </g>
+
+  <!-- joues creme -->
+  <ellipse cx="204" cy="244" rx="42" ry="36" fill="#F6E7CE" opacity="0.55"/>
+  <ellipse cx="312" cy="244" rx="42" ry="36" fill="#F6E7CE" opacity="0.55"/>
+  <ellipse cx="200" cy="252" rx="16" ry="10" fill="#F2A9A9" opacity="0.45"/>
+  <ellipse cx="316" cy="252" rx="16" ry="10" fill="#F2A9A9" opacity="0.45"/>
+
+  <!-- ===== YEUX : grands, ronds, ambre, 2 reflets en etoile ===== -->
+  <g stroke="#6B4A2F" stroke-width="5">
+    <circle cx="214" cy="214" r="34" fill="url(#eyeGrad)"/>
+    <circle cx="302" cy="214" r="34" fill="url(#eyeGrad)"/>
+  </g>
+  <circle cx="214" cy="216" r="15" fill="#4A2F1C"/>
+  <circle cx="302" cy="216" r="15" fill="#4A2F1C"/>
+  <!-- reflet etoile 1 (grand) + reflet etoile 2 (petit) sur chaque oeil -->
+  <g fill="#FFFFFF">
+    <path d="M206 204 l 3 6 6 3 -6 3 -3 6 -3 -6 -6 -3 6 -3 z"/>
+    <circle cx="222" cy="222" r="3.4"/>
+    <path d="M294 204 l 3 6 6 3 -6 3 -3 6 -3 -6 -6 -3 6 -3 z"/>
+    <circle cx="310" cy="222" r="3.4"/>
+  </g>
+
+  <!-- ===== LUNETTES rondes (uniquement en Mode Profesor) ===== -->
+  <g fill="none" stroke="#6B4A2F" stroke-width="5">
+    <circle cx="214" cy="214" r="42"/>
+    <circle cx="302" cy="214" r="42"/>
+    <path d="M256 214 q 2 -6 4 0"/>
+    <path d="M172 210 l -18 -6"/>
+    <path d="M344 210 l 18 -6"/>
+  </g>
+
+  <!-- ===== NEZ rose bonbon + bouche ===== -->
+  <path d="M258 258 l -12 0 6 12 z" fill="#F2A9A9" stroke="#6B4A2F" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M258 270 q -12 14 -26 6 M258 270 q 12 14 26 6" fill="none" stroke="#6B4A2F" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- ===== MOUSTACHES longues, fines, blanches, incurvees ===== -->
+  <g fill="none" stroke="#FBF5EA" stroke-width="3.2" stroke-linecap="round">
+    <path d="M186 260 q -46 -6 -76 -20"/>
+    <path d="M188 272 q -46 4 -78 4"/>
+    <path d="M188 284 q -44 14 -70 26"/>
+    <path d="M330 260 q 46 -6 76 -20"/>
+    <path d="M328 272 q 46 4 78 4"/>
+    <path d="M328 284 q 44 14 70 26"/>
+  </g>
+
+  <!-- ===== PROP : petit tableau noir (la lecon) ===== -->
+  <g transform="translate(40 300)">
+    <rect x="0" y="0" width="118" height="92" rx="8" fill="#2E3B33" stroke="#6B4A2F" stroke-width="7"/>
+    <g fill="none" stroke="#F6E7CE" stroke-width="4" stroke-linecap="round" opacity="0.9">
+      <path d="M18 24 h 82"/>
+      <path d="M18 44 h 60"/>
+      <path d="M18 64 h 74"/>
+    </g>
+    <rect x="-6" y="92" width="130" height="12" rx="6" fill="#C97F3D" stroke="#6B4A2F" stroke-width="6"/>
+  </g>
+</svg>
