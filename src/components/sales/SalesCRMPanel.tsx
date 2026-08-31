@@ -109,10 +109,18 @@ export function SalesCRMPanel({
       // Status filter
       if (selectedStatus !== 'all') {
         const remaining = sale.totalPrice - sale.amountCollected;
+        // Auto-defaulted: payment overdue AND no update in 14 days (same logic as SalesTable)
+        let isDefaulted = sale.isDefaulted === true;
+        if (!isDefaulted && remaining > 0 && sale.nextPaymentDate) {
+          const today = new Date();
+          const lastUpdate = sale.lastPaymentUpdate ? new Date(sale.lastPaymentUpdate) : new Date(sale.createdAt);
+          const daysSinceUpdate = Math.floor((today.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysOverdue = Math.floor((today.getTime() - new Date(sale.nextPaymentDate).getTime()) / (1000 * 60 * 60 * 24));
+          isDefaulted = daysOverdue > 0 && daysSinceUpdate >= 14;
+        }
         const isPaid = remaining <= 0;
-        const isPartial = sale.amountCollected > 0 && remaining > 0 && !sale.isDefaulted;
-        const isPending = sale.amountCollected === 0 && !sale.isDefaulted;
-        const isDefaulted = sale.isDefaulted === true;
+        const isPartial = sale.amountCollected > 0 && remaining > 0 && !isDefaulted;
+        const isPending = sale.amountCollected === 0 && !isDefaulted;
 
         if (selectedStatus === 'paid' && !isPaid) return false;
         if (selectedStatus === 'partial' && !isPartial) return false;
