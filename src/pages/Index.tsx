@@ -277,7 +277,7 @@ const Index = () => {
             kpis={kpis}
             charges={charges}
             salaries={salaries}
-            coachingExpenses={filteredCoachingExpenses}
+            coachingExpenses={coachingExpenses}
             tunnels={tunnels}
             selectedMonth={selectedMonth}
             onMonthChange={setSelectedMonth}

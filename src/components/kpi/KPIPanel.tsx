@@ -37,7 +37,7 @@ interface KPIPanelProps {
 
 export function KPIPanel({ kpis, charges, salaries, coachingExpenses, tunnels, selectedMonth, onMonthChange, allSales = [], offers = [] }: KPIPanelProps) {
   const totalSalaries = salaries.reduce((sum, s) => sum + s.monthlyAmount, 0);
-  const totalCoachingExpenses = coachingExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalCoachingExpenses = coachingExpenses.filter(e => e.month === selectedMonth).reduce((sum, e) => sum + e.amount, 0);
   const isAboveAgencyThreshold = kpis.collectedRevenueHT > charges.agencyThreshold;
   
   const fixedCharges = charges.advertising + charges.marketing + 
