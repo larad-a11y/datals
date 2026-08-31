@@ -30,9 +30,9 @@ function calculateMonthKPIs(
   const filteredTunnels = tunnels.filter(t => t.month === month && t.isActive);
   const filteredCoachingExpenses = coachingExpenses.filter(e => e.month === month);
 
-  // CA Collecté TTC
+  // CA Collecté TTC (net des remboursements)
   const totalCollectedTTC = filteredTunnels.reduce((sum, t) => {
-    const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+    const salesCollected = t.sales.reduce((s, sale) => s + Math.max(0, sale.amountCollected - (sale.refundedAmount || 0)), 0);
     return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
   }, 0);
 
@@ -60,7 +60,7 @@ function calculateMonthKPIs(
   const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
     const tunnelSalesWithCloser = t.sales
       .filter(sale => sale.closerId)
-      .reduce((s, sale) => s + sale.amountCollected, 0);
+      .reduce((s, sale) => s + Math.max(0, sale.amountCollected - (sale.refundedAmount || 0)), 0);
     return sum + tunnelSalesWithCloser;
   }, 0);
   const salesWithCloserHTAmount = salesWithCloserHT * (1 / (1 + taxRate));
