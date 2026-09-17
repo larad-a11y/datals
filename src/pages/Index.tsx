@@ -177,6 +177,29 @@ const Index = () => {
     });
   };
 
+  // Cancel a refund (undo)
+  const handleCancelRefund = (saleId: string, tunnelId: string, refundId?: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    const sale = tunnel?.sales.find(s => s.id === saleId);
+    if (!sale) return;
+
+    const history = sale.refundHistory || [];
+    if (history.length === 0) {
+      updateSale(saleId, { refundedAmount: 0, refundHistory: [], isFullyRefunded: false });
+      return;
+    }
+
+    const targetId = refundId || history[history.length - 1].id;
+    const newHistory = history.filter(r => r.id !== targetId);
+    const newRefundedAmount = Math.round(newHistory.reduce((sum, r) => sum + r.amount, 0) * 100) / 100;
+
+    updateSale(saleId, {
+      refundedAmount: newRefundedAmount,
+      refundHistory: newHistory,
+      isFullyRefunded: newRefundedAmount > 0 && newRefundedAmount >= sale.amountCollected,
+    });
+  };
+
   // Generate notifications from all sales
   const notifications = useMemo(() => {
     const allSales = getAllSales();
@@ -247,6 +270,7 @@ const Index = () => {
             onFullyPaid={handleFullyPaid}
             onToggleDefaulted={handleToggleDefaulted}
             onRecordRefund={handleRecordRefund}
+            onCancelRefund={handleCancelRefund}
             installmentPlans={charges.installmentPlans}
             offers={charges.offers}
             closers={charges.closers}
