@@ -100,16 +100,20 @@ export function RefundActions({ sale, onRecordRefund, onCancelRefund }: RefundAc
   if (isFullyRefunded) {
     return (
       <>
-        <div className="flex items-center gap-1">
+        <div className="flex min-w-max items-center gap-2">
           <Badge variant="destructive" className="text-xs">Remboursée</Badge>
           {onCancelRefund && (
-            <button
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={handleCancelLast}
               title="Annuler le dernier remboursement"
-              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="h-7 gap-1 px-2 text-xs"
             >
               <Undo2 className="h-3.5 w-3.5" />
-            </button>
+              Annuler
+            </Button>
           )}
           {history.length > 0 && (
             <button
