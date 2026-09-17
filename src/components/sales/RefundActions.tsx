@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { RotateCcw, History } from 'lucide-react';
-import { Sale, RefundRecord } from '@/types/business';
+import { RotateCcw, History, Undo2, Trash2 } from 'lucide-react';
+import { Sale } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,23 +20,17 @@ import { Badge } from '@/components/ui/badge';
 interface RefundActionsProps {
   sale: Sale;
   onRecordRefund: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
+  onCancelRefund?: (saleId: string, tunnelId: string, refundId?: string) => void;
 }
 
-export function RefundActions({ sale, onRecordRefund }: RefundActionsProps) {
+export function RefundActions({ sale, onRecordRefund, onCancelRefund }: RefundActionsProps) {
   const [showPartialDialog, setShowPartialDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
   const [customAmount, setCustomAmount] = useState('');
 
+  const history = sale.refundHistory || [];
   const maxRefundable = sale.amountCollected - (sale.refundedAmount || 0);
   const isFullyRefunded = sale.isFullyRefunded || maxRefundable <= 0;
-
-  if (isFullyRefunded) {
-    return (
-      <Badge variant="destructive" className="text-xs">
-        Remboursée
-      </Badge>
-    );
-  }
 
   const handleFullRefund = () => {
     onRecordRefund(sale.id, sale.tunnelId, maxRefundable, true);
@@ -50,6 +44,87 @@ export function RefundActions({ sale, onRecordRefund }: RefundActionsProps) {
       setShowPartialDialog(false);
     }
   };
+
+  const handleCancelLast = () => {
+    const last = history[history.length - 1];
+    onCancelRefund?.(sale.id, sale.tunnelId, last?.id);
+  };
+
+  const historyDialog = (
+    <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Historique des remboursements - {sale.clientName || 'Client'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2 rounded-lg bg-secondary/30 p-3 text-sm">
+            <div>
+              <p className="text-muted-foreground">Total encaissé</p>
+              <p className="font-semibold">{sale.amountCollected.toLocaleString('fr-FR')} €</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Total remboursé</p>
+              <p className="font-semibold text-destructive">{(sale.refundedAmount || 0).toLocaleString('fr-FR')} €</p>
+            </div>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucun remboursement</p>
+          ) : (
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {history.map((refund) => (
+                <div key={refund.id} className="flex items-center justify-between rounded-lg border border-border/50 p-2 text-sm">
+                  <span>{new Date(refund.date).toLocaleDateString('fr-FR')}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-destructive">
+                      -{refund.amount.toLocaleString('fr-FR')} €
+                    </span>
+                    {onCancelRefund && (
+                      <button
+                        onClick={() => onCancelRefund(sale.id, sale.tunnelId, refund.id)}
+                        title="Annuler ce remboursement"
+                        className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (isFullyRefunded) {
+    return (
+      <>
+        <div className="flex items-center gap-1">
+          <Badge variant="destructive" className="text-xs">Remboursée</Badge>
+          {onCancelRefund && (
+            <button
+              onClick={handleCancelLast}
+              title="Annuler le dernier remboursement"
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {history.length > 0 && (
+            <button
+              onClick={() => setShowHistoryDialog(true)}
+              title="Historique des remboursements"
+              className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              <History className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        {historyDialog}
+      </>
+    );
+  }
 
   return (
     <>
@@ -79,9 +154,15 @@ export function RefundActions({ sale, onRecordRefund }: RefundActionsProps) {
             </div>
           </DropdownMenuItem>
 
-          {(sale.refundHistory || []).length > 0 && (
+          {history.length > 0 && (
             <>
               <DropdownMenuSeparator />
+              {onCancelRefund && (
+                <DropdownMenuItem onClick={handleCancelLast} className="gap-2">
+                  <Undo2 className="h-4 w-4" />
+                  Annuler le dernier remboursement
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setShowHistoryDialog(true)} className="gap-2">
                 <History className="h-4 w-4" />
                 Historique des remboursements
@@ -126,40 +207,7 @@ export function RefundActions({ sale, onRecordRefund }: RefundActionsProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Refund History Dialog */}
-      <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Historique des remboursements - {sale.clientName || 'Client'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 rounded-lg bg-secondary/30 p-3 text-sm">
-              <div>
-                <p className="text-muted-foreground">Total encaissé</p>
-                <p className="font-semibold">{sale.amountCollected.toLocaleString('fr-FR')} €</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Total remboursé</p>
-                <p className="font-semibold text-destructive">{(sale.refundedAmount || 0).toLocaleString('fr-FR')} €</p>
-              </div>
-            </div>
-            {(sale.refundHistory || []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun remboursement</p>
-            ) : (
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {(sale.refundHistory || []).map((refund) => (
-                  <div key={refund.id} className="flex items-center justify-between rounded-lg border border-border/50 p-2 text-sm">
-                    <span>{new Date(refund.date).toLocaleDateString('fr-FR')}</span>
-                    <span className="font-medium text-destructive">
-                      -{refund.amount.toLocaleString('fr-FR')} €
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {historyDialog}
     </>
   );
 }

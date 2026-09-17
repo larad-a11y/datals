@@ -30,6 +30,7 @@ interface SalesTableProps {
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
+  onCancelRefund?: (saleId: string, tunnelId: string, refundId?: string) => void;
   closers?: Closer[];
   offers?: Offer[];
 }
@@ -37,7 +38,7 @@ interface SalesTableProps {
 type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName';
 type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, closers = [], offers = [] }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [] }: SalesTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
@@ -360,10 +361,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   )}
                 </TableCell>
                 <TableCell>
-                  {onRecordRefund && !sale.isFullyRefunded ? (
+                  {onRecordRefund ? (
                     <RefundActions
                       sale={sale}
                       onRecordRefund={onRecordRefund}
+                      onCancelRefund={onCancelRefund}
                     />
                   ) : sale.isFullyRefunded ? (
                     <Badge variant="destructive" className="text-xs">Remboursée</Badge>
