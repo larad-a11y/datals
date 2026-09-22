@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Tunnel, Charges, Salary, KPIData, CoachingExpense } from '@/types/business';
+import { Tunnel, Charges, Salary, KPIData, CoachingExpense, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { roundCurrency } from '@/lib/utils';
 
 interface UseBusinessCalculationsProps {
@@ -45,7 +45,7 @@ export function useBusinessCalculations({
     // === CA CONTRACTÉ ===
     const totalContracted = roundCurrency(filteredTunnels.reduce((sum, t) => {
       if (t.sales.length > 0) {
-        return sum + t.sales.reduce((s, sale) => s + sale.totalPrice - (sale.refundedAmount || 0), 0);
+        return sum + t.sales.reduce((s, sale) => s + getEffectiveContractedAmount(sale), 0);
       }
       return sum + t.sales.length * t.averagePrice;
     }, 0));
@@ -53,7 +53,7 @@ export function useBusinessCalculations({
     // === CA COLLECTÉ TTC ===
     const totalCollectedTTC = roundCurrency(filteredTunnels.reduce((sum, t) => {
       if (t.sales.length > 0) {
-        return sum + t.sales.reduce((s, sale) => s + sale.amountCollected - (sale.refundedAmount || 0), 0);
+        return sum + t.sales.reduce((s, sale) => s + getEffectiveCollectedAmount(sale), 0);
       }
       return sum + t.collectedAmount;
     }, 0));
@@ -103,7 +103,7 @@ export function useBusinessCalculations({
         sum + t.sales
           .filter(s => s.closerId)
           .reduce((s, sale) =>
-            s + (sale.amountCollected - (sale.refundedAmount || 0)) / (1 + taxRate), 0
+            s + getEffectiveCollectedAmount(sale) / (1 + taxRate), 0
           ), 0
       )
     );
@@ -179,14 +179,14 @@ export function useBusinessCalculations({
     const organicSales = filteredTunnels.flatMap(t => t.sales.filter(s => s.trafficSource === 'organic'));
     const organicSalesCount = organicSales.length;
     const organicCollectedAmount = roundCurrency(
-      organicSales.reduce((sum, s) => sum + s.amountCollected - (s.refundedAmount || 0), 0)
+      organicSales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0)
     );
 
     // === ENCAISSÉ DIRECT ===
     const directCollectedThisMonth = roundCurrency(
       filteredTunnels.reduce((sum, t) =>
         sum + t.sales.reduce((s, sale) => {
-          const collected = sale.amountCollected - (sale.refundedAmount || 0);
+          const collected = getEffectiveCollectedAmount(sale);
           if (sale.numberOfPayments <= 1) return s + collected;
           const cbAmount = sale.totalPrice - (sale.klarnaAmount || 0);
           const firstInstallment = cbAmount / sale.numberOfPayments + (sale.klarnaAmount || 0);
@@ -213,7 +213,7 @@ export function useBusinessCalculations({
     const remainingToCollectThisMonth = roundCurrency(
       tunnels
         .flatMap(t => t.sales)
-        .filter(sale => !sale.isDefaulted && sale.numberOfPayments > 1 && sale.saleDate)
+        .filter(sale => !sale.isDefaulted && !sale.isFullyRefunded && sale.numberOfPayments > 1 && sale.saleDate)
         .reduce((sum, sale) => {
           const cbAmount = sale.totalPrice - (sale.klarnaAmount || 0);
           const installmentAmount = cbAmount / sale.numberOfPayments;
@@ -237,8 +237,8 @@ export function useBusinessCalculations({
     const upcomingPaymentsTotal = roundCurrency(
       tunnels
         .flatMap(t => t.sales)
-        .filter(sale => !sale.isDefaulted)
-        .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0)
+        .filter(sale => !sale.isDefaulted && !sale.isFullyRefunded)
+        .reduce((sum, sale) => sum + getRemainingAmount(sale), 0)
     );
 
     // === PAIEMENTS CE MOIS ===
@@ -247,12 +247,12 @@ export function useBusinessCalculations({
         .filter(t => t.month !== selectedMonth)
         .flatMap(t => t.sales)
         .filter(sale => {
-          if (sale.isDefaulted || !sale.nextPaymentDate) return false;
+          if (sale.isDefaulted || sale.isFullyRefunded || !sale.nextPaymentDate) return false;
           return sale.nextPaymentDate.substring(0, 7) === selectedMonth
             && sale.amountCollected < sale.totalPrice;
         })
         .reduce((sum, sale) => {
-          const remaining = sale.totalPrice - sale.amountCollected;
+          const remaining = getRemainingAmount(sale);
           const paid = sale.paymentHistory?.length || 1;
           const paymentsRemaining = sale.numberOfPayments - paid;
           return sum + (paymentsRemaining > 0 ? remaining / paymentsRemaining : remaining);
@@ -264,7 +264,7 @@ export function useBusinessCalculations({
       tunnels
         .flatMap(t => t.sales)
         .filter(sale => sale.isDefaulted)
-        .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0)
+        .reduce((sum, sale) => sum + getRemainingAmount(sale), 0)
     );
 
     return {

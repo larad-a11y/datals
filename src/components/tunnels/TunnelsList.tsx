@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Target, ExternalLink } from 'lucide-react';
-import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
+import { Tunnel, Sale, tunnelTypeLabels, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { TunnelForm } from './TunnelForm';
 import { SaleForm } from './SaleForm';
 import { Button } from '@/components/ui/button';
@@ -106,8 +106,8 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
           {filteredTunnels.map((tunnel) => {
             const totalRefunded = tunnel.sales.reduce((sum, s) => sum + (s.refundedAmount || 0), 0);
             const refundedCount = tunnel.sales.filter((s) => (s.refundedAmount || 0) > 0).length;
-            const salesContracted = tunnel.sales.reduce((sum, s) => sum + s.totalPrice - (s.refundedAmount || 0), 0);
-            const salesCollected = tunnel.sales.reduce((sum, s) => sum + s.amountCollected - (s.refundedAmount || 0), 0);
+            const salesContracted = tunnel.sales.reduce((sum, s) => sum + getEffectiveContractedAmount(s), 0);
+            const salesCollected = tunnel.sales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0);
             const contractedRevenue = tunnel.sales.length > 0 ? salesContracted : tunnel.callsClosed * tunnel.averagePrice;
             const collectedAmount = tunnel.sales.length > 0 ? salesCollected : tunnel.collectedAmount;
             
@@ -121,7 +121,7 @@ export function TunnelsList({ tunnels, selectedMonth, onMonthChange, onAdd, onUp
               ? (actualSalesCount / tunnel.callsGenerated) * 100 
               : 0;
             const trend = roas >= 3 ? 'profitable' : roas >= 2 ? 'warning' : 'danger';
-            const remainingAmount = salesContracted - salesCollected;
+            const remainingAmount = tunnel.sales.reduce((sum, s) => sum + getRemainingAmount(s), 0);
 
             return (
               <div 

@@ -1,4 +1,4 @@
-import { Tunnel, Charges, Salary, CoachingExpense } from "@/types/business";
+import { Tunnel, Charges, Salary, CoachingExpense, getEffectiveCollectedAmount, getEffectiveContractedAmount } from "@/types/business";
 
 interface TunnelCardProps {
   tunnel: Tunnel;
@@ -14,12 +14,12 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses, totalC
   // === REVENUS ===
   const contractedRevenue =
     tunnel.sales.length > 0
-      ? tunnel.sales.reduce((sum, s) => sum + s.totalPrice - (s.refundedAmount || 0), 0)
+      ? tunnel.sales.reduce((sum, s) => sum + getEffectiveContractedAmount(s), 0)
       : tunnel.sales.length * tunnel.averagePrice;
 
   const collectedRevenueTTC =
     tunnel.sales.length > 0
-      ? tunnel.sales.reduce((sum, s) => sum + s.amountCollected - (s.refundedAmount || 0), 0)
+      ? tunnel.sales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0)
       : tunnel.collectedAmount;
 
   const tvaAmount = (collectedRevenueTTC * taxRate) / (1 + taxRate);
@@ -34,7 +34,7 @@ export function TunnelCard({ tunnel, charges, salaries, coachingExpenses, totalC
   // === CLOSERS ===
   const salesWithCloserHT = tunnel.sales
     .filter((s) => s.closerId)
-    .reduce((sum, s) => sum + (s.amountCollected - (s.refundedAmount || 0)) / (1 + taxRate), 0);
+    .reduce((sum, s) => sum + getEffectiveCollectedAmount(s) / (1 + taxRate), 0);
   const closersCost = salesWithCloserHT * (charges.closersPercent / 100);
 
   // === CHARGES FIXES (proportionnelles) ===

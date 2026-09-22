@@ -9,7 +9,7 @@ import { KPIPanel } from '@/components/kpi/KPIPanel';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { useBusinessCalculations } from '@/hooks/useBusinessCalculations';
 import { useAuth } from '@/hooks/useAuth';
-import { defaultCharges, Sale, generatePaymentNotifications, PaymentRecord, RefundRecord } from '@/types/business';
+import { defaultCharges, Sale, generatePaymentNotifications, getRemainingAmount, PaymentRecord, RefundRecord } from '@/types/business';
 import { Loader2 } from 'lucide-react';
 
 const Index = () => {
@@ -126,7 +126,7 @@ const Index = () => {
     const sale = tunnel.sales.find(s => s.id === saleId);
     if (!sale) return;
     
-    const remaining = sale.totalPrice - sale.amountCollected;
+    const remaining = getRemainingAmount(sale);
     if (remaining <= 0) return;
     
     const newPayment: PaymentRecord = {
@@ -174,6 +174,7 @@ const Index = () => {
       refundedAmount: newRefundedAmount,
       refundHistory: [...(sale.refundHistory || []), newRefund],
       isFullyRefunded,
+      ...(isFullyRefunded ? { isDefaulted: false } : {}),
     });
   };
 
