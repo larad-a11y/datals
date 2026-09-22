@@ -85,6 +85,20 @@ export interface Sale {
   isFullyRefunded?: boolean; // Vente totalement remboursée
 }
 
+export function getEffectiveContractedAmount(sale: Sale): number {
+  if (sale.isFullyRefunded) return 0;
+  return Math.max(0, sale.totalPrice - (sale.refundedAmount || 0));
+}
+
+export function getEffectiveCollectedAmount(sale: Sale): number {
+  return Math.max(0, sale.amountCollected - (sale.refundedAmount || 0));
+}
+
+export function getRemainingAmount(sale: Sale): number {
+  if (sale.isFullyRefunded) return 0;
+  return Math.max(0, getEffectiveContractedAmount(sale) - getEffectiveCollectedAmount(sale));
+}
+
 export interface PaymentNotification {
   id: string;
   saleId: string;
@@ -272,9 +286,10 @@ export function generatePaymentNotifications(sales: (Sale & { tunnelName?: strin
   const notifications: PaymentNotification[] = [];
   
   sales.forEach(sale => {
+    if (sale.isFullyRefunded) return;
     if (!sale.nextPaymentDate) return;
     
-    const remaining = sale.totalPrice - sale.amountCollected;
+    const remaining = getRemainingAmount(sale);
     if (remaining <= 0) return; // Fully paid
     
     const dueDate = new Date(sale.nextPaymentDate);

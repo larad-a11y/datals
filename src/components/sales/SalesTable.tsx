@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
-import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer } from '@/types/business';
+import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer, getEffectiveCollectedAmount, getRemainingAmount } from '@/types/business';
 import { RefundActions } from './RefundActions';
 import {
   Table,
@@ -48,7 +48,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
     if (sale.isDefaulted) return true;
     if (!sale.nextPaymentDate) return false;
     
-    const remaining = sale.totalPrice - sale.amountCollected;
+    const remaining = getRemainingAmount(sale);
     if (remaining <= 0) return false;
     
     const today = new Date();
@@ -118,7 +118,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
 
   // Get row status class based on payment verification status
   const getRowStatusClass = (sale: EnrichedSale) => {
-    const remaining = sale.totalPrice - sale.amountCollected;
+    const remaining = getRemainingAmount(sale);
     const isPaid = remaining <= 0;
     
     if (isPaid) return 'bg-profitable/5 border-l-2 border-l-profitable';
@@ -210,8 +210,9 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
         </TableHeader>
         <TableBody>
           {sortedSales.map((sale) => {
-            const remaining = sale.totalPrice - sale.amountCollected;
-            const progress = sale.totalPrice > 0 ? (sale.amountCollected / sale.totalPrice) * 100 : 0;
+            const remaining = getRemainingAmount(sale);
+            const effectiveCollected = getEffectiveCollectedAmount(sale);
+            const progress = sale.isFullyRefunded ? 0 : sale.totalPrice > 0 ? (effectiveCollected / sale.totalPrice) * 100 : 0;
             const isPaid = remaining <= 0;
             const rowClass = getRowStatusClass(sale);
             const saleIsDefaulted = sale.isDefaulted || isAutoDefaulted(sale);
@@ -316,7 +317,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                   )}
                 </TableCell>
                 <TableCell className="text-right font-medium text-profitable">
-                  {sale.amountCollected.toLocaleString('fr-FR')} €
+                  {effectiveCollected.toLocaleString('fr-FR')} €
                 </TableCell>
                 <TableCell className={`text-right font-medium ${isPaid ? 'text-profitable' : 'text-warning'}`}>
                   {remaining.toLocaleString('fr-FR')} €

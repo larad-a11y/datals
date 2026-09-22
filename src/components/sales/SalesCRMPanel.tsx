@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download } from 'lucide-react';
-import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
+import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
@@ -110,7 +110,7 @@ export function SalesCRMPanel({
 
       // Status filter
       if (selectedStatus !== 'all') {
-        const remaining = sale.totalPrice - sale.amountCollected;
+        const remaining = getRemainingAmount(sale);
         // Auto-defaulted: payment overdue AND no update in 14 days (same logic as SalesTable)
         let isDefaulted = sale.isDefaulted === true;
         if (!isDefaulted && remaining > 0 && sale.nextPaymentDate) {
@@ -121,8 +121,9 @@ export function SalesCRMPanel({
           isDefaulted = daysOverdue > 0 && daysSinceUpdate >= 14;
         }
         const isPaid = remaining <= 0;
-        const isPartial = sale.amountCollected > 0 && remaining > 0 && !isDefaulted;
-        const isPending = sale.amountCollected === 0 && !isDefaulted;
+        const effectiveCollected = getEffectiveCollectedAmount(sale);
+        const isPartial = effectiveCollected > 0 && remaining > 0 && !isDefaulted;
+        const isPending = effectiveCollected === 0 && remaining > 0 && !isDefaulted && !sale.isFullyRefunded;
 
         if (selectedStatus === 'paid' && !isPaid) return false;
         if (selectedStatus === 'partial' && !isPartial) return false;
@@ -148,10 +149,10 @@ export function SalesCRMPanel({
 
   // Global stats
   const stats = useMemo(() => {
-    const totalContracted = filteredSales.reduce((sum, s) => sum + s.totalPrice, 0);
-    const totalCollected = filteredSales.reduce((sum, s) => sum + s.amountCollected, 0);
-    const remaining = totalContracted - totalCollected;
-    const paidCount = filteredSales.filter((s) => s.totalPrice - s.amountCollected <= 0).length;
+    const totalContracted = filteredSales.reduce((sum, s) => sum + getEffectiveContractedAmount(s), 0);
+    const totalCollected = filteredSales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0);
+    const remaining = filteredSales.reduce((sum, s) => sum + getRemainingAmount(s), 0);
+    const paidCount = filteredSales.filter((s) => !s.isFullyRefunded && getRemainingAmount(s) <= 0).length;
     const totalRefunded = filteredSales.reduce((sum, s) => sum + (s.refundedAmount || 0), 0);
     const refundedCount = filteredSales.filter((s) => (s.refundedAmount || 0) > 0).length;
 
@@ -197,7 +198,7 @@ export function SalesCRMPanel({
 
     const getStatus = (s: EnrichedSale) => {
       if (s.isFullyRefunded) return 'Remboursée';
-      const remaining = s.totalPrice - s.amountCollected;
+      const remaining = getRemainingAmount(s);
       if (s.isDefaulted) return 'Impayé';
       if (remaining <= 0) return 'Payée';
       if (s.amountCollected > 0) return 'Partielle';
@@ -215,7 +216,7 @@ export function SalesCRMPanel({
       s.tunnelType || '', s.tunnelDate || '', s.tunnelMonth || '',
       closerName(s.closerId), offerName(s.offerId), s.paymentMethod || '',
       s.basePrice, s.totalPrice, s.numberOfPayments || 1,
-      s.amountCollected, s.totalPrice - s.amountCollected, s.refundedAmount || 0,
+      getEffectiveCollectedAmount(s), getRemainingAmount(s), s.refundedAmount || 0,
       getStatus(s), s.cbAmount ?? '', s.klarnaAmount ?? '', s.nextPaymentDate || '',
     ].map(escape).join(','));
 
