@@ -3,7 +3,7 @@ import { Sparkles, Send, Loader2, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { KPIData, Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
+import { KPIData, Tunnel, Charges, Salary, CoachingExpense, getEffectiveCollectedAmount, getEffectiveContractedAmount } from '@/types/business';
 import { toast } from '@/hooks/use-toast';
 
 interface DashboardAIChatProps {
@@ -62,8 +62,8 @@ export function DashboardAIChat({ kpis, tunnels, allTunnels = [], charges, salar
       m.callsGenerated += t.callsGenerated || 0;
       m.callsClosed += t.callsClosed || 0;
       m.salesCount += t.sales.length;
-      m.contracted += t.sales.reduce((s, x) => s + x.totalPrice - (x.refundedAmount || 0), 0);
-      m.collected += t.sales.reduce((s, x) => s + x.amountCollected - (x.refundedAmount || 0), 0);
+      m.contracted += t.sales.reduce((s, x) => s + getEffectiveContractedAmount(x), 0);
+      m.collected += t.sales.reduce((s, x) => s + getEffectiveCollectedAmount(x), 0);
       m.refunded += t.sales.reduce((s, x) => s + (x.refundedAmount || 0), 0);
       monthMap.set(t.month, m);
     }
@@ -90,8 +90,8 @@ export function DashboardAIChat({ kpis, tunnels, allTunnels = [], charges, salar
       callsBooked: t.callsBooked,
       closerStats: t.closerStats,
       salesCount: t.sales.length,
-      totalContracted: t.sales.reduce((s, x) => s + x.totalPrice - (x.refundedAmount || 0), 0),
-      totalCollected: t.sales.reduce((s, x) => s + x.amountCollected - (x.refundedAmount || 0), 0),
+      totalContracted: t.sales.reduce((s, x) => s + getEffectiveContractedAmount(x), 0),
+      totalCollected: t.sales.reduce((s, x) => s + getEffectiveCollectedAmount(x), 0),
       refundedAmount: t.sales.reduce((s, x) => s + (x.refundedAmount || 0), 0),
       sales: t.sales.map(s => ({
         id: s.id,

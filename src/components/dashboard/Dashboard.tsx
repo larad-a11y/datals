@@ -21,6 +21,7 @@ import {
 import { KPICard } from './KPICard';
 import { TunnelCard } from './TunnelCard';
 import { DashboardAIChat } from './DashboardAIChat';
+import { getEffectiveCollectedAmount, getEffectiveContractedAmount } from '@/types/business';
 import { KPIData, Tunnel, Charges, Salary, CoachingExpense } from '@/types/business';
 import { useMemo, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
@@ -55,12 +56,12 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
     
     // Calculate previous month metrics
     const totalContracted = prevTunnels.reduce((sum, t) => {
-      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
+      const salesContracted = t.sales.reduce((s, sale) => s + getEffectiveContractedAmount(sale), 0);
       return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
     }, 0);
     
     const totalCollectedTTC = prevTunnels.reduce((sum, t) => {
-      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+      const salesCollected = t.sales.reduce((s, sale) => s + getEffectiveCollectedAmount(sale), 0);
       return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
     }, 0);
     
@@ -78,7 +79,7 @@ export function Dashboard({ kpis, tunnels, charges, salaries, coachingExpenses, 
     const salesWithCloserTTC = prevTunnels.reduce((sum, t) => {
       const tunnelSalesWithCloser = t.sales
         .filter(sale => sale.closerId)
-        .reduce((s, sale) => s + sale.amountCollected, 0);
+        .reduce((s, sale) => s + getEffectiveCollectedAmount(sale), 0);
       return sum + tunnelSalesWithCloser;
     }, 0);
     const salesWithCloserHT = salesWithCloserTTC * (1 / (1 + taxRate));
