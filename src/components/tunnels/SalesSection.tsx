@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
-import { Sale, InstallmentPlan, Offer, defaultInstallmentPlans, Closer } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { SaleForm } from './SaleForm';
 
 interface SalesSectionProps {
@@ -28,9 +28,9 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, ins
   };
 
   // Calculate totals
-  const totalContracted = sales.reduce((sum, s) => sum + s.totalPrice, 0);
-  const totalCollected = sales.reduce((sum, s) => sum + s.amountCollected, 0);
-  const totalRemaining = totalContracted - totalCollected;
+  const totalContracted = sales.reduce((sum, s) => sum + getEffectiveContractedAmount(s), 0);
+  const totalCollected = sales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0);
+  const totalRemaining = sales.reduce((sum, s) => sum + getRemainingAmount(s), 0);
 
   return (
     <div className="space-y-4">
@@ -62,8 +62,10 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, ins
       {sales.length > 0 && (
         <div className="space-y-2 max-h-48 overflow-y-auto">
           {sales.map((sale) => {
-            const remaining = sale.totalPrice - sale.amountCollected;
-            const progress = sale.totalPrice > 0 ? (sale.amountCollected / sale.totalPrice) * 100 : 0;
+            const remaining = getRemainingAmount(sale);
+            const effectiveContracted = getEffectiveContractedAmount(sale);
+            const effectiveCollected = getEffectiveCollectedAmount(sale);
+            const progress = effectiveContracted > 0 ? (effectiveCollected / effectiveContracted) * 100 : 100;
             
             return (
               <div 
@@ -103,7 +105,7 @@ export function SalesSection({ sales, onAddSale, onUpdateSale, onDeleteSale, ins
                   />
                 </div>
                 <div className="mt-1 flex justify-between text-xs">
-                  <span className="text-profitable">{sale.amountCollected.toLocaleString('fr-FR')} €</span>
+                  <span className="text-profitable">{effectiveCollected.toLocaleString('fr-FR')} €</span>
                   {remaining > 0 && (
                     <span className="text-warning">-{remaining.toLocaleString('fr-FR')} €</span>
                   )}

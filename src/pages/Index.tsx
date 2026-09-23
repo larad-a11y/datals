@@ -174,7 +174,7 @@ const Index = () => {
       refundedAmount: newRefundedAmount,
       refundHistory: [...(sale.refundHistory || []), newRefund],
       isFullyRefunded,
-      ...(isFullyRefunded ? { isDefaulted: false } : {}),
+      ...(isFullyRefunded ? { isDefaulted: false, nextPaymentDate: undefined } : {}),
     });
   };
 

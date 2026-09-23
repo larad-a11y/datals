@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale, CoachingExpense } from '@/types/business';
+import { Tunnel, Charges, Salary, KPIData, defaultCharges, Sale, CoachingExpense, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { roundCurrency } from '@/lib/utils';
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -30,13 +30,13 @@ export function useBusinessData() {
   // Calculate KPIs
   const kpis = useMemo((): KPIData => {
     const totalContracted = filteredTunnels.reduce((sum, t) => {
-      const salesContracted = t.sales.reduce((s, sale) => s + sale.totalPrice, 0);
+      const salesContracted = t.sales.reduce((s, sale) => s + getEffectiveContractedAmount(sale), 0);
       return sum + (salesContracted > 0 ? salesContracted : t.callsClosed * t.averagePrice);
     }, 0);
     
     // CA Collecté TTC
     const totalCollectedTTC = filteredTunnels.reduce((sum, t) => {
-      const salesCollected = t.sales.reduce((s, sale) => s + sale.amountCollected, 0);
+      const salesCollected = t.sales.reduce((s, sale) => s + getEffectiveCollectedAmount(sale), 0);
       return sum + (salesCollected > 0 ? salesCollected : t.collectedAmount);
     }, 0);
     
@@ -86,7 +86,7 @@ export function useBusinessData() {
     const salesWithCloserHT = filteredTunnels.reduce((sum, t) => {
       const tunnelSalesWithCloser = t.sales
         .filter(sale => sale.closerId)
-        .reduce((s, sale) => s + sale.amountCollected, 0);
+        .reduce((s, sale) => s + getEffectiveCollectedAmount(sale), 0);
       return sum + tunnelSalesWithCloser;
     }, 0);
     // Convertir TTC en HT pour les ventes avec closer
@@ -158,11 +158,11 @@ export function useBusinessData() {
         if (sale.isDefaulted) return false; // Exclure les impayés
         if (!sale.nextPaymentDate) return false;
         const paymentMonth = sale.nextPaymentDate.substring(0, 7); // "YYYY-MM"
-        return paymentMonth === selectedMonth && sale.amountCollected < sale.totalPrice;
+        return paymentMonth === selectedMonth && getRemainingAmount(sale) > 0;
       })
       .reduce((sum, sale) => {
         // Montant restant à collecter pour cette vente
-        const remaining = sale.totalPrice - sale.amountCollected;
+        const remaining = getRemainingAmount(sale);
         // On estime le prochain paiement comme le montant restant divisé par les paiements restants
         const paymentsRemaining = sale.numberOfPayments ? 
           sale.numberOfPayments - (sale.paymentHistory?.length || 1) : 1;
@@ -173,13 +173,13 @@ export function useBusinessData() {
     const upcomingPaymentsTotal = roundCurrency(tunnels
       .flatMap(t => t.sales)
       .filter(sale => !sale.isDefaulted)
-      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0));
+      .reduce((sum, sale) => sum + getRemainingAmount(sale), 0));
 
     // Montant total en impayé
     const defaultedAmount = roundCurrency(tunnels
       .flatMap(t => t.sales)
       .filter(sale => sale.isDefaulted)
-      .reduce((sum, sale) => sum + Math.max(0, sale.totalPrice - sale.amountCollected), 0));
+      .reduce((sum, sale) => sum + getRemainingAmount(sale), 0));
 
     // Cost per call
     const costPerCall = roundCurrency(totalCalls > 0 ? totalAdBudget / totalCalls : 0);
@@ -199,7 +199,7 @@ export function useBusinessData() {
     // Organic stats
     const organicSales = filteredTunnels.flatMap(t => t.sales.filter(s => s.trafficSource === 'organic'));
     const organicSalesCount = organicSales.length;
-    const organicCollectedAmount = roundCurrency(organicSales.reduce((sum, s) => sum + s.amountCollected, 0));
+    const organicCollectedAmount = roundCurrency(organicSales.reduce((sum, s) => sum + getEffectiveCollectedAmount(s), 0));
 
     // Placeholder values for new metrics (not used in legacy hook)
     const directCollectedThisMonth = 0;
