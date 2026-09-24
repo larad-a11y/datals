@@ -525,6 +525,11 @@ export function useSupabaseData() {
       if (updates.refundedAmount !== undefined) dbUpdates.refunded_amount = updates.refundedAmount;
       if (updates.refundHistory !== undefined) dbUpdates.refund_history = updates.refundHistory;
       if (updates.isFullyRefunded !== undefined) dbUpdates.is_fully_refunded = updates.isFullyRefunded;
+      if (updates.isFullyRefunded === true) {
+        dbUpdates.next_payment_date = null;
+        dbUpdates.is_defaulted = false;
+        dbUpdates.defaulted_at = null;
+      }
 
       const { error } = await supabase
         .from('sales')

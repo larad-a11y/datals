@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer, Charges, TrafficSource, trafficSourceLabels } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer, Charges, TrafficSource, trafficSourceLabels, isSaleFullyRefunded } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -220,7 +220,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
 
   const hasMarkup = totalPriceNum > basePriceNum && basePriceNum > 0;
   const markupAmount = roundCurrency(totalPriceNum - basePriceNum);
-  const remainingAmount = roundCurrency(totalPriceNum - amountCollectedNum);
+  const remainingAmount = sale && isSaleFullyRefunded(sale)
+    ? 0
+    : roundCurrency(Math.max(0, totalPriceNum - amountCollectedNum));
   const paymentPerInstallment = formData.numberOfPayments > 0 && totalPriceNum > 0
     ? roundCurrency(totalPriceNum / formData.numberOfPayments)
     : 0;
