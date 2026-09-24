@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
-import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download } from 'lucide-react';
+import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download, Columns3 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
-import { SalesTable, SortDirection, SortKey } from './SalesTable';
+import { SalesTable, SortDirection, SortKey, OptionalColumn, optionalColumnLabels } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
 
 interface EnrichedSale extends Sale {
@@ -59,6 +61,17 @@ export function SalesCRMPanel({
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [editingSale, setEditingSale] = useState<EnrichedSale | null>(null);
+  const [minRemaining, setMinRemaining] = useState('');
+  const [hiddenColumns, setHiddenColumns] = useState<OptionalColumn[]>(() => {
+    try { return JSON.parse(localStorage.getItem('sales_hidden_columns') || '[]'); } catch { return []; }
+  });
+  const toggleColumn = (col: OptionalColumn) => {
+    setHiddenColumns((prev) => {
+      const next = prev.includes(col) ? prev.filter((c) => c !== col) : [...prev, col];
+      localStorage.setItem('sales_hidden_columns', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const allSales = useMemo(() => getAllSales(), [getAllSales]);
 
@@ -107,8 +120,13 @@ export function SalesCRMPanel({
         const query = searchQuery.toLowerCase();
         const matchesClient = sale.clientName?.toLowerCase().includes(query);
         const matchesTunnel = sale.tunnelName?.toLowerCase().includes(query);
-        if (!matchesClient && !matchesTunnel) return false;
+        const matchesEmail = sale.clientEmail?.toLowerCase().includes(query);
+        if (!matchesClient && !matchesTunnel && !matchesEmail) return false;
       }
+
+      // Minimum remaining amount filter
+      const minRem = parseFloat(minRemaining.replace(',', '.'));
+      if (!isNaN(minRem) && minRem > 0 && getRemainingAmount(sale) < minRem) return false;
 
       // Status filter
       if (selectedStatus !== 'all') {
@@ -137,7 +155,7 @@ export function SalesCRMPanel({
 
       return true;
     });
-  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, selectedPaymentMethod, dateRange, searchQuery, selectedStatus]);
+  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, selectedPaymentMethod, dateRange, searchQuery, selectedStatus, minRemaining]);
 
   const sortedFilteredSales = useMemo(() => {
     const closerName = (id?: string) => {
@@ -212,6 +230,7 @@ export function SalesCRMPanel({
       pendingCount: filteredSales.length - paidCount,
       totalRefunded,
       refundedCount,
+      totalPrice: filteredSales.reduce((sum, s) => sum + s.totalPrice, 0),
     };
   }, [filteredSales]);
 
@@ -228,6 +247,40 @@ export function SalesCRMPanel({
 
   const handleDeleteSale = (saleId: string, tunnelId: string) => {
     onDeleteSale(tunnelId, saleId);
+  };
+
+  const downloadCSV = (headers: string[], rows: unknown[][], filename: string) => {
+    const escape = (v: unknown) => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return `"${s.replace(/"/g, '""')}"`;
+    };
+    const csv = '\uFEFF' + [headers.map(escape).join(','), ...rows.map((r) => r.map(escape).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const refundedSales = useMemo(() => sortedFilteredSales.filter((s) => (s.refundedAmount || 0) > 0), [sortedFilteredSales]);
+
+  const handleExportRefundsCSV = () => {
+    const headers = ['Date vente', 'Client', 'Email', 'Tunnel', 'Prix total', 'Encaissé (brut)', 'Montant remboursé', 'Type', 'Date(s) remboursement', 'Motif(s)'];
+    const rows = refundedSales.map((s) => {
+      const history = (s as any).refundHistory as { date?: string; reason?: string }[] | undefined;
+      return [
+        s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
+        s.totalPrice, s.amountCollected, s.refundedAmount || 0,
+        s.isFullyRefunded ? 'Total' : 'Partiel',
+        (history || []).map((h) => h.date ? new Date(h.date).toLocaleDateString('fr-FR') : '').filter(Boolean).join(' | '),
+        (history || []).map((h) => h.reason || '').filter(Boolean).join(' | '),
+      ];
+    });
+    downloadCSV(headers, rows, `remboursements_${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   const handleExportCSV = () => {
@@ -418,9 +471,20 @@ export function SalesCRMPanel({
 
       {/* Results count */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center gap-3">
         <span>
           {filteredSales.length} vente{filteredSales.length !== 1 ? 's' : ''} trouvée{filteredSales.length !== 1 ? 's' : ''}
         </span>
+          <input
+            type="number"
+            min={0}
+            value={minRemaining}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+            onChange={(e) => { setMinRemaining(e.target.value); setCurrentPage(1); }}
+            placeholder="Reste min. (€)"
+            className="input-field w-36 py-1.5 text-sm"
+          />
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={handleExportCSV}
@@ -431,6 +495,31 @@ export function SalesCRMPanel({
             <Download className="h-4 w-4" />
             Exporter CSV
           </button>
+          <button
+            onClick={handleExportRefundsCSV}
+            disabled={refundedSales.length === 0}
+            className="flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/30 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Exporter uniquement les ventes remboursées (filtres appliqués)"
+          >
+            <RotateCcw className="h-4 w-4" />
+            CSV remboursements
+          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-2 rounded-lg border border-border/50 bg-secondary/30 px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary/50 transition-colors">
+                <Columns3 className="h-4 w-4" />
+                Colonnes
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-52 space-y-2">
+              {(Object.keys(optionalColumnLabels) as OptionalColumn[]).map((col) => (
+                <label key={col} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <Checkbox checked={!hiddenColumns.includes(col)} onCheckedChange={() => toggleColumn(col)} />
+                  {optionalColumnLabels[col]}
+                </label>
+              ))}
+            </PopoverContent>
+          </Popover>
           {totalPages > 1 && (
             <span>
               Page {currentPage} sur {totalPages}
@@ -455,6 +544,8 @@ export function SalesCRMPanel({
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSort={handleSort}
+        hiddenColumns={hiddenColumns}
+        totals={{ price: stats.totalPrice, collected: stats.totalCollected, remaining: stats.remaining, refunded: stats.totalRefunded, count: stats.totalSales }}
       />
 
       {/* Pagination */}
