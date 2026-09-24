@@ -33,14 +33,15 @@ interface SalesTableProps {
   onCancelRefund?: (saleId: string, tunnelId: string, refundId?: string) => void;
   closers?: Closer[];
   offers?: Offer[];
+  sortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
 }
 
-type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
-type SortDirection = 'asc' | 'desc';
+export type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
+export type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [] }: SalesTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort }: SalesTableProps) {
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
 
   // Helper to check if sale should be auto-defaulted (14 days without payment update)
@@ -70,12 +71,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
   };
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortKey(key);
-      setSortDirection('desc');
-    }
+    onSort(key);
   };
 
   const sortedSales = [...sales].sort((a, b) => {

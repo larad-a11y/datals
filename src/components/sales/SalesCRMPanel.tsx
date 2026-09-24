@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download } from 'lucide-react';
 import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
-import { SalesTable } from './SalesTable';
+import { SalesTable, SortDirection, SortKey } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
 
 interface EnrichedSale extends Sale {
@@ -56,6 +56,8 @@ export function SalesCRMPanel({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [editingSale, setEditingSale] = useState<EnrichedSale | null>(null);
 
   const allSales = useMemo(() => getAllSales(), [getAllSales]);
@@ -137,9 +139,52 @@ export function SalesCRMPanel({
     });
   }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, selectedPaymentMethod, dateRange, searchQuery, selectedStatus]);
 
-  // Pagination
+  const sortedFilteredSales = useMemo(() => {
+    const closerName = (id?: string) => {
+      const closer = closers.find((item) => item.id === id);
+      return closer ? `${closer.firstName} ${closer.lastName}` : '';
+    };
+
+    return [...filteredSales].sort((a, b) => {
+      let comparison = 0;
+      switch (sortKey) {
+        case 'createdAt': comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); break;
+        case 'clientName': comparison = (a.clientName || '').localeCompare(b.clientName || ''); break;
+        case 'totalPrice': comparison = a.totalPrice - b.totalPrice; break;
+        case 'amountCollected': comparison = a.amountCollected - b.amountCollected; break;
+        case 'tunnelName': comparison = (a.tunnelName || '').localeCompare(b.tunnelName || ''); break;
+        case 'offerName': comparison = (offers.find(o => o.id === a.offerId)?.name || '').localeCompare(offers.find(o => o.id === b.offerId)?.name || ''); break;
+        case 'tunnelDate': comparison = new Date(a.tunnelDate || 0).getTime() - new Date(b.tunnelDate || 0).getTime(); break;
+        case 'closer': comparison = closerName(a.closerId).localeCompare(closerName(b.closerId)); break;
+        case 'paymentMethod': comparison = (a.paymentMethod || 'cb').localeCompare(b.paymentMethod || 'cb'); break;
+        case 'numberOfPayments': comparison = a.numberOfPayments - b.numberOfPayments; break;
+        case 'nextPaymentDate': comparison = new Date(a.nextPaymentDate || 0).getTime() - new Date(b.nextPaymentDate || 0).getTime(); break;
+        case 'remaining': comparison = getRemainingAmount(a) - getRemainingAmount(b); break;
+        case 'refunded': comparison = (a.refundedAmount || 0) - (b.refundedAmount || 0); break;
+        case 'progress': {
+          const progressA = a.isFullyRefunded ? 0 : a.totalPrice > 0 ? getEffectiveCollectedAmount(a) / a.totalPrice : 0;
+          const progressB = b.isFullyRefunded ? 0 : b.totalPrice > 0 ? getEffectiveCollectedAmount(b) / b.totalPrice : 0;
+          comparison = progressA - progressB;
+          break;
+        }
+      }
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [filteredSales, sortKey, sortDirection, closers, offers]);
+
+  const handleSort = (key: SortKey) => {
+    setCurrentPage(1);
+    if (sortKey === key) {
+      setSortDirection((direction) => direction === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('desc');
+    }
+  };
+
+  // Pagination is applied after sorting the complete filtered result.
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
-  const paginatedSales = filteredSales.slice(
+  const paginatedSales = sortedFilteredSales.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -213,7 +258,7 @@ export function SalesCRMPanel({
     };
     const offerName = (id?: string) => offers.find((o) => o.id === id)?.name || '';
 
-    const rows = filteredSales.map((s) => [
+    const rows = sortedFilteredSales.map((s) => [
       s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
       s.tunnelType || '', s.tunnelDate || '', s.tunnelMonth || '',
       closerName(s.closerId), offerName(s.offerId), s.paymentMethod || '',
