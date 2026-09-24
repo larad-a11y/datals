@@ -100,7 +100,9 @@ export function isSaleFullyRefunded(sale: Sale): boolean {
 }
 
 export function getRemainingAmount(sale: Sale): number {
-  if (isSaleFullyRefunded(sale)) return 0;
+  // A refund closes the sale: no future amount remains due, even when only
+  // the amount already collected was refunded.
+  if ((sale.refundedAmount || 0) > 0) return 0;
   return Math.max(0, getEffectiveContractedAmount(sale) - getEffectiveCollectedAmount(sale));
 }
 
@@ -291,7 +293,7 @@ export function generatePaymentNotifications(sales: (Sale & { tunnelName?: strin
   const notifications: PaymentNotification[] = [];
   
   sales.forEach(sale => {
-    if (sale.isFullyRefunded) return;
+    if ((sale.refundedAmount || 0) > 0) return;
     if (!sale.nextPaymentDate) return;
     
     const remaining = getRemainingAmount(sale);
