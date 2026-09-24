@@ -35,7 +35,7 @@ interface SalesTableProps {
   offers?: Offer[];
 }
 
-type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName';
+type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
 type SortDirection = 'asc' | 'desc';
 
 export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [] }: SalesTableProps) {
@@ -100,6 +100,36 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
         const offerNameA = offers.find(o => o.id === a.offerId)?.name || '';
         const offerNameB = offers.find(o => o.id === b.offerId)?.name || '';
         comparison = offerNameA.localeCompare(offerNameB);
+        break;
+      }
+      case 'tunnelDate':
+        comparison = new Date(a.tunnelDate || 0).getTime() - new Date(b.tunnelDate || 0).getTime();
+        break;
+      case 'closer':
+        comparison = (getCloserName(a.closerId) || '').localeCompare(getCloserName(b.closerId) || '');
+        break;
+      case 'paymentMethod':
+        comparison = (a.paymentMethod || 'cb').localeCompare(b.paymentMethod || 'cb');
+        break;
+      case 'numberOfPayments':
+        comparison = a.numberOfPayments - b.numberOfPayments;
+        break;
+      case 'nextPaymentDate':
+        comparison = new Date(a.nextPaymentDate || 0).getTime() - new Date(b.nextPaymentDate || 0).getTime();
+        break;
+      case 'remaining': {
+        const remainingA = getRemainingAmount(a);
+        const remainingB = getRemainingAmount(b);
+        comparison = remainingA - remainingB;
+        break;
+      }
+      case 'refunded':
+        comparison = (a.refundedAmount || 0) - (b.refundedAmount || 0);
+        break;
+      case 'progress': {
+        const progressA = a.isFullyRefunded ? 0 : a.totalPrice > 0 ? (getEffectiveCollectedAmount(a) / a.totalPrice) * 100 : 0;
+        const progressB = b.isFullyRefunded ? 0 : b.totalPrice > 0 ? (getEffectiveCollectedAmount(b) / b.totalPrice) * 100 : 0;
+        comparison = progressA - progressB;
         break;
       }
     }
@@ -186,23 +216,39 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Closer</TableHead>
+            <TableHead>
+              <SortHeader label="Date" sortKeyName="tunnelDate" />
+            </TableHead>
+            <TableHead>
+              <SortHeader label="Closer" sortKeyName="closer" />
+            </TableHead>
             <TableHead>
               <SortHeader label="Offre" sortKeyName="offerName" />
             </TableHead>
-            <TableHead>Moyen</TableHead>
+            <TableHead>
+              <SortHeader label="Moyen" sortKeyName="paymentMethod" />
+            </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
-            <TableHead className="text-center">Paiements</TableHead>
-            <TableHead>Échéances</TableHead>
+            <TableHead className="text-center">
+              <SortHeader label="Paiements" sortKeyName="numberOfPayments" />
+            </TableHead>
+            <TableHead>
+              <SortHeader label="Échéances" sortKeyName="nextPaymentDate" />
+            </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
-            <TableHead className="text-right">Reste</TableHead>
-            <TableHead className="text-right">Remboursé</TableHead>
-            <TableHead className="w-[120px]">Progression</TableHead>
+            <TableHead className="text-right">
+              <SortHeader label="Reste" sortKeyName="remaining" />
+            </TableHead>
+            <TableHead className="text-right">
+              <SortHeader label="Remboursé" sortKeyName="refunded" />
+            </TableHead>
+            <TableHead className="w-[120px]">
+              <SortHeader label="Progression" sortKeyName="progress" />
+            </TableHead>
             <TableHead className="w-[120px]">Paiement</TableHead>
             <TableHead className="w-[120px]">Remb.</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
