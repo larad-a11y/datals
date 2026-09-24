@@ -166,7 +166,7 @@ const Index = () => {
       date: new Date().toISOString(),
     };
     
-    const newRefundedAmount = (sale.refundedAmount || 0) + amount;
+    const newRefundedAmount = Math.round(Math.min(sale.amountCollected, (sale.refundedAmount || 0) + amount) * 100) / 100;
     const maxRefundable = sale.amountCollected;
     const isFullyRefunded = isFull || newRefundedAmount >= maxRefundable;
     
@@ -174,7 +174,7 @@ const Index = () => {
       refundedAmount: newRefundedAmount,
       refundHistory: [...(sale.refundHistory || []), newRefund],
       isFullyRefunded,
-      ...(isFullyRefunded ? { isDefaulted: false, nextPaymentDate: undefined } : {}),
+      ...(isFullyRefunded ? { isDefaulted: false, defaultedAt: undefined, nextPaymentDate: undefined } : {}),
     });
   };
 

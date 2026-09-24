@@ -94,8 +94,13 @@ export function getEffectiveCollectedAmount(sale: Sale): number {
   return Math.max(0, sale.amountCollected - (sale.refundedAmount || 0));
 }
 
+export function isSaleFullyRefunded(sale: Sale): boolean {
+  const refundedAmount = sale.refundedAmount || 0;
+  return sale.isFullyRefunded === true || (sale.amountCollected > 0 && refundedAmount >= sale.amountCollected);
+}
+
 export function getRemainingAmount(sale: Sale): number {
-  if (sale.isFullyRefunded) return 0;
+  if (isSaleFullyRefunded(sale)) return 0;
   return Math.max(0, getEffectiveContractedAmount(sale) - getEffectiveCollectedAmount(sale));
 }
 
