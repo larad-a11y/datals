@@ -285,7 +285,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                         </Badge>
                       )}
                     </div>
-                    {sale.clientEmail && (
+                    {show('email') && sale.clientEmail && (
                       <span className="text-xs text-muted-foreground">{sale.clientEmail}</span>
                     )}
                   </div>
@@ -300,9 +300,12 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-sm">{sale.tunnelName}</span>
                   </div>
                 </TableCell>
+                {show('tunnelDate') && (
                 <TableCell className="text-sm text-muted-foreground">
                   {sale.tunnelDate ? new Date(sale.tunnelDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '-'}
                 </TableCell>
+                )}
+                {show('closer') && (
                 <TableCell>
                   {sale.closerId ? (
                     <div className="flex items-center gap-1.5">
@@ -315,6 +318,8 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground italic">Aucun</span>
                   )}
                 </TableCell>
+                )}
+                {show('offer') && (
                 <TableCell className="text-sm">
                   {sale.offerId ? (
                     <Badge variant="outline" className="text-xs">
@@ -324,11 +329,14 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground italic">-</span>
                   )}
                 </TableCell>
+                )}
+                {show('method') && (
                 <TableCell className="text-sm">
                   <Badge variant="outline" className="text-xs">
                     {sale.paymentMethod === 'virement' ? 'Virement' : 'CB'}
                   </Badge>
                 </TableCell>
+                )}
                 <TableCell className="text-right font-medium">
                   <div className="flex flex-col items-end">
                     <span className="whitespace-nowrap">{sale.totalPrice.toLocaleString('fr-FR')} €</span>
@@ -339,9 +347,12 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     )}
                   </div>
                 </TableCell>
+                {show('payments') && (
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {sale.numberOfPayments}x
                 </TableCell>
+                )}
+                {show('schedule') && (
                 <TableCell>
                   {sale.paymentHistory && sale.paymentHistory.length > 0 ? (
                     <div className="flex flex-col gap-0.5">
@@ -368,12 +379,14 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
+                )}
                 <TableCell className="text-right font-medium text-profitable">
                   {effectiveCollected.toLocaleString('fr-FR')} €
                 </TableCell>
                 <TableCell className={`text-right font-medium ${isPaid ? 'text-profitable' : 'text-warning'}`}>
                   {remaining.toLocaleString('fr-FR')} €
                 </TableCell>
+                {show('refunded') && (
                 <TableCell className="text-right">
                   {(sale.refundedAmount || 0) > 0 ? (
                     <div className="flex flex-col items-end">
@@ -388,6 +401,8 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
+                )}
+                {show('progress') && (
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Progress 
@@ -399,6 +414,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     </span>
                   </div>
                 </TableCell>
+                )}
                 <TableCell>
                   {onRecordPayment && onFullyPaid ? (
                     <PaymentActions
@@ -448,7 +464,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => onDelete(sale.id, sale.tunnelId)}
+                      onClick={() => setSaleToDelete(sale)}
                       className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       title="Supprimer"
                     >
