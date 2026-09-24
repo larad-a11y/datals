@@ -271,7 +271,7 @@ export function SalesCRMPanel({
   const handleExportRefundsCSV = () => {
     const headers = ['Date vente', 'Client', 'Email', 'Tunnel', 'Prix total', 'Encaissé (brut)', 'Montant remboursé', 'Type', 'Date(s) remboursement', 'Motif(s)'];
     const rows = refundedSales.map((s) => {
-      const history = (s as any).refundHistory as { date?: string; reason?: string }[] | undefined;
+      const history = s.refundHistory;
       return [
         s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
         s.totalPrice, s.amountCollected, s.refundedAmount || 0,
