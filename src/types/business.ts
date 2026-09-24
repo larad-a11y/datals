@@ -86,7 +86,7 @@ export interface Sale {
 }
 
 export function getEffectiveContractedAmount(sale: Sale): number {
-  if (sale.isFullyRefunded) return 0;
+  if (isSaleFullyRefunded(sale)) return 0;
   return Math.max(0, sale.totalPrice - (sale.refundedAmount || 0));
 }
 
