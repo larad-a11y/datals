@@ -216,23 +216,39 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Closer</TableHead>
+            <TableHead>
+              <SortHeader label="Date" sortKeyName="tunnelDate" />
+            </TableHead>
+            <TableHead>
+              <SortHeader label="Closer" sortKeyName="closer" />
+            </TableHead>
             <TableHead>
               <SortHeader label="Offre" sortKeyName="offerName" />
             </TableHead>
-            <TableHead>Moyen</TableHead>
+            <TableHead>
+              <SortHeader label="Moyen" sortKeyName="paymentMethod" />
+            </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
-            <TableHead className="text-center">Paiements</TableHead>
-            <TableHead>Échéances</TableHead>
+            <TableHead className="text-center">
+              <SortHeader label="Paiements" sortKeyName="numberOfPayments" />
+            </TableHead>
+            <TableHead>
+              <SortHeader label="Échéances" sortKeyName="nextPaymentDate" />
+            </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
-            <TableHead className="text-right">Reste</TableHead>
-            <TableHead className="text-right">Remboursé</TableHead>
-            <TableHead className="w-[120px]">Progression</TableHead>
+            <TableHead className="text-right">
+              <SortHeader label="Reste" sortKeyName="remaining" />
+            </TableHead>
+            <TableHead className="text-right">
+              <SortHeader label="Remboursé" sortKeyName="refunded" />
+            </TableHead>
+            <TableHead className="w-[120px]">
+              <SortHeader label="Progression" sortKeyName="progress" />
+            </TableHead>
             <TableHead className="w-[120px]">Paiement</TableHead>
             <TableHead className="w-[120px]">Remb.</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
