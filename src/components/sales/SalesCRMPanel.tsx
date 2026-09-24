@@ -111,6 +111,7 @@ export function SalesCRMPanel({
       // Status filter
       if (selectedStatus !== 'all') {
         const remaining = getRemainingAmount(sale);
+        const isRefunded = (sale.refundedAmount || 0) > 0;
         // Auto-defaulted: payment overdue AND no update in 14 days (same logic as SalesTable)
         let isDefaulted = sale.isDefaulted === true;
         if (!isDefaulted && remaining > 0 && sale.nextPaymentDate) {
@@ -120,7 +121,7 @@ export function SalesCRMPanel({
           const daysOverdue = Math.floor((today.getTime() - new Date(sale.nextPaymentDate).getTime()) / (1000 * 60 * 60 * 24));
           isDefaulted = daysOverdue > 0 && daysSinceUpdate >= 14;
         }
-        const isPaid = remaining <= 0;
+        const isPaid = remaining <= 0 && !isRefunded;
         const effectiveCollected = getEffectiveCollectedAmount(sale);
         const isPartial = effectiveCollected > 0 && remaining > 0 && !isDefaulted;
         const isPending = effectiveCollected === 0 && remaining > 0 && !isDefaulted && !sale.isFullyRefunded;
@@ -129,6 +130,7 @@ export function SalesCRMPanel({
         if (selectedStatus === 'partial' && !isPartial) return false;
         if (selectedStatus === 'pending' && !isPending) return false;
         if (selectedStatus === 'defaulted' && !isDefaulted) return false;
+        if (selectedStatus === 'refunded' && !isRefunded) return false;
       }
 
       return true;
