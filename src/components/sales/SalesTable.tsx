@@ -1,5 +1,22 @@
 import { useState } from 'react';
-import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Edit2, Trash2, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { TableFooter } from '@/components/ui/table';
+
+export type OptionalColumn = 'email' | 'tunnelDate' | 'closer' | 'offer' | 'method' | 'payments' | 'schedule' | 'refunded' | 'progress';
+export const optionalColumnLabels: Record<OptionalColumn, string> = {
+  email: 'Email', tunnelDate: 'Date tunnel', closer: 'Closer', offer: 'Offre', method: 'Moyen',
+  payments: 'Paiements', schedule: 'Échéances', refunded: 'Remboursé', progress: 'Progression',
+};
 import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer, getEffectiveCollectedAmount, getRemainingAmount } from '@/types/business';
 import { RefundActions } from './RefundActions';
 import {
@@ -36,13 +53,18 @@ interface SalesTableProps {
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
+  hiddenColumns?: OptionalColumn[];
+  totals?: { price: number; collected: number; remaining: number; refunded: number; count: number };
 }
 
 export type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
 export type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort, hiddenColumns = [], totals }: SalesTableProps) {
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
+  const [saleToDelete, setSaleToDelete] = useState<EnrichedSale | null>(null);
+  const show = (col: OptionalColumn) => !hiddenColumns.includes(col);
+  const fmt = (n: number) => `${(Math.round(n * 100) / 100).toLocaleString('fr-FR')} €`;
 
   // Helper to check if sale should be auto-defaulted (14 days without payment update)
   const isAutoDefaulted = (sale: EnrichedSale) => {
@@ -138,7 +160,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
       className="flex items-center gap-1 hover:text-foreground transition-colors"
     >
       {label}
-      <ArrowUpDown className={`h-3 w-3 ${sortKey === sortKeyName ? 'text-primary' : ''}`} />
+      {sortKey === sortKeyName ? (
+        sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-50" />
+      )}
     </button>
   );
 
@@ -212,39 +238,23 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             <TableHead>
               <SortHeader label="Tunnel" sortKeyName="tunnelName" />
             </TableHead>
-            <TableHead>
-              <SortHeader label="Date" sortKeyName="tunnelDate" />
-            </TableHead>
-            <TableHead>
-              <SortHeader label="Closer" sortKeyName="closer" />
-            </TableHead>
-            <TableHead>
-              <SortHeader label="Offre" sortKeyName="offerName" />
-            </TableHead>
-            <TableHead>
-              <SortHeader label="Moyen" sortKeyName="paymentMethod" />
-            </TableHead>
+            {show('tunnelDate') && <TableHead><SortHeader label="Date" sortKeyName="tunnelDate" /></TableHead>}
+            {show('closer') && <TableHead><SortHeader label="Closer" sortKeyName="closer" /></TableHead>}
+            {show('offer') && <TableHead><SortHeader label="Offre" sortKeyName="offerName" /></TableHead>}
+            {show('method') && <TableHead><SortHeader label="Moyen" sortKeyName="paymentMethod" /></TableHead>}
             <TableHead className="text-right">
               <SortHeader label="Prix" sortKeyName="totalPrice" />
             </TableHead>
-            <TableHead className="text-center">
-              <SortHeader label="Paiements" sortKeyName="numberOfPayments" />
-            </TableHead>
-            <TableHead>
-              <SortHeader label="Échéances" sortKeyName="nextPaymentDate" />
-            </TableHead>
+            {show('payments') && <TableHead className="text-center"><SortHeader label="Paiements" sortKeyName="numberOfPayments" /></TableHead>}
+            {show('schedule') && <TableHead><SortHeader label="Échéances" sortKeyName="nextPaymentDate" /></TableHead>}
             <TableHead className="text-right">
               <SortHeader label="Encaissé" sortKeyName="amountCollected" />
             </TableHead>
             <TableHead className="text-right">
               <SortHeader label="Reste" sortKeyName="remaining" />
             </TableHead>
-            <TableHead className="text-right">
-              <SortHeader label="Remboursé" sortKeyName="refunded" />
-            </TableHead>
-            <TableHead className="w-[120px]">
-              <SortHeader label="Progression" sortKeyName="progress" />
-            </TableHead>
+            {show('refunded') && <TableHead className="text-right"><SortHeader label="Remboursé" sortKeyName="refunded" /></TableHead>}
+            {show('progress') && <TableHead className="w-[120px]"><SortHeader label="Progression" sortKeyName="progress" /></TableHead>}
             <TableHead className="w-[120px]">Paiement</TableHead>
             <TableHead className="w-[120px]">Remb.</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
@@ -275,7 +285,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                         </Badge>
                       )}
                     </div>
-                    {sale.clientEmail && (
+                    {show('email') && sale.clientEmail && (
                       <span className="text-xs text-muted-foreground">{sale.clientEmail}</span>
                     )}
                   </div>
@@ -290,9 +300,12 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-sm">{sale.tunnelName}</span>
                   </div>
                 </TableCell>
+                {show('tunnelDate') && (
                 <TableCell className="text-sm text-muted-foreground">
                   {sale.tunnelDate ? new Date(sale.tunnelDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '-'}
                 </TableCell>
+                )}
+                {show('closer') && (
                 <TableCell>
                   {sale.closerId ? (
                     <div className="flex items-center gap-1.5">
@@ -305,6 +318,8 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground italic">Aucun</span>
                   )}
                 </TableCell>
+                )}
+                {show('offer') && (
                 <TableCell className="text-sm">
                   {sale.offerId ? (
                     <Badge variant="outline" className="text-xs">
@@ -314,11 +329,14 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground italic">-</span>
                   )}
                 </TableCell>
+                )}
+                {show('method') && (
                 <TableCell className="text-sm">
                   <Badge variant="outline" className="text-xs">
                     {sale.paymentMethod === 'virement' ? 'Virement' : 'CB'}
                   </Badge>
                 </TableCell>
+                )}
                 <TableCell className="text-right font-medium">
                   <div className="flex flex-col items-end">
                     <span className="whitespace-nowrap">{sale.totalPrice.toLocaleString('fr-FR')} €</span>
@@ -329,9 +347,12 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     )}
                   </div>
                 </TableCell>
+                {show('payments') && (
                 <TableCell className="text-center text-sm text-muted-foreground">
                   {sale.numberOfPayments}x
                 </TableCell>
+                )}
+                {show('schedule') && (
                 <TableCell>
                   {sale.paymentHistory && sale.paymentHistory.length > 0 ? (
                     <div className="flex flex-col gap-0.5">
@@ -358,12 +379,14 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
+                )}
                 <TableCell className="text-right font-medium text-profitable">
                   {effectiveCollected.toLocaleString('fr-FR')} €
                 </TableCell>
                 <TableCell className={`text-right font-medium ${isPaid ? 'text-profitable' : 'text-warning'}`}>
                   {remaining.toLocaleString('fr-FR')} €
                 </TableCell>
+                {show('refunded') && (
                 <TableCell className="text-right">
                   {(sale.refundedAmount || 0) > 0 ? (
                     <div className="flex flex-col items-end">
@@ -378,6 +401,8 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     <span className="text-xs text-muted-foreground">-</span>
                   )}
                 </TableCell>
+                )}
+                {show('progress') && (
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Progress 
@@ -389,6 +414,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                     </span>
                   </div>
                 </TableCell>
+                )}
                 <TableCell>
                   {onRecordPayment && onFullyPaid ? (
                     <PaymentActions
@@ -438,7 +464,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => onDelete(sale.id, sale.tunnelId)}
+                      onClick={() => setSaleToDelete(sale)}
                       className="rounded p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                       title="Supprimer"
                     >
@@ -459,6 +485,23 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             );
           })}
         </TableBody>
+        {totals && (
+          <TableFooter>
+            <TableRow className="bg-secondary/40 font-semibold">
+              <TableCell colSpan={3 + (['tunnelDate', 'closer', 'offer', 'method'] as OptionalColumn[]).filter(show).length}>
+                Total ({totals.count} vente{totals.count > 1 ? 's' : ''} filtrée{totals.count > 1 ? 's' : ''})
+              </TableCell>
+              <TableCell className="text-right whitespace-nowrap">{fmt(totals.price)}</TableCell>
+              {(show('payments') || show('schedule')) && (
+                <TableCell colSpan={(['payments', 'schedule'] as OptionalColumn[]).filter(show).length} />
+              )}
+              <TableCell className="text-right whitespace-nowrap text-profitable">{fmt(totals.collected)}</TableCell>
+              <TableCell className="text-right whitespace-nowrap text-warning">{fmt(totals.remaining)}</TableCell>
+              {show('refunded') && <TableCell className="text-right whitespace-nowrap text-destructive">{fmt(totals.refunded)}</TableCell>}
+              <TableCell colSpan={3 + (show('progress') ? 1 : 0)} />
+            </TableRow>
+          </TableFooter>
+        )}
       </Table>
       
       {/* Payment History Dialog */}
@@ -469,6 +512,29 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
           onRecordPayment={handleRecordPayment}
         />
       )}
+
+      <AlertDialog open={!!saleToDelete} onOpenChange={(open) => !open && setSaleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette vente ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La vente de {saleToDelete?.clientName || 'ce client'} ({saleToDelete ? fmt(saleToDelete.totalPrice) : ''}) sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (saleToDelete) onDelete(saleToDelete.id, saleToDelete.tunnelId);
+                setSaleToDelete(null);
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

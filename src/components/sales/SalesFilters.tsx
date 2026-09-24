@@ -103,7 +103,7 @@ export function SalesFilters({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher un client..."
+          placeholder="Rechercher un client, email, tunnel..."
           className="input-field w-full pl-9"
         />
       </div>
