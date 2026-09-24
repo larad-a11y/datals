@@ -485,6 +485,23 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
             );
           })}
         </TableBody>
+        {totals && (
+          <TableFooter>
+            <TableRow className="bg-secondary/40 font-semibold">
+              <TableCell colSpan={3 + (['tunnelDate', 'closer', 'offer', 'method'] as OptionalColumn[]).filter(show).length}>
+                Total ({totals.count} vente{totals.count > 1 ? 's' : ''} filtrée{totals.count > 1 ? 's' : ''})
+              </TableCell>
+              <TableCell className="text-right whitespace-nowrap">{fmt(totals.price)}</TableCell>
+              {(show('payments') || show('schedule')) && (
+                <TableCell colSpan={(['payments', 'schedule'] as OptionalColumn[]).filter(show).length} />
+              )}
+              <TableCell className="text-right whitespace-nowrap text-profitable">{fmt(totals.collected)}</TableCell>
+              <TableCell className="text-right whitespace-nowrap text-warning">{fmt(totals.remaining)}</TableCell>
+              {show('refunded') && <TableCell className="text-right whitespace-nowrap text-destructive">{fmt(totals.refunded)}</TableCell>}
+              <TableCell colSpan={3 + (show('progress') ? 1 : 0)} />
+            </TableRow>
+          </TableFooter>
+        )}
       </Table>
       
       {/* Payment History Dialog */}
@@ -495,6 +512,29 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
           onRecordPayment={handleRecordPayment}
         />
       )}
+
+      <AlertDialog open={!!saleToDelete} onOpenChange={(open) => !open && setSaleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette vente ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La vente de {saleToDelete?.clientName || 'ce client'} ({saleToDelete ? fmt(saleToDelete.totalPrice) : ''}) sera définitivement supprimée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (saleToDelete) onDelete(saleToDelete.id, saleToDelete.tunnelId);
+                setSaleToDelete(null);
+              }}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
