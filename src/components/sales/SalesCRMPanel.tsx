@@ -452,6 +452,9 @@ export function SalesCRMPanel({
         onCancelRefund={onCancelRefund}
         closers={closers}
         offers={offers}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       />
 
       {/* Pagination */}
