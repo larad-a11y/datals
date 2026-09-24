@@ -1,5 +1,22 @@
 import { useState } from 'react';
-import { Edit2, Trash2, ExternalLink, ArrowUpDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Edit2, Trash2, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, User, AlertTriangle, RefreshCw } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { TableFooter } from '@/components/ui/table';
+
+export type OptionalColumn = 'email' | 'tunnelDate' | 'closer' | 'offer' | 'method' | 'payments' | 'schedule' | 'refunded' | 'progress';
+export const optionalColumnLabels: Record<OptionalColumn, string> = {
+  email: 'Email', tunnelDate: 'Date tunnel', closer: 'Closer', offer: 'Offre', method: 'Moyen',
+  payments: 'Paiements', schedule: 'Échéances', refunded: 'Remboursé', progress: 'Progression',
+};
 import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer, getEffectiveCollectedAmount, getRemainingAmount } from '@/types/business';
 import { RefundActions } from './RefundActions';
 import {
@@ -36,13 +53,18 @@ interface SalesTableProps {
   sortKey: SortKey;
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
+  hiddenColumns?: OptionalColumn[];
+  totals?: { price: number; collected: number; remaining: number; refunded: number; count: number };
 }
 
 export type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
 export type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort, hiddenColumns = [], totals }: SalesTableProps) {
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
+  const [saleToDelete, setSaleToDelete] = useState<EnrichedSale | null>(null);
+  const show = (col: OptionalColumn) => !hiddenColumns.includes(col);
+  const fmt = (n: number) => `${(Math.round(n * 100) / 100).toLocaleString('fr-FR')} €`;
 
   // Helper to check if sale should be auto-defaulted (14 days without payment update)
   const isAutoDefaulted = (sale: EnrichedSale) => {
@@ -138,7 +160,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
       className="flex items-center gap-1 hover:text-foreground transition-colors"
     >
       {label}
-      <ArrowUpDown className={`h-3 w-3 ${sortKey === sortKeyName ? 'text-primary' : ''}`} />
+      {sortKey === sortKeyName ? (
+        sortDirection === 'asc' ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 opacity-50" />
+      )}
     </button>
   );
 
