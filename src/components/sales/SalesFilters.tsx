@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, X, CalendarIcon } from 'lucide-react';
+import { Search, X, CalendarIcon, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Tunnel, Closer, Offer } from '@/types/business';
@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export type PaymentStatus = 'all' | 'paid' | 'pending' | 'partial' | 'defaulted' | 'refunded';
 
@@ -35,8 +36,8 @@ interface SalesFiltersProps {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   offers?: Offer[];
-  selectedOfferId?: string;
-  onOfferChange?: (offerId: string) => void;
+  selectedOfferIds?: string[];
+  onOffersChange?: (offerIds: string[]) => void;
   selectedPaymentMethod?: string;
   onPaymentMethodChange?: (method: string) => void;
 }
@@ -57,12 +58,20 @@ export function SalesFilters({
   dateRange,
   onDateRangeChange,
   offers = [],
-  selectedOfferId = '',
-  onOfferChange,
+  selectedOfferIds = [],
+  onOffersChange,
   selectedPaymentMethod = '',
   onPaymentMethodChange,
 }: SalesFiltersProps) {
   const [dateOpen, setDateOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
+
+  const toggleOffer = (id: string) => {
+    const next = selectedOfferIds.includes(id)
+      ? selectedOfferIds.filter((v) => v !== id)
+      : [...selectedOfferIds, id];
+    onOffersChange?.(next);
+  };
   const statusOptions: { value: PaymentStatus; label: string }[] = [
     { value: 'all', label: 'Tous' },
     { value: 'paid', label: 'Payé' },
@@ -72,7 +81,7 @@ export function SalesFilters({
     { value: 'refunded', label: 'Remboursements' },
   ];
 
-  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedOfferId !== '' || selectedPaymentMethod !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
+  const hasActiveFilters = selectedTunnelId !== '' || selectedStatus !== 'all' || searchQuery !== '' || selectedMonth !== '' || selectedCloserId !== '' || selectedOfferIds.length > 0 || selectedPaymentMethod !== '' || dateRange.from !== undefined || dateRange.to !== undefined;
 
   const resetFilters = () => {
     onTunnelChange('');
@@ -80,7 +89,7 @@ export function SalesFilters({
     onSearchChange('');
     onMonthChange('');
     onCloserChange('');
-    onOfferChange?.('');
+    onOffersChange?.([]);
     onPaymentMethodChange?.('');
     onDateRangeChange({ from: undefined, to: undefined });
   };
@@ -150,21 +159,60 @@ export function SalesFilters({
         ))}
       </select>
 
-      {/* Offer filter */}
-      {offers.length > 0 && onOfferChange && (
-        <select
-          value={selectedOfferId}
-          onChange={(e) => onOfferChange(e.target.value)}
-          className="input-field min-w-[150px]"
-        >
-          <option value="">Toutes les offres</option>
-          <option value="none">Sans offre</option>
-          {offers.map((offer) => (
-            <option key={offer.id} value={offer.id}>
-              {offer.name}
-            </option>
-          ))}
-        </select>
+      {/* Offer filter (multi-select) */}
+      {offers.length > 0 && onOffersChange && (
+        <Popover open={offerOpen} onOpenChange={setOfferOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "min-w-[150px] justify-start font-normal",
+                selectedOfferIds.length === 0 && "text-muted-foreground"
+              )}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              {selectedOfferIds.length === 0
+                ? "Toutes les offres"
+                : selectedOfferIds.length === 1
+                  ? (selectedOfferIds[0] === 'none'
+                      ? 'Sans offre'
+                      : offers.find((o) => o.id === selectedOfferIds[0])?.name || '1 offre')
+                  : `${selectedOfferIds.length} offres`}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-2" align="start">
+            <div className="max-h-72 overflow-y-auto space-y-1">
+              <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer">
+                <Checkbox
+                  checked={selectedOfferIds.includes('none')}
+                  onCheckedChange={() => toggleOffer('none')}
+                />
+                Sans offre
+              </label>
+              {offers.map((offer) => (
+                <label
+                  key={offer.id}
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-secondary/50 cursor-pointer"
+                >
+                  <Checkbox
+                    checked={selectedOfferIds.includes(offer.id)}
+                    onCheckedChange={() => toggleOffer(offer.id)}
+                  />
+                  <span className="truncate">{offer.name}</span>
+                </label>
+              ))}
+            </div>
+            {selectedOfferIds.length > 0 && (
+              <button
+                onClick={() => onOffersChange([])}
+                className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-border/50 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+                Tout désélectionner
+              </button>
+            )}
+          </PopoverContent>
+        </Popover>
       )}
 
       {/* Payment method filter */}
