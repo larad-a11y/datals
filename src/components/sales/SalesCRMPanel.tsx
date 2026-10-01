@@ -54,7 +54,7 @@ export function SalesCRMPanel({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedCloserId, setSelectedCloserId] = useState('');
-  const [selectedOfferId, setSelectedOfferId] = useState('');
+  const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [currentPage, setCurrentPage] = useState(1);
@@ -87,10 +87,10 @@ export function SalesCRMPanel({
       // Closer filter
       if (selectedCloserId && sale.closerId !== selectedCloserId) return false;
 
-      // Offer filter
-      if (selectedOfferId) {
-        if (selectedOfferId === 'none' && sale.offerId) return false;
-        if (selectedOfferId !== 'none' && sale.offerId !== selectedOfferId) return false;
+      // Offer filter (multi-select)
+      if (selectedOfferIds.length > 0) {
+        const saleOfferId = sale.offerId || 'none';
+        if (!selectedOfferIds.includes(saleOfferId)) return false;
       }
 
       // Payment method filter
@@ -155,7 +155,7 @@ export function SalesCRMPanel({
 
       return true;
     });
-  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferId, selectedPaymentMethod, dateRange, searchQuery, selectedStatus, minRemaining]);
+  }, [allSales, selectedTunnelId, selectedMonth, selectedCloserId, selectedOfferIds, selectedPaymentMethod, dateRange, searchQuery, selectedStatus, minRemaining]);
 
   const sortedFilteredSales = useMemo(() => {
     const closerName = (id?: string) => {
@@ -452,9 +452,9 @@ export function SalesCRMPanel({
           handleFilterChange();
         }}
         offers={offers}
-        selectedOfferId={selectedOfferId}
-        onOfferChange={(id) => {
-          setSelectedOfferId(id);
+        selectedOfferIds={selectedOfferIds}
+        onOffersChange={(ids) => {
+          setSelectedOfferIds(ids);
           handleFilterChange();
         }}
         selectedPaymentMethod={selectedPaymentMethod}
