@@ -22,6 +22,7 @@ interface SalesCRMPanelProps {
   onNavigateToTunnel?: (tunnelId: string) => void;
   initialTunnelFilter?: string;
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
+  onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
   onFullyPaid: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
@@ -41,6 +42,7 @@ export function SalesCRMPanel({
   onNavigateToTunnel,
   initialTunnelFilter = '',
   onRecordPayment,
+  onDeletePayment,
   onFullyPaid,
   onToggleDefaulted,
   onRecordRefund,
@@ -535,6 +537,7 @@ export function SalesCRMPanel({
         onDelete={handleDeleteSale}
         onViewTunnel={onNavigateToTunnel}
         onRecordPayment={onRecordPayment}
+        onDeletePayment={onDeletePayment}
         onFullyPaid={onFullyPaid}
         onToggleDefaulted={onToggleDefaulted}
         onRecordRefund={onRecordRefund}
