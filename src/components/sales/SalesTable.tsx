@@ -45,6 +45,7 @@ interface SalesTableProps {
   onViewTunnel?: (tunnelId: string) => void;
   onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
   onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
+  onUpdatePaymentDate?: (saleId: string, tunnelId: string, paymentId: string, date: string) => void;
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
@@ -508,10 +509,11 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
       {/* Payment History Dialog */}
       {onRecordPayment && (
         <PaymentHistoryDialog
-          sale={historyDialogSale}
+          sale={historyDialogSale ? (sales.find(s => s.id === historyDialogSale.id) || historyDialogSale) : null}
           onClose={() => setHistoryDialogSale(null)}
           onRecordPayment={handleRecordPayment}
           onDeletePayment={onDeletePayment}
+          onUpdatePaymentDate={onUpdatePaymentDate}
         />
       )}
 

@@ -303,6 +303,7 @@ const Index = () => {
             initialTunnelFilter={salesTunnelFilter}
             onRecordPayment={handleRecordPayment}
             onDeletePayment={handleDeletePayment}
+            onUpdatePaymentDate={handleUpdatePaymentDate}
             onFullyPaid={handleFullyPaid}
             onToggleDefaulted={handleToggleDefaulted}
             onRecordRefund={handleRecordRefund}
