@@ -150,6 +150,17 @@ const Index = () => {
     });
   };
 
+  // Change the date of a recorded payment
+  const handleUpdatePaymentDate = (saleId: string, tunnelId: string, paymentId: string, date: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    const sale = tunnel?.sales.find(s => s.id === saleId);
+    if (!sale || !date) return;
+    const newHistory = (sale.paymentHistory || []).map(p =>
+      p.id === paymentId ? { ...p, date: new Date(`${date}T12:00:00`).toISOString() } : p
+    );
+    updateSale(saleId, { paymentHistory: newHistory });
+  };
+
   // Mark a sale as fully paid
   const handleFullyPaid = (saleId: string, tunnelId: string) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
