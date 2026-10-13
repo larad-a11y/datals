@@ -176,16 +176,15 @@ export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeleteP
                           onWheel={(e) => e.currentTarget.blur()}
                           onBlur={(e) => {
                             const amount = parseFloat(e.target.value);
-                            if (amount > 0 && amount !== payment.amount) {
+                            if (!isNaN(amount) && amount !== 0 && amount !== payment.amount) {
                               onUpdatePaymentAmount(sale.id, sale.tunnelId, payment.id, Math.round(amount * 100) / 100);
                             } else {
                               e.target.value = String(payment.amount);
                             }
                           }}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                          className="w-24 rounded border border-border/50 bg-transparent px-1 py-0.5 text-right text-sm font-medium text-profitable"
+                          className={`w-24 rounded border border-border/50 bg-transparent px-1 py-0.5 text-right text-sm font-medium ${payment.amount < 0 ? 'text-destructive' : 'text-profitable'}`}
                           title="Modifier le montant du paiement"
-                          min="0"
                           step="0.01"
                         />
                       ) : (
