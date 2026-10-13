@@ -46,6 +46,7 @@ export function SalesCRMPanel({
   onRecordPayment,
   onDeletePayment,
   onUpdatePaymentDate,
+  onUpdatePaymentAmount,
   onFullyPaid,
   onToggleDefaulted,
   onRecordRefund,
@@ -542,6 +543,7 @@ export function SalesCRMPanel({
         onRecordPayment={onRecordPayment}
         onDeletePayment={onDeletePayment}
         onUpdatePaymentDate={onUpdatePaymentDate}
+        onUpdatePaymentAmount={onUpdatePaymentAmount}
         onFullyPaid={onFullyPaid}
         onToggleDefaulted={onToggleDefaulted}
         onRecordRefund={onRecordRefund}

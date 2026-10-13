@@ -161,6 +161,35 @@ const Index = () => {
     updateSale(saleId, { paymentHistory: newHistory });
   };
 
+  // Change the amount of a recorded payment
+  const handleUpdatePaymentAmount = (saleId: string, tunnelId: string, paymentId: string, amount: number) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    const sale = tunnel?.sales.find(s => s.id === saleId);
+    if (!sale || !(amount > 0)) return;
+
+    const newHistory = (sale.paymentHistory || []).map(p =>
+      p.id === paymentId ? { ...p, amount } : p
+    );
+    const newAmountCollected = Math.round(newHistory.reduce((sum, p) => sum + p.amount, 0) * 100) / 100;
+    const remaining = sale.totalPrice - newAmountCollected;
+
+    // Restore next payment date if the sale is no longer fully paid
+    let nextPaymentDate: string | undefined;
+    if (remaining > 0 && sale.numberOfPayments > 1) {
+      const nextDate = new Date();
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      nextPaymentDate = nextDate.toISOString().split('T')[0];
+    }
+
+    updateSale(saleId, {
+      amountCollected: newAmountCollected,
+      paymentHistory: newHistory,
+      nextPaymentDate,
+      isDefaulted: false,
+      defaultedAt: undefined,
+    });
+  };
+
   // Mark a sale as fully paid
   const handleFullyPaid = (saleId: string, tunnelId: string) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
