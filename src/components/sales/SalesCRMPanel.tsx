@@ -24,6 +24,7 @@ interface SalesCRMPanelProps {
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
   onUpdatePaymentDate?: (saleId: string, tunnelId: string, paymentId: string, date: string) => void;
+  onUpdatePaymentAmount?: (saleId: string, tunnelId: string, paymentId: string, amount: number) => void;
   onFullyPaid: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
