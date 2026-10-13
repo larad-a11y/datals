@@ -30,7 +30,7 @@ export function RefundActions({ sale, onRecordRefund, onCancelRefund }: RefundAc
 
   const history = sale.refundHistory || [];
   const maxRefundable = sale.amountCollected - (sale.refundedAmount || 0);
-  const isFullyRefunded = sale.isFullyRefunded || maxRefundable <= 0;
+  const isFullyRefunded = sale.isFullyRefunded || ((sale.refundedAmount || 0) > 0 && maxRefundable <= 0);
 
   const handleFullRefund = () => {
     onRecordRefund(sale.id, sale.tunnelId, maxRefundable, true);

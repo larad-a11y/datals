@@ -93,9 +93,10 @@ interface PaymentHistoryDialogProps {
   onClose: () => void;
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
+  onUpdatePaymentDate?: (saleId: string, tunnelId: string, paymentId: string, date: string) => void;
 }
 
-export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeletePayment }: PaymentHistoryDialogProps) {
+export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeletePayment, onUpdatePaymentDate }: PaymentHistoryDialogProps) {
   const [customAmount, setCustomAmount] = useState('');
   
   if (!sale) return null;
@@ -153,7 +154,17 @@ export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeleteP
                   >
                     <div className="flex items-center gap-2">
                       <Check className={`h-4 w-4 ${payment.verified ? 'text-profitable' : 'text-muted-foreground'}`} />
-                      <span>{new Date(payment.date).toLocaleDateString('fr-FR')}</span>
+                      {onUpdatePaymentDate ? (
+                        <input
+                          type="date"
+                          value={new Date(payment.date).toISOString().split('T')[0]}
+                          onChange={(e) => e.target.value && onUpdatePaymentDate(sale.id, sale.tunnelId, payment.id, e.target.value)}
+                          className="rounded border border-border/50 bg-transparent px-1 py-0.5 text-sm"
+                          title="Modifier la date du paiement"
+                        />
+                      ) : (
+                        <span>{new Date(payment.date).toLocaleDateString('fr-FR')}</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-profitable">
