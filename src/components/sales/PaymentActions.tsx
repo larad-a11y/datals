@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronsUp, Plus, History } from 'lucide-react';
+import { Check, ChevronsUp, Plus, History, Trash2 } from 'lucide-react';
 import { Sale, PaymentRecord, getRemainingAmount } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import {
@@ -92,9 +92,10 @@ interface PaymentHistoryDialogProps {
   sale: Sale | null;
   onClose: () => void;
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
+  onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
 }
 
-export function PaymentHistoryDialog({ sale, onClose, onRecordPayment }: PaymentHistoryDialogProps) {
+export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeletePayment }: PaymentHistoryDialogProps) {
   const [customAmount, setCustomAmount] = useState('');
   
   if (!sale) return null;
@@ -146,17 +147,28 @@ export function PaymentHistoryDialog({ sale, onClose, onRecordPayment }: Payment
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {sale.paymentHistory.map((payment) => (
-                  <div 
-                    key={payment.id} 
+                  <div
+                    key={payment.id}
                     className="flex items-center justify-between rounded-lg border border-border/50 p-2 text-sm"
                   >
                     <div className="flex items-center gap-2">
                       <Check className={`h-4 w-4 ${payment.verified ? 'text-profitable' : 'text-muted-foreground'}`} />
                       <span>{new Date(payment.date).toLocaleDateString('fr-FR')}</span>
                     </div>
-                    <span className="font-medium text-profitable">
-                      +{payment.amount.toLocaleString('fr-FR')} €
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-profitable">
+                        +{payment.amount.toLocaleString('fr-FR')} €
+                      </span>
+                      {onDeletePayment && (
+                        <button
+                          onClick={() => onDeletePayment(sale.id, sale.tunnelId, payment.id)}
+                          className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          title="Supprimer ce paiement (erreur de saisie)"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

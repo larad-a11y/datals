@@ -118,6 +118,38 @@ const Index = () => {
     });
   };
 
+  // Delete a payment recorded by mistake
+  const handleDeletePayment = (saleId: string, tunnelId: string, paymentId: string) => {
+    const tunnel = tunnels.find(t => t.id === tunnelId);
+    if (!tunnel) return;
+
+    const sale = tunnel.sales.find(s => s.id === saleId);
+    if (!sale) return;
+
+    const payment = (sale.paymentHistory || []).find(p => p.id === paymentId);
+    if (!payment) return;
+
+    const newHistory = sale.paymentHistory.filter(p => p.id !== paymentId);
+    const newAmountCollected = Math.max(0, Math.round((sale.amountCollected - payment.amount) * 100) / 100);
+    const remaining = sale.totalPrice - newAmountCollected;
+
+    // Restore next payment date if the sale is no longer fully paid
+    let nextPaymentDate: string | undefined;
+    if (remaining > 0 && sale.numberOfPayments > 1) {
+      const nextDate = new Date();
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      nextPaymentDate = nextDate.toISOString().split('T')[0];
+    }
+
+    updateSale(saleId, {
+      amountCollected: newAmountCollected,
+      paymentHistory: newHistory,
+      nextPaymentDate,
+      isDefaulted: false,
+      defaultedAt: undefined,
+    });
+  };
+
   // Mark a sale as fully paid
   const handleFullyPaid = (saleId: string, tunnelId: string) => {
     const tunnel = tunnels.find(t => t.id === tunnelId);
@@ -270,6 +302,7 @@ const Index = () => {
             }}
             initialTunnelFilter={salesTunnelFilter}
             onRecordPayment={handleRecordPayment}
+            onDeletePayment={handleDeletePayment}
             onFullyPaid={handleFullyPaid}
             onToggleDefaulted={handleToggleDefaulted}
             onRecordRefund={handleRecordRefund}
