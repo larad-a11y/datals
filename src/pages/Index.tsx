@@ -344,6 +344,7 @@ const Index = () => {
             onRecordPayment={handleRecordPayment}
             onDeletePayment={handleDeletePayment}
             onUpdatePaymentDate={handleUpdatePaymentDate}
+            onUpdatePaymentAmount={handleUpdatePaymentAmount}
             onFullyPaid={handleFullyPaid}
             onToggleDefaulted={handleToggleDefaulted}
             onRecordRefund={handleRecordRefund}
