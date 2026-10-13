@@ -159,6 +159,19 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
         verified: true,
         verifiedAt: new Date().toISOString(),
       }];
+    } else if (sale) {
+      // En édition : synchroniser l'historique avec le montant encaissé saisi
+      const historySum = roundCurrency(paymentHistory.reduce((sum, p) => sum + p.amount, 0));
+      const delta = roundCurrency(amountCollectedNum - historySum);
+      if (delta !== 0) {
+        paymentHistory = [...paymentHistory, {
+          id: `payment-${Date.now()}`,
+          amount: delta,
+          date: new Date().toISOString().split('T')[0],
+          verified: true,
+          verifiedAt: new Date().toISOString(),
+        }];
+      }
     }
     
     // Calculate Klarna/CB amounts based on payment method
