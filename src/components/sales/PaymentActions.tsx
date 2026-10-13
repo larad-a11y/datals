@@ -94,9 +94,10 @@ interface PaymentHistoryDialogProps {
   onRecordPayment: (saleId: string, tunnelId: string, amount: number) => void;
   onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
   onUpdatePaymentDate?: (saleId: string, tunnelId: string, paymentId: string, date: string) => void;
+  onUpdatePaymentAmount?: (saleId: string, tunnelId: string, paymentId: string, amount: number) => void;
 }
 
-export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeletePayment, onUpdatePaymentDate }: PaymentHistoryDialogProps) {
+export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeletePayment, onUpdatePaymentDate, onUpdatePaymentAmount }: PaymentHistoryDialogProps) {
   const [customAmount, setCustomAmount] = useState('');
   
   if (!sale) return null;
@@ -167,9 +168,31 @@ export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeleteP
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-profitable">
-                        +{payment.amount.toLocaleString('fr-FR')} €
-                      </span>
+                      {onUpdatePaymentAmount ? (
+                        <input
+                          type="number"
+                          defaultValue={payment.amount}
+                          key={`${payment.id}-${payment.amount}`}
+                          onWheel={(e) => e.currentTarget.blur()}
+                          onBlur={(e) => {
+                            const amount = parseFloat(e.target.value);
+                            if (amount > 0 && amount !== payment.amount) {
+                              onUpdatePaymentAmount(sale.id, sale.tunnelId, payment.id, Math.round(amount * 100) / 100);
+                            } else {
+                              e.target.value = String(payment.amount);
+                            }
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                          className="w-24 rounded border border-border/50 bg-transparent px-1 py-0.5 text-right text-sm font-medium text-profitable"
+                          title="Modifier le montant du paiement"
+                          min="0"
+                          step="0.01"
+                        />
+                      ) : (
+                        <span className="font-medium text-profitable">
+                          +{payment.amount.toLocaleString('fr-FR')} €
+                        </span>
+                      )}
                       {onDeletePayment && (
                         <button
                           onClick={() => onDeletePayment(sale.id, sale.tunnelId, payment.id)}

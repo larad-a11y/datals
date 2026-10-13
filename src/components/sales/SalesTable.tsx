@@ -46,6 +46,7 @@ interface SalesTableProps {
   onRecordPayment?: (saleId: string, tunnelId: string, amount: number) => void;
   onDeletePayment?: (saleId: string, tunnelId: string, paymentId: string) => void;
   onUpdatePaymentDate?: (saleId: string, tunnelId: string, paymentId: string, date: string) => void;
+  onUpdatePaymentAmount?: (saleId: string, tunnelId: string, paymentId: string, amount: number) => void;
   onFullyPaid?: (saleId: string, tunnelId: string) => void;
   onToggleDefaulted?: (saleId: string, tunnelId: string, isDefaulted: boolean) => void;
   onRecordRefund?: (saleId: string, tunnelId: string, amount: number, isFull: boolean) => void;
@@ -62,7 +63,7 @@ interface SalesTableProps {
 export type SortKey = 'createdAt' | 'clientName' | 'totalPrice' | 'amountCollected' | 'tunnelName' | 'offerName' | 'tunnelDate' | 'closer' | 'paymentMethod' | 'numberOfPayments' | 'nextPaymentDate' | 'remaining' | 'refunded' | 'progress';
 export type SortDirection = 'asc' | 'desc';
 
-export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onDeletePayment, onUpdatePaymentDate, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort, hiddenColumns = [], totals }: SalesTableProps) {
+export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPayment, onDeletePayment, onUpdatePaymentDate, onUpdatePaymentAmount, onFullyPaid, onToggleDefaulted, onRecordRefund, onCancelRefund, closers = [], offers = [], sortKey, sortDirection, onSort, hiddenColumns = [], totals }: SalesTableProps) {
   const [historyDialogSale, setHistoryDialogSale] = useState<EnrichedSale | null>(null);
   const [saleToDelete, setSaleToDelete] = useState<EnrichedSale | null>(null);
   const show = (col: OptionalColumn) => !hiddenColumns.includes(col);
@@ -514,6 +515,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
           onRecordPayment={handleRecordPayment}
           onDeletePayment={onDeletePayment}
           onUpdatePaymentDate={onUpdatePaymentDate}
+          onUpdatePaymentAmount={onUpdatePaymentAmount}
         />
       )}
 
