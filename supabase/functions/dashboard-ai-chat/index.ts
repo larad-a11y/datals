@@ -33,7 +33,7 @@ ${JSON.stringify(context, null, 2)}`;
       },
       body: JSON.stringify({
         model: "anthropic/claude-sonnet-5",
-        max_tokens: 2048,
+        max_tokens: 8192,
         system: systemPrompt,
         messages: messages.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })),
         stream: true,
