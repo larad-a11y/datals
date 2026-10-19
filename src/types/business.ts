@@ -1,6 +1,6 @@
 export type TunnelType = 'webinar' | 'vsl' | 'challenge';
 
-export type PaymentMethod = 'cb' | 'virement' | 'klarna' | 'cb_klarna';
+export type PaymentMethod = 'cb' | 'virement' | 'klarna' | 'cb_klarna' | 'whop';
 
 export type TrafficSource = 'ads' | 'organic';
 
@@ -282,6 +282,7 @@ export const paymentMethodLabels: Record<PaymentMethod, string> = {
   virement: 'Virement',
   klarna: 'Klarna',
   cb_klarna: 'CB + Klarna',
+  whop: 'Whop',
 };
 
 // Helper to generate notifications from sales

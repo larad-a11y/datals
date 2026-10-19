@@ -336,7 +336,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 {show('method') && (
                 <TableCell className="text-sm">
                   <Badge variant="outline" className="text-xs">
-                    {sale.paymentMethod === 'virement' ? 'Virement' : 'CB'}
+                    {paymentMethodLabels[sale.paymentMethod] || 'CB'}
                   </Badge>
                 </TableCell>
                 )}
