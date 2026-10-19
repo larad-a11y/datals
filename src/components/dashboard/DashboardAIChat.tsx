@@ -187,7 +187,8 @@ export function DashboardAIChat({ kpis, tunnels, allTunnels = [], charges, salar
           if (json === '[DONE]') { done = true; break; }
           try {
             const parsed = JSON.parse(json);
-            const content = parsed.choices?.[0]?.delta?.content;
+            if (parsed.type === 'message_stop') { done = true; break; }
+            const content = parsed.delta?.type === 'text_delta' ? parsed.delta.text : undefined;
             if (content) {
               assistantText += content;
               setMessages(prev => {

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Receipt, TrendingUp, Clock, CheckCircle, RotateCcw, Download, Columns3 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount } from '@/types/business';
+import { Sale, Tunnel, TunnelType, InstallmentPlan, Offer, defaultInstallmentPlans, Closer, getEffectiveCollectedAmount, getEffectiveContractedAmount, getRemainingAmount, paymentMethodLabels } from '@/types/business';
 import { SalesFilters, PaymentStatus } from './SalesFilters';
 import { SalesTable, SortDirection, SortKey, OptionalColumn, optionalColumnLabels } from './SalesTable';
 import { SaleForm } from '@/components/tunnels/SaleForm';
@@ -320,7 +320,7 @@ export function SalesCRMPanel({
     const rows = sortedFilteredSales.map((s) => [
       s.saleDate, s.clientName || '', s.clientEmail || '', s.tunnelName || '',
       s.tunnelType || '', s.tunnelDate || '', s.tunnelMonth || '',
-      closerName(s.closerId), offerName(s.offerId), s.paymentMethod || '',
+      closerName(s.closerId), offerName(s.offerId), paymentMethodLabels[s.paymentMethod] || s.paymentMethod || '',
       s.basePrice, s.totalPrice, s.numberOfPayments || 1,
       getEffectiveCollectedAmount(s), getRemainingAmount(s), s.refundedAmount || 0,
       getStatus(s), s.cbAmount ?? '', s.klarnaAmount ?? '', s.nextPaymentDate || '',

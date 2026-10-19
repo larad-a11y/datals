@@ -17,7 +17,7 @@ export const optionalColumnLabels: Record<OptionalColumn, string> = {
   email: 'Email', tunnelDate: 'Date tunnel', closer: 'Closer', offer: 'Offre', method: 'Moyen',
   payments: 'Paiements', schedule: 'Échéances', refunded: 'Remboursé', progress: 'Progression',
 };
-import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer, getEffectiveCollectedAmount, getRemainingAmount } from '@/types/business';
+import { Sale, TunnelType, tunnelTypeLabels, Closer, Offer, getEffectiveCollectedAmount, getRemainingAmount, paymentMethodLabels } from '@/types/business';
 import { RefundActions } from './RefundActions';
 import {
   Table,
@@ -336,7 +336,7 @@ export function SalesTable({ sales, onEdit, onDelete, onViewTunnel, onRecordPaym
                 {show('method') && (
                 <TableCell className="text-sm">
                   <Badge variant="outline" className="text-xs">
-                    {sale.paymentMethod === 'virement' ? 'Virement' : 'CB'}
+                    {paymentMethodLabels[sale.paymentMethod] || 'CB'}
                   </Badge>
                 </TableCell>
                 )}

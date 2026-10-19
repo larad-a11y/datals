@@ -375,6 +375,7 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
           <option value="virement">{paymentMethodLabels.virement}</option>
           <option value="klarna">{paymentMethodLabels.klarna}</option>
           <option value="cb_klarna">{paymentMethodLabels.cb_klarna}</option>
+          <option value="whop">{paymentMethodLabels.whop}</option>
         </select>
         {formData.paymentMethod === 'klarna' && (
           <p className="mt-1 text-xs text-warning">

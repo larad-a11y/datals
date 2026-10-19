@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792399685889,
+      "tag": "0000_add_whop_payment_method",
+      "breakpoints": true
+    }
+  ]
+}

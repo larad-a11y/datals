@@ -225,6 +225,7 @@ export function SalesFilters({
           <option value="">Tous les moyens</option>
           <option value="cb">CB</option>
           <option value="virement">Virement</option>
+          <option value="whop">Whop</option>
         </select>
       )}
 
