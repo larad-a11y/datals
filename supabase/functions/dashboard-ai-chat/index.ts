@@ -24,15 +24,18 @@ Réponds en français, de manière concise, structurée et orientée décision b
 Données contextuelles complètes (JSON):
 ${JSON.stringify(context, null, 2)}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/messages", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        model: "anthropic/claude-sonnet-5",
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: messages.map((m: { role: string; content: string }) => ({ role: m.role, content: m.content })),
         stream: true,
       }),
     });
