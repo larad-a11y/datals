@@ -1,0 +1,2 @@
+ALTER TABLE public.sales DROP CONSTRAINT sales_payment_method_check;
+ALTER TABLE public.sales ADD CONSTRAINT sales_payment_method_check CHECK (payment_method = ANY (ARRAY['cb'::text, 'virement'::text, 'klarna'::text, 'cb_klarna'::text, 'whop'::text]));
