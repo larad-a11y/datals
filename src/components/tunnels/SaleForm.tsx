@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer, Charges, TrafficSource, trafficSourceLabels, isSaleFullyRefunded } from '@/types/business';
+import { Sale, InstallmentPlan, Offer, PaymentMethod, paymentMethodLabels, OfferInstallment, Closer, Charges, TrafficSource, trafficSourceLabels, isSaleFullyRefunded, getNextInstallmentAmount } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -237,7 +237,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
     ? 0
     : roundCurrency(Math.max(0, totalPriceNum - amountCollectedNum));
   const paymentPerInstallment = formData.numberOfPayments > 0 && totalPriceNum > 0
-    ? roundCurrency(totalPriceNum / formData.numberOfPayments)
+    ? sale
+      ? getNextInstallmentAmount({ ...sale, offerId: formData.offerId, totalPrice: totalPriceNum, numberOfPayments: formData.numberOfPayments, amountCollected: amountCollectedNum })
+      : roundCurrency(totalPriceNum / formData.numberOfPayments)
     : 0;
 
   const formContent = (
@@ -601,7 +603,9 @@ export function SaleForm({ sale, tunnelId = '', onSave, onCancel, inline = false
             </p>
           )}
           <p className="mt-1 text-xs text-muted-foreground">
-            {formData.numberOfPayments} paiements de {paymentPerInstallment.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
+            {formData.offerId === 'offer-magali-mercat-special'
+              ? 'Acompte de 1 000 € puis 4 mensualités de 550 €'
+              : `${formData.numberOfPayments} paiements de ${paymentPerInstallment.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €`}
           </p>
         </div>
       )}
