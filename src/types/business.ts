@@ -106,6 +106,15 @@ export function getRemainingAmount(sale: Sale): number {
   return Math.max(0, getEffectiveContractedAmount(sale) - getEffectiveCollectedAmount(sale));
 }
 
+export function getNextInstallmentAmount(sale: Sale): number {
+  const remaining = getRemainingAmount(sale);
+  if (sale.offerId === 'offer-magali-mercat-special') {
+    const depositRemaining = Math.max(0, 1000 - sale.amountCollected);
+    return Math.min(remaining, depositRemaining > 0 ? depositRemaining : 550);
+  }
+  return Math.min(remaining, Math.round(sale.totalPrice / sale.numberOfPayments * 100) / 100);
+}
+
 export interface PaymentNotification {
   id: string;
   saleId: string;
@@ -309,7 +318,7 @@ export function generatePaymentNotifications(sales: (Sale & { tunnelName?: strin
     // Only show notification if payment date has passed (diffDays <= -1 means at least 1 day after)
     // This is for VERIFICATION that the automatic payment was collected
     if (diffDays <= -1) {
-      const paymentAmount = sale.totalPrice / sale.numberOfPayments;
+      const paymentAmount = getNextInstallmentAmount(sale);
       const daysOverdue = Math.abs(diffDays);
       
       // Type based on how long since payment should have been verified
