@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { getNextInstallmentAmount, getRemainingAmount, type Sale } from './business';
+import { getNextInstallmentAmount, getRemainingAmount, type Sale } from '../src/types/business';
 
 const magali: Sale = {
   id: 'test-magali', tunnelId: '', clientName: 'Magali Mercat',
