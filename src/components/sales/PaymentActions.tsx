@@ -52,10 +52,7 @@ export function PaymentActions({ sale, onRecordPayment, onFullyPaid, onViewHisto
         >
           <Check className="h-4 w-4 text-profitable" />
           <div>
-            <p className="font-medium">Mensualité</p>
-            <p className="text-xs text-muted-foreground">
-              +{monthlyPayment.toLocaleString('fr-FR')} €
-            </p>
+            <p className="font-medium">Mensualité de {monthlyPayment.toLocaleString('fr-FR')} €</p>
           </div>
         </DropdownMenuItem>
         
