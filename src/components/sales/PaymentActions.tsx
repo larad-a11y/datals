@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronsUp, Plus, History, Trash2 } from 'lucide-react';
-import { Sale, PaymentRecord, getRemainingAmount } from '@/types/business';
+import { Sale, PaymentRecord, getRemainingAmount, getNextInstallmentAmount } from '@/types/business';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -25,7 +25,7 @@ interface PaymentActionsProps {
 
 export function PaymentActions({ sale, onRecordPayment, onFullyPaid, onViewHistory }: PaymentActionsProps) {
   const remaining = getRemainingAmount(sale);
-  const monthlyPayment = sale.totalPrice / sale.numberOfPayments;
+  const monthlyPayment = getNextInstallmentAmount(sale);
   const isPaid = remaining <= 0;
 
   if (isPaid) {
@@ -103,7 +103,7 @@ export function PaymentHistoryDialog({ sale, onClose, onRecordPayment, onDeleteP
   if (!sale) return null;
   
   const remaining = getRemainingAmount(sale);
-  const monthlyPayment = sale.totalPrice / sale.numberOfPayments;
+  const monthlyPayment = getNextInstallmentAmount(sale);
   
   const handleCustomPayment = () => {
     const amount = parseFloat(customAmount);
